@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CITK Student Connect | Orientation & Support</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <header class="google-header">
+        <div class="logo-area">
+            <span class="logo-icon"><i class="fas fa-graduation-cap"></i></span>
+            <span class="logo-text">CITK <strong>Student Connect</strong></span>
+        </div>
+        <nav class="nav-links">
+            <a href="#" class="active">Home</a>
+            <a href="#">3D Campus Map <span class="badge">AI Beta</span></a>
+            <a href="#">Admission Guide</a>
+            <a href="#" class="btn-login-nav">Login</a>
+        </nav>
+    </header>
+
+    <main class="hero-container">
+        
+        <div class="hero-content">
+            <h1 class="animate-text">Welcome to <span class="google-blue">CIT</span> Kokrajhar</h1>
+            <p class="hero-sub">The all-in-one AI companion for new Diploma & B.Tech students.</p>
+            
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <i class="fas fa-cube google-red"></i>
+                    <div>
+                        <h4>3D Campus Nav</h4>
+                        <small>AI-generated campus walk-through</small>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-file-contract google-yellow"></i>
+                    <div>
+                        <h4>Doc Assistant</h4>
+                        <small>Anti-ragging & Medical forms</small>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-users google-green"></i>
+                    <div>
+                        <h4>Senior Connect</h4>
+                        <small>Direct mentorship & contact</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="auth-card-wrapper">
+            <div class="card glass-effect">
+                <div class="card-header">
+                    <h2>Create Account</h2>
+                    <p>Join the CITK digital community</p>
+                </div>
+
+                <form id="register-form">
+                    <div class="input-group">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" placeholder="Full Name" required>
+                    </div>
+
+                    <div class="input-group">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" placeholder="Email Address" required>
+                    </div>
+
+                    <div class="input-group">
+                        <i class="fas fa-university input-icon"></i>
+                        <select id="student-status" required>
+                            <option value="" disabled selected>Current Status</option>
+                            <option value="new_admission">Applying for Admission</option>
+                            <option value="diploma_1">Diploma 1st Sem</option>
+                            <option value="btech_1">B.Tech 1st Sem</option>
+                            <option value="senior">Senior Student</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" placeholder="Create Password" required>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="terms" required>
+                        <label for="terms">I agree to the <a href="#">Community Guidelines</a></label>
+                    </div>
+
+                    <button type="submit" class="btn-google-primary">
+                        Get Started <i class="fas fa-arrow-right"></i>
+                    </button>
+
+                    <div class="form-footer">
+                        Already have an account? <a href="#">Sign in</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer class="google-footer">
+        <div class="footer-content">
+            <div class="footer-left">
+                <p>&copy; 2025 CITK Student Innovation.</p>
+                <div class="hackathon-tag">
+                    <i class="fab fa-google"></i> Built for Google Open Innovation Hackathon
+                </div>
+            </div>
+            <div class="footer-links">
+                <a href="#">Privacy</a>
+                <a href="#">Terms</a>
+                <a href="#">About Developers</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

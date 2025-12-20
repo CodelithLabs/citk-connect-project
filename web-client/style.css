@@ -1,0 +1,295 @@
+/* --- VARIABLES: GOOGLE BRAND COLORS --- */
+:root {
+    --g-blue: #4285F4;
+    --g-red: #EA4335;
+    --g-yellow: #FBBC05;
+    --g-green: #34A853;
+    --bg-dark: #202124;
+    /* Google Dark Mode BG */
+    --surface-dark: #303134;
+    /* Card BG */
+    --text-primary: #e8eaed;
+    --text-secondary: #9aa0a6;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Roboto', sans-serif;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- HEADER --- */
+.google-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 40px;
+    background: rgba(32, 33, 36, 0.95);
+    border-bottom: 1px solid #3c4043;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.3rem;
+}
+
+.logo-icon {
+    color: var(--g-blue);
+    font-size: 1.5rem;
+}
+
+.nav-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    margin-left: 25px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: 0.3s;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+    color: var(--g-blue);
+}
+
+.badge {
+    background: var(--g-red);
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
+.btn-login-nav {
+    border: 1px solid var(--text-secondary);
+    padding: 8px 20px;
+    border-radius: 4px;
+}
+
+.btn-login-nav:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white !important;
+}
+
+/* --- HERO SECTION --- */
+.hero-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    gap: 60px;
+    flex-wrap: wrap;
+    background: radial-gradient(circle at top right, rgba(66, 133, 244, 0.1), transparent 40%);
+}
+
+/* LEFT SIDE CONTENT */
+.hero-content {
+    max-width: 500px;
+}
+
+.hero-content h1 {
+    font-size: 3.5rem;
+    line-height: 1.2;
+    margin-bottom: 15px;
+    font-weight: 700;
+}
+
+.google-blue {
+    color: var(--g-blue);
+}
+
+.google-red {
+    color: var(--g-red);
+}
+
+.google-yellow {
+    color: var(--g-yellow);
+}
+
+.google-green {
+    color: var(--g-green);
+}
+
+.hero-sub {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin-bottom: 40px;
+}
+
+/* Feature Grid */
+.feature-grid {
+    display: grid;
+    gap: 20px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: var(--surface-dark);
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid transparent;
+    transition: 0.3s;
+}
+
+.feature-item:nth-child(1) {
+    border-left-color: var(--g-red);
+}
+
+.feature-item:nth-child(2) {
+    border-left-color: var(--g-yellow);
+}
+
+.feature-item:nth-child(3) {
+    border-left-color: var(--g-green);
+}
+
+.feature-item:hover {
+    transform: translateX(5px);
+    background: #3c4043;
+}
+
+.feature-item i {
+    font-size: 1.5rem;
+}
+
+/* --- REGISTRATION CARD --- */
+.auth-card-wrapper {
+    width: 100%;
+    max-width: 400px;
+}
+
+.glass-effect {
+    background: var(--surface-dark);
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.card-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.input-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.input-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+}
+
+.input-group input,
+.input-group select {
+    width: 100%;
+    padding: 12px 15px 12px 45px;
+    /* space for icon */
+    background: #202124;
+    border: 1px solid #5f6368;
+    border-radius: 4px;
+    color: white;
+    font-size: 1rem;
+    outline: none;
+    transition: 0.3s;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+    border-color: var(--g-blue);
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.3);
+}
+
+.btn-google-primary {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--g-blue);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.3s;
+}
+
+.btn-google-primary:hover {
+    background-color: #3367d6;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+    color: var(--text-secondary);
+}
+
+.checkbox-group a {
+    color: var(--g-blue);
+    text-decoration: none;
+}
+
+.form-footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.form-footer a {
+    color: var(--g-blue);
+    text-decoration: none;
+}
+
+/* --- FOOTER --- */
+.google-footer {
+    background: #171717;
+    padding: 20px 40px;
+    border-top: 1px solid #3c4043;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.footer-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    margin-left: 20px;
+}
+
+.hackathon-tag {
+    margin-top: 5px;
+    font-size: 0.75rem;
+    color: #5f6368;
+}
