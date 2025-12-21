@@ -1,112 +1,133 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/legacy.dart' show StateProvider;
-import 'package:mobile_app/models/chat_message.dart';
-import 'package:mobile_app/providers/services_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile_app/services/chat_repository.dart';
+import 'package:mobile_app/services/chat_service.dart';
 
-// 1. State provider to hold the list of chat messages
-final chatMessagesProvider = StateProvider<List<ChatMessage>>((ref) => []);
-
-// 2. State provider to track the loading state
-final isLoadingProvider = StateProvider<bool>((ref) => false);
-
-
-class ChatbotView extends ConsumerWidget {
+class ChatbotView extends ConsumerStatefulWidget {
   const ChatbotView({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final messages = ref.watch(chatMessagesProvider);
-    final isLoading = ref.watch(isLoadingProvider);
-    final textController = TextEditingController();
+  ConsumerState<ChatbotView> createState() => _ChatbotViewState();
+}
 
-    void handleSendMessage() async {
-      final messageText = textController.text;
-      if (messageText.isEmpty) return;
+class _ChatbotViewState extends ConsumerState<ChatbotView> {
+  final TextEditingController _messageController = TextEditingController();
+  bool _isLoading = false;
 
-      // Add user message to the list
-      ref.read(chatMessagesProvider.notifier).update((state) => [
-            ...state,
-            ChatMessage(text: messageText, type: MessageType.user)
-          ]);
-      textController.clear();
-
-      // Set loading state and get response from AI
-      ref.read(isLoadingProvider.notifier).state = true;
-      final response = await ref.read(chatServiceProvider).sendMessage(messageText);
-      ref.read(isLoadingProvider.notifier).state = false;
-      
-      // Add bot response to the list
-      ref.read(chatMessagesProvider.notifier).update((state) => [
-            ...state,
-            ChatMessage(text: response, type: MessageType.bot)
-          ]);
-    }
+  @override
+  Widget build(BuildContext context) {
+    final chatHistory = ref.watch(chatHistoryProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('The Brain'),
-        centerTitle: true,
+        title: const Text('The Brain - AI Assistant'),
       ),
       body: Column(
         children: [
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: messages.length,
-              itemBuilder: (context, index) {
-                final message = messages[index];
-                return Align(
-                  alignment: message.type == MessageType.user 
-                      ? Alignment.centerRight 
-                      : Alignment.centerLeft,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                    margin: const EdgeInsets.symmetric(vertical: 4),
-                    decoration: BoxDecoration(
-                      color: message.type == MessageType.user 
-                          ? Colors.blue[100] 
-                          : Colors.grey[200],
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(message.text),
-                  ),
+            child: chatHistory.when(
+              data: (snapshot) {
+                final messages = snapshot.docs;
+                return ListView.builder(
+                  reverse: true,
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) {
+                    final message = messages[index];
+                    final isUserMessage = message['isFromUser'];
+                    return ListTile(
+                      title: Align(
+                        alignment: isUserMessage ? Alignment.centerRight : Alignment.centerLeft,
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: isUserMessage ? Theme.of(context).colorScheme.primary : Colors.grey[300],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            message['text'],
+                            style: TextStyle(color: isUserMessage ? Colors.white : Colors.black),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => Center(child: Text('Error: $error')),
             ),
           ),
-          if (isLoading)
+          if (_isLoading)
             const Padding(
               padding: EdgeInsets.all(8.0),
               child: CircularProgressIndicator(),
             ),
-          // Input area
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: textController,
-                    decoration: const InputDecoration(
-                      hintText: 'Ask about CITK...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(30.0)),
-                      ),
-                    ),
-                    onSubmitted: (_) => handleSendMessage(),
-                  ),
+          _buildMessageComposer(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessageComposer() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _messageController,
+              decoration: InputDecoration(
+                hintText: 'Ask CITK anything...',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                const SizedBox(width: 8.0),
-                IconButton(
-                  icon: const Icon(Icons.send),
-                  onPressed: handleSendMessage,
-                )
-              ],
+              ),
+              onSubmitted: (_) => _sendMessage(),
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.send),
+            onPressed: _sendMessage,
           ),
         ],
       ),
     );
   }
+
+  Future<void> _sendMessage() async {
+    if (_messageController.text.isEmpty) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final messageText = _messageController.text;
+    _messageController.clear();
+
+    try {
+      // Save user message to Firestore
+      await ref.read(chatRepositoryProvider).addMessage(messageText, true);
+
+      // Get AI response
+      final response = await ref.read(chatServiceProvider).sendMessage(messageText);
+
+      // Save AI response to Firestore
+      await ref.read(chatRepositoryProvider).addMessage(response, false);
+    } catch (e) {
+       if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 }
+
+// Provider for the chat history stream
+final chatHistoryProvider = StreamProvider.autoDispose((ref) {
+  final chatRepository = ref.watch(chatRepositoryProvider);
+  return chatRepository.getChatHistory();
+});

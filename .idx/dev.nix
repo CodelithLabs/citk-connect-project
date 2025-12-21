@@ -46,21 +46,7 @@
 
       previews = {
         web = {
-          command = [
-            "sh"
-            "-c"
-            "cd web-client && python3 -m http.server $PORT"
-          ];
-          command = ["python" "-m" "http.server" "$PORT" "--directory" "web-client"];
-          manager = "web";
-        };
-
-        app = {
-          command = [
-            "sh"
-            "-c"
-            "cd mobile_app && flutter run -d web-server --web-port $PORT --web-hostname 0.0.0.0"
-          ];
+          command = ["sh", "-c", "cd web-client && npm install && npm run dev"];
           manager = "web";
         };
       };
