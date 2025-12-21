@@ -46,11 +46,7 @@
 
       previews = {
         web = {
-          command = [
-            "sh"
-            "-c"
-            "cd web-client && python3 -m http.server $PORT"
-          ];
+          command = ["python" "-m" "http.server" "$PORT" "--directory" "web-client"];
           manager = "web";
         };
 
