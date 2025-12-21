@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.10.4
+  sdk: ">=3.9.0 <4.0.0"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -46,7 +46,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
-# For information on the generic Dart part of this file, see the
+# For information on the generic Dart part of a this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
@@ -87,22 +87,3 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
-
-
-
-  # 1. Google Firebase (The Backend)
-  firebase_core: ^3.0.0
-  firebase_auth: ^5.0.0          # For Google Sign-In
-  cloud_firestore: ^5.0.0        # The Database
-
-  # 2. Google AI (The Brain)
-  google_generative_ai: ^0.4.0   # Official Gemini API for Dart
-
-  # 3. Google Maps (The Navigation)
-  google_maps_flutter: ^2.5.0
-  geolocator: ^12.0.0            # To get user's GPS position
-
-  # 4. UI Polish (To look professional)
-  google_fonts: ^6.2.0           # Official Google Fonts
-  flutter_animate: ^4.5.0        # Smooth animations
-  provider: ^6.1.0               # State Management

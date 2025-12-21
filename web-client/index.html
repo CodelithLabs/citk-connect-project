@@ -1,244 +1,89 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CITK Student Connect | Google for Education</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Welcome to Firebase Hosting</title>
 
-    <div id="auth-view">
-        <header class="landing-header">
-            <div class="logo-area">
-                <i class="fas fa-graduation-cap logo-icon"></i>
-                <span class="logo-text">CITK <strong>Student Connect</strong></span>
-            </div>
-            <nav class="landing-nav">
-                <a href="#">Overview</a>
-                <a href="#">Features</a>
-                <a href="#" class="btn-outlined" id="nav-login-btn">Sign In</a>
-            </nav>
-        </header>
+    <!-- update the version number as needed -->
+    <script defer src="/__/firebase/12.7.0/firebase-app-compat.js"></script>
+    <!-- include only the Firebase features as you need -->
+    <script defer src="/__/firebase/12.7.0/firebase-auth-compat.js"></script>
+    <script defer src="/__/firebase/12.7.0/firebase-database-compat.js"></script>
+    <script defer src="/__/firebase/12.7.0/firebase-firestore-compat.js"></script>
+    <script defer src="/__/firebase/12.7.0/firebase-functions-compat.js"></script>
+    <script defer src="/__/firebase/12.7.0/firebase-messaging-compat.js"></script>
+    <script defer src="/__/firebase/12.7.0/firebase-storage-compat.js"></script>
+    <script defer src="/__/firebase/12.7.0/firebase-analytics-compat.js"></script>
+    <script defer src="/__/firebase/12.7.0/firebase-remote-config-compat.js"></script>
+    <script defer src="/__/firebase/12.7.0/firebase-performance-compat.js"></script>
+    <!-- 
+      initialize the SDK after all desired features are loaded, set useEmulator to false
+      to avoid connecting the SDK to running emulators.
+    -->
+    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
 
-        <main class="hero-section">
-            <div class="hero-content">
-                <h1 class="hero-title">
-                    Your campus life, <br>
-                    <span class="g-text-blue">Reimagined</span> with AI.
-                </h1>
-                <p class="hero-subtitle">
-                    The official student companion for CIT Kokrajhar. 
-                    Navigate campus, manage documents, and connect with seniors.
-                </p>
-                
-                <div class="feature-pills">
-                    <div class="pill"><i class="fas fa-check-circle g-text-green"></i> 3D Campus Map</div>
-                    <div class="pill"><i class="fas fa-check-circle g-text-green"></i> Senior Mentorship</div>
-                    <div class="pill"><i class="fas fa-check-circle g-text-green"></i> Doc Manager</div>
-                </div>
-            </div>
-
-            <div class="auth-card">
-                <div class="progress-bar"></div> <h2>Create your account</h2>
-                <p class="sub-text">to continue to Student Connect</p>
-
-                <form id="auth-form">
-                    <div class="material-input">
-                        <input type="text" id="fullname" required placeholder=" ">
-                        <label for="fullname">Full Name</label>
-                    </div>
-
-                    <div class="material-input">
-                        <input type="email" id="email" required placeholder=" " value="student@cit.ac.in">
-                        <label for="email">Email</label>
-                    </div>
-
-                    <div class="material-select">
-                        <select id="role" required>
-                            <option value="" disabled selected>Select your role</option>
-                            <option value="fresher">Fresher (1st Year)</option>
-                            <option value="senior">Senior Student</option>
-                            <option value="faculty">Faculty</option>
-                        </select>
-                        <i class="fas fa-caret-down"></i>
-                    </div>
-
-                    <div class="action-buttons">
-                        <a href="#" class="link-btn">Log in instead</a>
-                        <button type="submit" class="btn-primary">
-                            <span>Next</span>
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </main>
-
-        <footer class="simple-footer">
-            <div class="footer-left">
-                English (United States) <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="footer-right">
-                <a href="#">Help</a>
-                <a href="#">Privacy</a>
-                <a href="#">Terms</a>
-            </div>
-        </footer>
+    <style media="screen">
+      body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
+      #message { background: white; max-width: 360px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px; }
+      #message h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
+      #message h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
+      #message p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
+      #message a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; padding: 16px; border-radius: 4px; }
+      #message, #message a { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
+      #load { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
+      @media (max-width: 600px) {
+        body, #message { margin-top: 0; background: white; box-shadow: none; }
+        body { border-top: 16px solid #ffa100; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="message">
+      <h2>Welcome</h2>
+      <h1>Firebase Hosting Setup Complete</h1>
+      <p>You're seeing this because you've successfully setup Firebase Hosting. Now it's time to go build something extraordinary!</p>
+      <a target="_blank" href="https://firebase.google.com/docs/hosting/">Open Hosting Documentation</a>
     </div>
+    <p id="load">Firebase SDK Loading&hellip;</p>
 
-    <div id="dashboard-view" class="hidden">
-        
-        <header class="app-bar">
-            <div class="app-bar-left">
-                <button class="icon-btn"><i class="fas fa-bars"></i></button>
-                <div class="app-logo">
-                    <i class="fas fa-graduation-cap g-text-blue"></i>
-                    <span>Connect</span>
-                </div>
-            </div>
-            
-            <div class="search-bar-wrapper">
-                <div class="search-bar">
-                    <button class="search-icon"><i class="fas fa-search"></i></button>
-                    <input type="text" placeholder="Search for seniors, hostels, or docs">
-                    <button class="filter-icon"><i class="fas fa-sliders-h"></i></button>
-                </div>
-            </div>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const loadEl = document.querySelector('#load');
+        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+        // // The Firebase SDK is initialized and available here!
+        //
+        // firebase.auth().onAuthStateChanged(user => { });
+        // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
+        // firebase.firestore().doc('/foo/bar').get().then(() => { });
+        // firebase.functions().httpsCallable('yourFunction')().then(() => { });
+        // firebase.messaging().requestPermission().then(() => { });
+        // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
+        // firebase.analytics(); // call to activate
+        // firebase.analytics().logEvent('tutorial_completed');
+        // firebase.performance(); // call to activate
+        //
+        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
 
-            <div class="app-bar-right">
-                <button class="icon-btn"><i class="far fa-question-circle"></i></button>
-                <button class="icon-btn"><i class="fas fa-cog"></i></button>
-                <div class="profile-avatar">S</div>
-            </div>
-        </header>
-
-        <div class="app-body">
-            <aside class="sidebar">
-                <button class="compose-btn">
-                    <i class="fas fa-plus"></i>
-                    <span>New Request</span>
-                </button>
-
-                <ul class="nav-list">
-                    <li class="nav-item active" onclick="switchTab('home')">
-                        <i class="fas fa-home"></i> <span>Home</span>
-                    </li>
-                    <li class="nav-item" onclick="switchTab('seniors')">
-                        <i class="fas fa-user-friends"></i> <span>Seniors</span>
-                    </li>
-                    <li class="nav-item" onclick="switchTab('docs')">
-                        <i class="fas fa-folder"></i> <span>Documents</span>
-                    </li>
-                    <li class="nav-item" onclick="switchTab('map')">
-                        <i class="fas fa-map-marked-alt"></i> <span>Campus Map</span>
-                    </li>
-                </ul>
-
-                <div class="storage-info">
-                    <div class="storage-bar"><div class="fill" style="width: 75%"></div></div>
-                    <small>Admission Progress: 75%</small>
-                </div>
-            </aside>
-
-            <main class="main-content">
-                
-                <section id="tab-home" class="tab-section">
-                    <h2 class="section-title">Suggested for you</h2>
-                    
-                    <div class="cards-grid">
-                        <div class="google-card">
-                            <div class="card-top">
-                                <div class="icon-circle bg-red-light"><i class="fas fa-exclamation-triangle g-text-red"></i></div>
-                                <i class="fas fa-ellipsis-v more-opt"></i>
-                            </div>
-                            <h3>Action Required</h3>
-                            <p>Anti-Ragging Affidavit pending approval.</p>
-                            <button class="btn-text g-text-red">View Details</button>
-                        </div>
-
-                        <div class="google-card">
-                            <div class="card-top">
-                                <div class="icon-circle bg-blue-light"><i class="fas fa-calendar-alt g-text-blue"></i></div>
-                                <i class="fas fa-ellipsis-v more-opt"></i>
-                            </div>
-                            <h3>Orientation</h3>
-                            <p>Tomorrow, 10:00 AM<br>Central Auditorium</p>
-                            <button class="btn-text g-text-blue">Add to Calendar</button>
-                        </div>
-
-                        <div class="google-card">
-                            <div class="card-top">
-                                <div class="icon-circle bg-green-light"><i class="fas fa-check g-text-green"></i></div>
-                                <i class="fas fa-ellipsis-v more-opt"></i>
-                            </div>
-                            <h3>Hostel Allotted</h3>
-                            <p>New Boys Hostel (NBH)<br>Room 204</p>
-                            <button class="btn-text g-text-green">View Allotment</button>
-                        </div>
-                    </div>
-
-                    <h2 class="section-title" style="margin-top: 40px;">Recent Announcements</h2>
-                    <div class="list-container">
-                        <div class="list-item">
-                            <div class="item-icon"><i class="fas fa-bullhorn"></i></div>
-                            <div class="item-text">
-                                <h4>Classes Start Date</h4>
-                                <small>Academic Cell • 2 hours ago</small>
-                            </div>
-                        </div>
-                        <div class="list-item">
-                            <div class="item-icon"><i class="fas fa-utensils"></i></div>
-                            <div class="item-text">
-                                <h4>Mess Registration Open</h4>
-                                <small>Hostel Warden • Yesterday</small>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <section id="tab-seniors" class="tab-section hidden">
-                    <div class="toolbar">
-                        <h2>Senior Connect</h2>
-                        <div class="sort-options">Name <i class="fas fa-arrow-down"></i></div>
-                    </div>
-                    <div id="seniors-container" class="grid-layout">
-                        </div>
-                </section>
-
-                <section id="tab-docs" class="tab-section hidden">
-                    <div class="toolbar">
-                        <h2>My Documents</h2>
-                        <div class="view-options"><i class="fas fa-list"></i></div>
-                    </div>
-                    <div class="table-header">
-                        <span>Name</span>
-                        <span>Owner</span>
-                        <span>Last Modified</span>
-                        <span>Status</span>
-                    </div>
-                    <div id="docs-container" class="docs-list">
-                        </div>
-                </section>
-
-                <section id="tab-map" class="tab-section hidden">
-                    <h2 class="section-title">3D Campus Navigation</h2>
-                    <div class="map-viewport">
-                        <div class="grid-overlay"></div>
-                        <div class="map-content">
-                            <i class="fas fa-cube fa-spin"></i>
-                            <h3>Initializing 3D Environment...</h3>
-                            <p>Loading Assets: Library, Admin Block, Hostels</p>
-                            <button class="btn-primary">Launch Fullscreen</button>
-                        </div>
-                    </div>
-                </section>
-
-            </main>
-        </div>
-    </div>
-
-    <script src="script.js"></script>
-</body>
+        try {
+          let app = firebase.app();
+          let features = [
+            'auth', 
+            'database', 
+            'firestore',
+            'functions',
+            'messaging', 
+            'storage', 
+            'analytics', 
+            'remoteConfig',
+            'performance',
+          ].filter(feature => typeof app[feature] === 'function');
+          loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
+        } catch (e) {
+          console.error(e);
+          loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
+        }
+      });
+    </script>
+  </body>
 </html>

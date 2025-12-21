@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "418075503046",
+    "project_id": "citk-connect-project",
+    "storage_bucket": "citk-connect-project.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:418075503046:android:85b43fdec24cbb11d32ac7",
+        "android_client_info": {
+          "package_name": "com.example.mobile_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAwoIpJdF-GcUDPScrHsbcAZYwH6TfaC9Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
