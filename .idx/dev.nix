@@ -1,32 +1,66 @@
-# To learn more about how to use Nix to configure your environment
-# see: https://firebase.google.com/docs/studio/customize-workspace
 { pkgs, ... }: {
-  # Which nixpkgs channel to use.
-  channel = "stable-24.05"; # or "unstable"
+  channel = "stable-24.05";
 
-  # Use https://search.nixos.org/packages to find packages
   packages = [
+    # --- Core Languages ---
     pkgs.python3
+    pkgs.nodejs
+    pkgs.dart
+    pkgs.flutter
+    pkgs.jdk17
+
+    # --- Build Tools ---
+    pkgs.cmake
+    pkgs.ninja
+    pkgs.clang
+    pkgs.gcc
+    pkgs.pkg-config
+
+    # --- Flutter / Desktop deps ---
+    pkgs.gtk3
+    pkgs.lzma
+
+    # --- Web & Cloud ---
+    pkgs.firebase-tools
+
+    # --- Utilities ---
+    pkgs.git
+    pkgs.curl
+    pkgs.wget
+    pkgs.unzip
+    pkgs.zip
   ];
 
-  # Sets environment variables in the workspace
-  env = {};
+  env = {
+    CMAKE_GENERATOR = "Ninja";
+  };
+
   idx = {
-    # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
     extensions = [
-      # "vscodevim.vim"
+      "Dart-Code.flutter"
+      "Dart-Code.dart-code"
     ];
 
-    # Enable previews
     previews = {
       enable = true;
+
       previews = {
         web = {
+          command = [
+            "sh"
+            "-c"
+            "cd web-client && python3 -m http.server $PORT"
+          ];
           command = ["python" "-m" "http.server" "$PORT" "--directory" "web-client"];
           manager = "web";
         };
+
         app = {
-          command = ["sh", "-c", "cd mobile_app && flutter run -d web-server --web-port $PORT"];
+          command = [
+            "sh"
+            "-c"
+            "cd mobile_app && flutter run -d web-server --web-port $PORT --web-hostname 0.0.0.0"
+          ];
           manager = "web";
         };
       };

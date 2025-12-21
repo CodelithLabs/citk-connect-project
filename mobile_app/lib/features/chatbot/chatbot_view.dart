@@ -1,6 +1,6 @@
-
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import 'package:mobile_app/models/chat_message.dart';
 import 'package:mobile_app/providers/services_provider.dart';
 
