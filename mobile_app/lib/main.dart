@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const ChatbotView(), // For now, we'll go directly to the chatbot
+      home: const homeView(), // For now, we'll go directly to the chatbot
     );
   }
 }
