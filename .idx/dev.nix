@@ -16,11 +16,11 @@
     pkgs.gcc
     pkgs.pkg-config
 
-    # --- Flutter / Desktop deps ---
+    # --- Flutter Desktop Deps ---
     pkgs.gtk3
     pkgs.lzma
 
-    # --- Web & Cloud ---
+    # --- Firebase / Cloud ---
     pkgs.firebase-tools
 
     # --- Utilities ---
@@ -33,6 +33,7 @@
 
   env = {
     CMAKE_GENERATOR = "Ninja";
+    JAVA_HOME = pkgs.jdk17.home;
   };
 
   idx = {
@@ -46,7 +47,11 @@
 
       previews = {
         web = {
-          command = ["sh", "-c", "cd web-client && npm install && npm run dev"];
+          command = [
+            "sh"
+            "-c"
+            "cd web-client && npm install && npm run dev"
+          ];
           manager = "web";
         };
       };
