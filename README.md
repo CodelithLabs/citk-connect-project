@@ -1,35 +1,51 @@
-# 🎓 CITK Student Connect
-> **Open Innovation Hackathon Project** > *Bridging the gap for new students at Central Institute of Technology, Kokrajhar.*
+# CITK Connect: The All-in-One Student Portal
 
-![Project Status](https://img.shields.io/badge/Status-Prototype-blue)
-![Hackathon](https://img.shields.io/badge/Hackathon-Google%20Open%20Innovation-green)
-![Tech](https://img.shields.io/badge/Built%20With-Google%20Tech-orange)
+Welcome to the CITK Connect project! This is a monorepo containing the web and mobile applications for a hackathon project sponsored by Google. Our goal is to solve common challenges faced by new students at CITK with a modern, AI-powered platform.
 
-## 🚀 Overview
-**CITK Student Connect** is a digital companion designed to solve the "Day 1 Chaos" faced by freshers (Diploma & B.Tech 1st Sem) at **Central Institute of Technology (CIT), Kokrajhar**.
+## 💡 The Problem
 
-From finding the right administrative building to understanding anti-ragging affidavits, this platform acts as a bridge between the confusion of admission and the comfort of campus life.
-
-## 💡 The Problem (Local Challenge)
-Every year, hundreds of new students arrive at CITK from diverse backgrounds. They face immediate challenges:
-1.  **Navigation Chaos:** "Where is the Academic Block vs the Admin Block?"
-2.  **Documentation Anxiety:** Confusion over Anti-Ragging affidavits, Medical Certificates, and Admission forms.
-3.  **Communication Gap:** Lack of direct contact with seniors or department heads for guidance.
+Every year, new students at CITK face:
+*   **Navigation Chaos:** Finding their way around a large campus.
+*   **Documentation Anxiety:** Dealing with complex admission paperwork.
+*   **Communication Gaps:** Lacking a direct line to seniors or faculty for guidance.
 
 ## 🛠 The Solution
-We built an all-in-one web and mobile portal that features:
 
-* **🗺️ AI-Powered 3D Campus Map:** A virtual walkthrough of the CITK campus to help students find classrooms and hostels before they even arrive.
-* **📄 Smart Document Assistant:** Step-by-step guides for all admission paperwork (Medical, Affidavits, etc.).
-* **🤝 Senior Connect:** A verified directory to connect freshers with student mentors from their specific branch.
-* **📅 Event Tracker:** Real-time updates on Admission dates, Orientation schedules, and Hackathons.
+We're building a unified platform featuring:
+*   **🗺️ AI-Powered 3D Campus Map:** A virtual guide to the CITK campus.
+*   **📄 Smart Document Assistant:** Step-by-step help for all admission-related paperwork.
+*   **🤝 Senior Connect:** A directory to connect freshers with student mentors.
+*   **📅 Event Tracker:** Real-time updates on important dates and events.
 
-## 🏗️ Architecture (Monorepo)
-We utilize a **Monorepo** structure to maintain both our Web and App codebases efficiently.
+## 🏗️ Project Architecture
+
+This project is a **monorepo** containing two main clients:
 
 ```text
 citk-connect-project/
-├── docs/               # Project Flowcharts & Hackathon Pitch Deck
-├── web-client/         # The Student Portal (HTML5, CSS3, JS)
-├── mobile-app/         # (Planned) Flutter-based Mobile Application
-└── backend-functions/  # Firebase Functions for Auth & Database
+├── web-client/         # The Next.js (React) Student Portal
+└── mobile-app/         # The Flutter-based Mobile Application
+```
+
+*   **`web-client`**: A modern web application built with [Next.js](https://nextjs.org/) and [Tailwind CSS](https://tailwindcss.com/). It connects directly to Firebase for backend services.
+*   **`mobile-app`**: A cross-platform mobile app built with [Flutter](https://flutter.dev/).
+
+## Getting Started
+
+### Web Client
+
+To run the web application:
+1.  Navigate to the `web-client` directory: `cd web-client`
+2.  Install dependencies: `npm install`
+3.  Run the development server: `npm run dev`
+4.  Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Mobile App
+
+To run the mobile application:
+1.  Navigate to the `mobile-app` directory: `cd mobile-app`
+2.  Install dependencies: `flutter pub get`
+3.  Run the app on a connected device or emulator.
+
+---
+*This project was bootstrapped for a Google-sponsored hackathon.*
