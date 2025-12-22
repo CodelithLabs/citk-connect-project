@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
@@ -11,91 +10,59 @@ class MapView extends StatefulWidget {
 }
 
 class _MapViewState extends State<MapView> {
-  final Completer<GoogleMapController> _controller = Completer();
-
-  // Coordinates for CIT Kokrajhar
-  static const LatLng _citKokrajhar = LatLng(26.4795, 90.2673);
-
-  // Set of markers for the map
-  final Set<Marker> _markers = {
-    const Marker(
-      markerId: MarkerId('main_gate'),
-      position: LatLng(26.4780, 90.2675), // Adjusted coordinates
-      infoWindow: InfoWindow(title: 'Main Gate'),
-    ),
-    const Marker(
-      markerId: MarkerId('admin_block'),
-      position: LatLng(26.4800, 90.2665), // Adjusted coordinates
-      infoWindow: InfoWindow(title: 'Administrative Block'),
-    ),
-    const Marker(
-      markerId: MarkerId('boys_hostel'),
-      position: LatLng(26.4815, 90.2685), // Adjusted coordinates
-      infoWindow: InfoWindow(title: 'Boys\' Hostel'),
-    ),
-     const Marker(
-      markerId: MarkerId('girls_hostel'),
-      position: LatLng(26.4790, 90.2690), // Adjusted coordinates
-      infoWindow: InfoWindow(title: 'Girls\' Hostel'),
-    ),
-    const Marker(
-      markerId: MarkerId('central_library'),
-      position: LatLng(26.4805, 90.2655), // Adjusted coordinates
-      infoWindow: InfoWindow(title: 'Central Library'),
-    ),
-  };
+  late GoogleMapController _mapController;
+  final LatLng _citKokrajhar = const LatLng(26.4795, 90.2673);
+  final Set<Marker> _markers = {};
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Campus Navigator'),
-        centerTitle: true,
+  void initState() {
+    super.initState();
+    _addMarkers();
+  }
+
+  void _addMarkers() {
+    _markers.add(
+      Marker(
+        markerId: const MarkerId('main_gate'),
+        position: const LatLng(26.4795, 90.2673), // Replace with actual coordinates
+        infoWindow: const InfoWindow(title: 'Main Gate'),
       ),
-      body: GoogleMap(
-        mapType: MapType.hybrid,
-        initialCameraPosition: const CameraPosition(
-          target: _citKokrajhar,
-          zoom: 16,
-        ),
-        onMapCreated: (GoogleMapController controller) {
-          _controller.complete(controller);
-        },
-        markers: _markers,
-        myLocationEnabled: true, // Shows the blue dot for user location
-        myLocationButtonEnabled: false, // We use a custom FAB
+    );
+    _markers.add(
+      Marker(
+        markerId: const MarkerId('admin_block'),
+        position: const LatLng(26.4800, 90.2670), // Replace with actual coordinates
+        infoWindow: const InfoWindow(title: 'Administrative Block'),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _goToCurrentUserLocation,
-        label: const Text('My Location'),
-        icon: const Icon(Icons.my_location),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
+    );
+    _markers.add(
+      Marker(
+        markerId: const MarkerId('boys_hostel'),
+        position: const LatLng(26.4780, 90.2680), // Replace with actual coordinates
+        infoWindow: const InfoWindow(title: 'Boys\' Hostel'),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
+    _markers.add(
+      Marker(
+        markerId: const MarkerId('girls_hostel'),
+        position: const LatLng(26.4810, 90.2660), // Replace with actual coordinates
+        infoWindow: const InfoWindow(title: 'Girls\' Hostel'),
+      ),
+    );
+    _markers.add(
+      Marker(
+        markerId: const MarkerId('central_library'),
+        position: const LatLng(26.4790, 90.2665), // Replace with actual coordinates
+        infoWindow: const InfoWindow(title: 'Central Library'),
+      ),
     );
   }
 
-  Future<void> _goToCurrentUserLocation() async {
-    try {
-      Position position = await _determinePosition();
-      final GoogleMapController controller = await _controller.future;
-      await controller.animateCamera(CameraUpdate.newCameraPosition(
-        CameraPosition(
-          target: LatLng(position.latitude, position.longitude),
-          zoom: 17.5, // Zoom in closer on user location
-        ),
-      ));
-    } catch (e) {
-       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: ${e.toString()}")),
-      );
-    }
+  void _onMapCreated(GoogleMapController controller) {
+    _mapController = controller;
   }
 
-  /// Determine the current position of the device.
-  Future<Position> _determinePosition() async {
+  Future<void> _centerOnUserLocation() async {
     bool serviceEnabled;
     LocationPermission permission;
 
@@ -117,6 +84,32 @@ class _MapViewState extends State<MapView> {
           'Location permissions are permanently denied, we cannot request permissions.');
     }
 
-    return await Geolocator.getCurrentPosition();
+    final position = await Geolocator.getCurrentPosition();
+    _mapController.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: LatLng(position.latitude, position.longitude),
+          zoom: 15,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: GoogleMap(
+        onMapCreated: _onMapCreated,
+        initialCameraPosition: CameraPosition(
+          target: _citKokrajhar,
+          zoom: 15,
+        ),
+        markers: _markers,
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _centerOnUserLocation,
+        child: const Icon(Icons.my_location),
+      ),
+    );
   }
 }

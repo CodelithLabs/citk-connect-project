@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_app/features/chatbot/chatbot_view.dart';
 import 'package:mobile_app/features/map/map_view.dart';
-import 'package:mobile_app/services/chat_service.dart';
 
-
+final bottomNavIndexProvider = StateProvider<int>((ref) => 0);
 
 class HomeView extends ConsumerWidget {
   const HomeView({super.key});
@@ -19,10 +18,15 @@ class HomeView extends ConsumerWidget {
     ];
 
     return Scaffold(
+      appBar: AppBar(
+        title: const Text("CITK Student Connect"),
+      ),
       body: pages[selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: selectedIndex,
-        onTap: (index) => ref.read(bottomNavIndexProvider.notifier).state = index,
+        onTap: (index) {
+          ref.read(bottomNavIndexProvider.notifier).state = index;
+        },
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.map),
@@ -52,9 +56,6 @@ class TheBrain extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // This is just a placeholder. You can replace it with your actual chatbot UI.
     return const ChatbotView();
   }
 }
-
-final bottomNavIndexProvider = StateProvider<int>((ref) => 0);

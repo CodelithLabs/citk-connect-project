@@ -18,53 +18,48 @@ class _ChatbotViewState extends ConsumerState<ChatbotView> {
   Widget build(BuildContext context) {
     final chatHistory = ref.watch(chatHistoryProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('The Brain - AI Assistant'),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: chatHistory.when(
-              data: (snapshot) {
-                final messages = snapshot.docs;
-                return ListView.builder(
-                  reverse: true,
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final message = messages[index];
-                    final isUserMessage = message['isFromUser'];
-                    return ListTile(
-                      title: Align(
-                        alignment: isUserMessage ? Alignment.centerRight : Alignment.centerLeft,
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: isUserMessage ? Theme.of(context).colorScheme.primary : Colors.grey[300],
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            message['text'],
-                            style: TextStyle(color: isUserMessage ? Colors.white : Colors.black),
-                          ),
+    return Column(
+      children: [
+        Expanded(
+          child: chatHistory.when(
+            data: (snapshot) {
+              final messages = snapshot.docs;
+              return ListView.builder(
+                reverse: true,
+                itemCount: messages.length,
+                itemBuilder: (context, index) {
+                  final message = messages[index];
+                  final isUserMessage = message['isFromUser'];
+                  return ListTile(
+                    title: Align(
+                      alignment: isUserMessage ? Alignment.centerRight : Alignment.centerLeft,
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: isUserMessage ? Theme.of(context).colorScheme.primary : Colors.grey[300],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          message['text'],
+                          style: TextStyle(color: isUserMessage ? Colors.white : Colors.black),
                         ),
                       ),
-                    );
-                  },
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(child: Text('Error: $error')),
-            ),
+                    ),
+                  );
+                },
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, stack) => Center(child: Text('Error: $error')),
           ),
-          if (_isLoading)
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: CircularProgressIndicator(),
-            ),
-          _buildMessageComposer(),
-        ],
-      ),
+        ),
+        if (_isLoading)
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: CircularProgressIndicator(),
+          ),
+        _buildMessageComposer(),
+      ],
     );
   }
 
@@ -125,9 +120,3 @@ class _ChatbotViewState extends ConsumerState<ChatbotView> {
     }
   }
 }
-
-// Provider for the chat history stream
-final chatHistoryProvider = StreamProvider.autoDispose((ref) {
-  final chatRepository = ref.watch(chatRepositoryProvider);
-  return chatRepository.getChatHistory();
-});
