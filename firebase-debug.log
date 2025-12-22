@@ -359,3 +359,130 @@
 [error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
 [debug] [2025-12-22T00:49:15.932Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
 [debug] [2025-12-22T00:49:15.932Z] > authorizing via signed-in user (contact.prasanta.ray@gmail.com)
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-12-22T04:03:42.219Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-12-22T04:03:42.219Z] > authorizing via signed-in user (contact.prasanta.ray@gmail.com)
+[debug] [2025-12-22T04:03:42.220Z] Checked if tokens are valid: false, expires at: 1766375843846
+[debug] [2025-12-22T04:03:42.221Z] Checked if tokens are valid: false, expires at: 1766375843846
+[debug] [2025-12-22T04:03:42.221Z] > refreshing access token with scopes: []
+[debug] [2025-12-22T04:03:42.223Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-12-22T04:03:42.223Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-12-22T04:03:42.226Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-12-22T04:03:42.226Z] > authorizing via signed-in user (contact.prasanta.ray@gmail.com)
+[debug] [2025-12-22T04:03:42.226Z] Checked if tokens are valid: false, expires at: 1766375843846
+[debug] [2025-12-22T04:03:42.226Z] Checked if tokens are valid: false, expires at: 1766375843846
+[debug] [2025-12-22T04:03:42.227Z] > refreshing access token with scopes: []
+[debug] [2025-12-22T04:03:42.227Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-12-22T04:03:42.227Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-12-22T04:03:42.266Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-12-22T04:03:42.266Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-12-22T04:03:42.277Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/citk-connect-project/billingInfo [none]
+[debug] [2025-12-22T04:03:42.279Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-12-22T04:03:42.279Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-12-22T04:03:42.285Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/citk-connect-project/billingInfo [none]
+[debug] [2025-12-22T04:03:42.509Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/citk-connect-project/billingInfo 200
+[debug] [2025-12-22T04:03:42.509Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/citk-connect-project/billingInfo {"name":"projects/citk-connect-project/billingInfo","projectId":"citk-connect-project","billingAccountName":"","billingEnabled":false}
+[debug] [2025-12-22T04:03:42.515Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:42.515Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:42.516Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:42.516Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:42.516Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:42.516Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:42.529Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:42.529Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:42.529Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:42.529Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:42.529Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firestore.googleapis.com [none]
+[debug] [2025-12-22T04:03:42.530Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firestore.googleapis.com x-goog-quota-user=projects/citk-connect-project
+[debug] [2025-12-22T04:03:42.531Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firebasedataconnect.googleapis.com [none]
+[debug] [2025-12-22T04:03:42.531Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/citk-connect-project
+[debug] [2025-12-22T04:03:42.532Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/cloudfunctions.googleapis.com [none]
+[debug] [2025-12-22T04:03:42.532Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/citk-connect-project
+[debug] [2025-12-22T04:03:42.533Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firebaseapphosting.googleapis.com [none]
+[debug] [2025-12-22T04:03:42.533Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/citk-connect-project
+[debug] [2025-12-22T04:03:42.534Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firebaseio.com [none]
+[debug] [2025-12-22T04:03:42.534Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firebaseio.com x-goog-quota-user=projects/citk-connect-project
+[debug] [2025-12-22T04:03:42.590Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/citk-connect-project/billingInfo 200
+[debug] [2025-12-22T04:03:42.590Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/citk-connect-project/billingInfo {"name":"projects/citk-connect-project/billingInfo","projectId":"citk-connect-project","billingAccountName":"","billingEnabled":false}
+[debug] [2025-12-22T04:03:42.591Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:42.591Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:42.591Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:42.591Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:42.591Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:42.592Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:42.597Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:42.597Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:42.597Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:42.597Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:42.597Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firestore.googleapis.com [none]
+[debug] [2025-12-22T04:03:42.597Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firestore.googleapis.com x-goog-quota-user=projects/citk-connect-project
+[debug] [2025-12-22T04:03:42.599Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firebasedataconnect.googleapis.com [none]
+[debug] [2025-12-22T04:03:42.599Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firebasedataconnect.googleapis.com x-goog-quota-user=projects/citk-connect-project
+[debug] [2025-12-22T04:03:42.600Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/cloudfunctions.googleapis.com [none]
+[debug] [2025-12-22T04:03:42.600Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/cloudfunctions.googleapis.com x-goog-quota-user=projects/citk-connect-project
+[debug] [2025-12-22T04:03:42.601Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firebaseapphosting.googleapis.com [none]
+[debug] [2025-12-22T04:03:42.601Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firebaseapphosting.googleapis.com x-goog-quota-user=projects/citk-connect-project
+[debug] [2025-12-22T04:03:42.602Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firebaseio.com [none]
+[debug] [2025-12-22T04:03:42.603Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firebaseio.com x-goog-quota-user=projects/citk-connect-project
+[debug] [2025-12-22T04:03:43.568Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firestore.googleapis.com 200
+[debug] [2025-12-22T04:03:43.568Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firestore.googleapis.com [omitted]
+[debug] [2025-12-22T04:03:43.592Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firebaseio.com 403
+[debug] [2025-12-22T04:03:43.592Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firebaseio.com [omitted]
+[debug] [2025-12-22T04:03:43.611Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firebasedataconnect.googleapis.com 200
+[debug] [2025-12-22T04:03:43.611Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2025-12-22T04:03:43.613Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/cloudfunctions.googleapis.com 200
+[debug] [2025-12-22T04:03:43.613Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/cloudfunctions.googleapis.com [omitted]
+[debug] [2025-12-22T04:03:43.615Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firebaseapphosting.googleapis.com 200
+[debug] [2025-12-22T04:03:43.615Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2025-12-22T04:03:43.615Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firebaseio.com 403
+[debug] [2025-12-22T04:03:43.615Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firebaseio.com [omitted]
+[debug] [2025-12-22T04:03:43.666Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firebasedataconnect.googleapis.com 200
+[debug] [2025-12-22T04:03:43.666Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2025-12-22T04:03:43.730Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firebaseapphosting.googleapis.com 200
+[debug] [2025-12-22T04:03:43.730Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2025-12-22T04:03:43.743Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firestore.googleapis.com 200
+[debug] [2025-12-22T04:03:43.743Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/firestore.googleapis.com [omitted]
+[debug] [2025-12-22T04:03:43.755Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/cloudfunctions.googleapis.com 200
+[debug] [2025-12-22T04:03:43.755Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/citk-connect-project/services/cloudfunctions.googleapis.com [omitted]
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-12-22T04:03:43.761Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-12-22T04:03:43.762Z] > authorizing via signed-in user (contact.prasanta.ray@gmail.com)
+[debug] [2025-12-22T04:03:43.762Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:43.762Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:43.762Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/citk-connect-project/billingInfo [none]
+[debug] [2025-12-22T04:03:44.717Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/citk-connect-project/billingInfo 200
+[debug] [2025-12-22T04:03:44.717Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/citk-connect-project/billingInfo {"name":"projects/citk-connect-project/billingInfo","projectId":"citk-connect-project","billingAccountName":"","billingEnabled":false}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-12-22T04:03:44.719Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-12-22T04:03:44.719Z] > authorizing via signed-in user (contact.prasanta.ray@gmail.com)
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-12-22T04:03:44.732Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-12-22T04:03:44.732Z] > authorizing via signed-in user (contact.prasanta.ray@gmail.com)
+[debug] [2025-12-22T04:03:44.733Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:44.733Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:44.733Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/citk-connect-project/billingInfo [none]
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-12-22T04:03:44.745Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-12-22T04:03:44.745Z] > authorizing via signed-in user (contact.prasanta.ray@gmail.com)
+[debug] [2025-12-22T04:03:44.745Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:44.745Z] Checked if tokens are valid: true, expires at: 1766379821279
+[debug] [2025-12-22T04:03:44.745Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/citk-connect-project/billingInfo [none]
+[debug] [2025-12-22T04:03:44.915Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/citk-connect-project/billingInfo 200
+[debug] [2025-12-22T04:03:44.915Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/citk-connect-project/billingInfo {"name":"projects/citk-connect-project/billingInfo","projectId":"citk-connect-project","billingAccountName":"","billingEnabled":false}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-12-22T04:03:44.916Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-12-22T04:03:44.917Z] > authorizing via signed-in user (contact.prasanta.ray@gmail.com)
+[debug] [2025-12-22T04:03:45.112Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/citk-connect-project/billingInfo 200
+[debug] [2025-12-22T04:03:45.112Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/citk-connect-project/billingInfo {"name":"projects/citk-connect-project/billingInfo","projectId":"citk-connect-project","billingAccountName":"","billingEnabled":false}
+[error] Failed to fetch Firebase Project from Studio Workspace because WORKSPACE_SLUG environment variable is empty
+[debug] [2025-12-22T04:03:45.113Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-12-22T04:03:45.113Z] > authorizing via signed-in user (contact.prasanta.ray@gmail.com)
