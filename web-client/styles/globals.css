@@ -3,32 +3,37 @@
 @tailwind utilities;
 
 :root {
-  --bg-dark: #1F1F1F;
-  --surface-dark: #2F2F2F;
-  --sidebar-bg: #2A2A2A;
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
 
-  /* Material Design System Colors */
-  --md-sys-color-on-background: #E6E1E5;
-  --md-sys-color-on-surface-variant: #CAC4D0;
-
-  /* Google Colors */
-  --g-blue: #4285F4;
-  --g-red: #DB4437;
-  --g-yellow: #F4B400;
-  --g-green: #0F9D58;
-
-  /* Border Radius */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 16px;
-  --radius-full: 9999px;
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
 }
 
 body {
-  @apply bg-bg-dark text-on-background;
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
 }
 
 .dark-theme {
-  background-color: var(--bg-dark);
-  color: var(--on-background);
+    --bg-dark: #121212;
+    --surface-dark: #1E1E1E;
+    --on-background: #FFFFFF;
+    --on-surface: #FFFFFF;
+    --on-surface-variant: #BDBDBD;
+    --g-blue: #4285F4;
+    --g-red: #DB4437;
+    --g-yellow: #F4B400;
+    --g-green: #0F9D58;
 }

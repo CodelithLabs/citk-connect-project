@@ -1,10 +1,7 @@
-import type { Metadata } from "next";
-import React from "react";
-
-export const metadata: Metadata = {
-  title: "CITK Student Connect | Google for Education",
-  description: "The official student companion for CIT Kokrajhar",
-};
+import '@/styles/globals.css';
+import { AuthProvider } from '@/context/AuthContext';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
 
 export default function RootLayout({
   children,
@@ -12,18 +9,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@400;600&display=swap"
-          rel="stylesheet"
-        />
-        <link
-          rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-        />
-      </head>
-      <body>{children}</body>
+    <html lang="en" className="dark">
+      <body className="bg-bg-dark text-on-background">
+        <AuthProvider>
+          <div className="flex flex-col min-h-screen">
+            <Header />
+            <main className="flex-grow">
+              {children}
+            </main>
+            <Footer />
+          </div>
+        </AuthProvider>
+      </body>
     </html>
   );
 }
