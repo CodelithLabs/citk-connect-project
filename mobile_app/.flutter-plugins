@@ -1,0 +1,26 @@
+# This is a generated file; do not edit or check into version control.
+cloud_firestore=/home/user/.pub-cache/hosted/pub.dev/cloud_firestore-6.1.1/
+cloud_firestore_web=/home/user/.pub-cache/hosted/pub.dev/cloud_firestore_web-5.1.1/
+firebase_auth=/home/user/.pub-cache/hosted/pub.dev/firebase_auth-6.1.3/
+firebase_auth_web=/home/user/.pub-cache/hosted/pub.dev/firebase_auth_web-6.1.1/
+firebase_core=/home/user/.pub-cache/hosted/pub.dev/firebase_core-4.3.0/
+firebase_core_web=/home/user/.pub-cache/hosted/pub.dev/firebase_core_web-3.3.1/
+flutter_plugin_android_lifecycle=/home/user/.pub-cache/hosted/pub.dev/flutter_plugin_android_lifecycle-2.0.22/
+geolocator=/home/user/.pub-cache/hosted/pub.dev/geolocator-13.0.2/
+geolocator_android=/home/user/.pub-cache/hosted/pub.dev/geolocator_android-4.6.1/
+geolocator_apple=/home/user/.pub-cache/hosted/pub.dev/geolocator_apple-2.3.9/
+geolocator_web=/home/user/.pub-cache/hosted/pub.dev/geolocator_web-4.1.1/
+geolocator_windows=/home/user/.pub-cache/hosted/pub.dev/geolocator_windows-0.2.3/
+google_maps_flutter=/home/user/.pub-cache/hosted/pub.dev/google_maps_flutter-2.10.1/
+google_maps_flutter_android=/home/user/.pub-cache/hosted/pub.dev/google_maps_flutter_android-2.14.7/
+google_maps_flutter_ios=/home/user/.pub-cache/hosted/pub.dev/google_maps_flutter_ios-2.15.2/
+google_maps_flutter_web=/home/user/.pub-cache/hosted/pub.dev/google_maps_flutter_web-0.5.12/
+google_sign_in=/home/user/.pub-cache/hosted/pub.dev/google_sign_in-6.2.2/
+google_sign_in_android=/home/user/.pub-cache/hosted/pub.dev/google_sign_in_android-6.1.31/
+google_sign_in_ios=/home/user/.pub-cache/hosted/pub.dev/google_sign_in_ios-5.9.0/
+google_sign_in_web=/home/user/.pub-cache/hosted/pub.dev/google_sign_in_web-0.12.4+4/
+path_provider=/home/user/.pub-cache/hosted/pub.dev/path_provider-2.1.5/
+path_provider_android=/home/user/.pub-cache/hosted/pub.dev/path_provider_android-2.2.10/
+path_provider_foundation=/home/user/.pub-cache/hosted/pub.dev/path_provider_foundation-2.4.1/
+path_provider_linux=/home/user/.pub-cache/hosted/pub.dev/path_provider_linux-2.2.1/
+path_provider_windows=/home/user/.pub-cache/hosted/pub.dev/path_provider_windows-2.3.0/

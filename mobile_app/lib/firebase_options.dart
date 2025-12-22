@@ -36,37 +36,37 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: "YOUR_API_KEY",
-    appId: "1:YOUR_APP_ID:web:YOUR_APP_ID",
-    messagingSenderId: "YOUR_SENDER_ID",
-    projectId: "YOUR_PROJECT_ID",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    apiKey: "AIzaSyCNktQV2L5nPfB5VRKLPbgsBaZ_TFp_F7M",
+    appId: "1:418075503046:web:84e665b6ea349ba8d32ac7",
+    messagingSenderId: "418075503046",
+    projectId: "citk-connect-project",
+    authDomain: "citk-connect-project.firebaseapp.com",
+    storageBucket: "citk-connect-project.appspot.com",
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: "YOUR_API_KEY",
-    appId: "1:YOUR_APP_ID:android:YOUR_APP_ID",
-    messagingSenderId: "YOUR_SENDER_ID",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    apiKey: "AIzaSyCNktQV2L5nPfB5VRKLPbgsBaZ_TFp_F7M",
+    appId: "1:418075503046:android:b4b353d61394a86ed32ac7",
+    messagingSenderId: "418075503046",
+    projectId: "citk-connect-project",
+    storageBucket: "citk-connect-project.appspot.com",
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: "YOUR_API_KEY",
-    appId: "1:YOUR_APP_ID:ios:YOUR_APP_ID",
-    messagingSenderId: "YOUR_SENDER_ID",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    apiKey: "AIzaSyCNktQV2L5nPfB5VRKLPbgsBaZ_TFp_F7M",
+    appId: "1:418075503046:ios:ed5b7d141e3335e2d32ac7",
+    messagingSenderId: "418075503046",
+    projectId: "citk-connect-project",
+    storageBucket: "citk-connect-project.appspot.com",
     iosBundleId: "com.example.mobileApp",
   );
 
    static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: "YOUR_API_KEY",
-    appId: "1:YOUR_APP_ID:ios:YOUR_APP_ID",
-    messagingSenderId: "YOUR_SENDER_ID",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    apiKey: "AIzaSyCNktQV2L5nPfB5VRKLPbgsBaZ_TFp_F7M",
+    appId: "1:418075503046:ios:ed5b7d141e3335e2d32ac7",
+    messagingSenderId: "418075503046",
+    projectId: "citk-connect-project",
+    storageBucket: "citk-connect-project.appspot.com",
     iosBundleId: "com.example.mobileApp",
   );
 
