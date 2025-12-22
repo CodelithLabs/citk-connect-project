@@ -1,16 +1,16 @@
 {
   "hosting": {
-    "public": "web-client/out",
+    "public": "app/build/web",
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
     ]
-  }
+  },
+  "functions": {
+    "source": "firebase/functions"
+  },
+  "firestore":{
+    "rules": "firebase/firestore.rules"
+    }
 }

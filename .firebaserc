@@ -1,5 +1,5 @@
 {
   "projects": {
-    "default": "citk-connect-project"
+    "default": "<YOUR_PROJECT_ID>"
   }
 }
