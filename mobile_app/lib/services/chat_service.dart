@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 
@@ -24,16 +25,17 @@ class ChatService {
             SafetySetting(HarmCategory.dangerousContent, HarmBlockThreshold.medium),
           ],
           systemInstruction: Content.text(
-              'You are a helpful AI assistant for students of Central Institute of Technology, Kokrajhar. \n'
-              'Your name is \"The Brain\".\n'
-              'You should provide information about the campus, events, and academic life.\n'
-              'Here is some information you should know:\n'
-              ' - The library is open from 9 AM to 8 PM on weekdays.\n'
-              ' - The Registrar sits in the Admin Block.\n'
-              ' - The annual cultural fest is called "Ecstasy".\n'
-              ' - The technical fest is called "Techsrijan".\n'
-              ' - You can find the academic calendar on the official CITK website.\n'
-              'When asked about topics outside of CITK, you should politely decline to answer.\n'),
+              'You are a helpful AI assistant for students of Central Institute of Technology, Kokrajhar. '
+              'Your name is "The Brain".'
+              'You should provide information about the campus, events, and academic life.'
+              'Here is some information you should know:'
+              ' - The library is open from 9 AM to 8 PM on weekdays.'
+              ' - The Registrar sits in the Admin Block.'
+              ' - The annual cultural fest is called "Ecstasy".'
+              ' - The technical fest is called "Techsrijan".'
+              ' - You can find the academic calendar on the official CITK website.'
+              'When asked about topics outside of CITK, you should politely decline to answer.'
+          ),
         ) {
     if (_apiKey.isEmpty) {
       throw Exception('GEMINI_API_KEY is not set. Please provide it using --dart-define=GEMINI_API_KEY=<YOUR_API_KEY>');
@@ -46,7 +48,9 @@ class ChatService {
       final response = await _model.generateContent(content);
       return response.text ?? 'No response from API.';
     } catch (e) {
-      print('Error sending message: $e');
+      if (kDebugMode) {
+        print('Error sending message: $e');
+      }
       return 'Error: Could not communicate with the AI.';
     }
   }

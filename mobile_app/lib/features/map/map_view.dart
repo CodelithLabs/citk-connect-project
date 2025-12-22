@@ -22,38 +22,38 @@ class _MapViewState extends State<MapView> {
 
   void _addMarkers() {
     _markers.add(
-      Marker(
-        markerId: const MarkerId('main_gate'),
-        position: const LatLng(26.4795, 90.2673), // Replace with actual coordinates
-        infoWindow: const InfoWindow(title: 'Main Gate'),
+      const Marker(
+        markerId: MarkerId('main_gate'),
+        position: LatLng(26.4795, 90.2673), // Replace with actual coordinates
+        infoWindow: InfoWindow(title: 'Main Gate'),
       ),
     );
     _markers.add(
-      Marker(
-        markerId: const MarkerId('admin_block'),
-        position: const LatLng(26.4800, 90.2670), // Replace with actual coordinates
-        infoWindow: const InfoWindow(title: 'Administrative Block'),
+      const Marker(
+        markerId: MarkerId('admin_block'),
+        position: LatLng(26.4800, 90.2670), // Replace with actual coordinates
+        infoWindow: InfoWindow(title: 'Administrative Block'),
       ),
     );
     _markers.add(
-      Marker(
-        markerId: const MarkerId('boys_hostel'),
-        position: const LatLng(26.4780, 90.2680), // Replace with actual coordinates
-        infoWindow: const InfoWindow(title: 'Boys\' Hostel'),
+      const Marker(
+        markerId: MarkerId('boys_hostel'),
+        position: LatLng(26.4780, 90.2680), // Replace with actual coordinates
+        infoWindow: InfoWindow(title: 'Boys\' Hostel'),
       ),
     );
     _markers.add(
-      Marker(
-        markerId: const MarkerId('girls_hostel'),
-        position: const LatLng(26.4810, 90.2660), // Replace with actual coordinates
-        infoWindow: const InfoWindow(title: 'Girls\' Hostel'),
+      const Marker(
+        markerId: MarkerId('girls_hostel'),
+        position: LatLng(26.4810, 90.2660), // Replace with actual coordinates
+        infoWindow: InfoWindow(title: 'Girls\' Hostel'),
       ),
     );
     _markers.add(
-      Marker(
-        markerId: const MarkerId('central_library'),
-        position: const LatLng(26.4790, 90.2665), // Replace with actual coordinates
-        infoWindow: const InfoWindow(title: 'Central Library'),
+      const Marker(
+        markerId: MarkerId('central_library'),
+        position: LatLng(26.4790, 90.2665), // Replace with actual coordinates
+        infoWindow: InfoWindow(title: 'Central Library'),
       ),
     );
   }
