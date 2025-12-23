@@ -3,10 +3,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:citk_connect/login_page.dart';
 import 'package:citk_connect/register_page.dart';
 import 'package:citk_connect/forgot_password_page.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
