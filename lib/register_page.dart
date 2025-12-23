@@ -14,14 +14,16 @@ class _RegisterPageState extends State<RegisterPage> {
   final AuthService _authService = AuthService();
   bool _isLoading = false;
 
-  void _register() async {
+  void _signUp() async {
     setState(() => _isLoading = true);
     try {
-      await _authService.signUp(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
+      final user = await _authService.signUp(
+        _emailController.text.trim(), 
+        _passwordController.text.trim()
       );
-      if (mounted) Navigator.pop(context); // Go back to login after success
+      if (user != null && mounted) {
+        Navigator.of(context).pop();
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
     } finally {
@@ -32,7 +34,7 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Create Account")),
+      appBar: AppBar(title: const Text("Register")),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -41,19 +43,19 @@ class _RegisterPageState extends State<RegisterPage> {
               controller: _emailController,
               decoration: const InputDecoration(labelText: "Email", border: OutlineInputBorder()),
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 20),
             TextField(
               controller: _passwordController,
-              decoration: const InputDecoration(labelText: "Password", border: OutlineInputBorder()),
               obscureText: true,
+              decoration: const InputDecoration(labelText: "Password", border: OutlineInputBorder()),
             ),
             const SizedBox(height: 25),
             _isLoading 
               ? const CircularProgressIndicator()
               : ElevatedButton(
-                  onPressed: _register,
+                  onPressed: _signUp,
                   style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
-                  child: const Text("Register"),
+                  child: const Text("Sign Up"),
                 ),
           ],
         ),

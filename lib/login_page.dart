@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:citk_connect/services/auth_service.dart'; // Import your new service
+import 'package:citk_connect/services/auth_service.dart';
 import 'forgot_password_page.dart';
 import 'register_page.dart';
 
@@ -16,16 +16,18 @@ class _LoginPageState extends State<LoginPage> {
   final AuthService _authService = AuthService();
   bool _isLoading = false;
 
-  void _login() async {
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) return;
-    
+  void _signIn() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please enter both email and password")));
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
-      await _authService.signIn(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
-      );
-      // Navigate to Home or Handle Success (Firebase Stream usually handles this)
+      final user = await _authService.signIn(_emailController.text.trim(), _passwordController.text.trim());
+      if (user == null && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Sign in failed.")));
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
     } finally {
@@ -33,11 +35,10 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  void _googleLogin() async {
+  void _signInWithGoogle() async {
     setState(() => _isLoading = true);
     try {
       await _authService.signInWithGoogle();
-      // Success is handled by the Auth Stream
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
     } finally {
@@ -53,46 +54,46 @@ class _LoginPageState extends State<LoginPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text("Welcome Back", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 30),
+            const Text("CITK-CONNECT", style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 40),
             TextField(
               controller: _emailController,
               decoration: const InputDecoration(labelText: "Email", border: OutlineInputBorder()),
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 20),
             TextField(
               controller: _passwordController,
-              decoration: const InputDecoration(labelText: "Password", border: OutlineInputBorder()),
               obscureText: true,
+              decoration: const InputDecoration(labelText: "Password", border: OutlineInputBorder()),
             ),
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ForgotPasswordPage())),
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ForgotPasswordPage())),
                 child: const Text("Forgot Password?"),
               ),
             ),
             const SizedBox(height: 20),
-            _isLoading 
-              ? const CircularProgressIndicator()
-              : Column(
-                  children: [
-                    ElevatedButton(
-                      onPressed: _login,
-                      style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
-                      child: const Text("Login"),
-                    ),
-                    const SizedBox(height: 15),
-                    OutlinedButton.icon(
-                      onPressed: _googleLogin,
-                      icon: const Icon(Icons.g_mobiledata, size: 30), // Uses Material Icon
-                      label: const Text("Sign in with Google"),
-                      style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
-                    ),
-                  ],
-                ),
+            _isLoading
+                ? const CircularProgressIndicator()
+                : Column(
+                    children: [
+                      ElevatedButton(
+                        onPressed: _signIn,
+                        style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
+                        child: const Text("Sign In"),
+                      ),
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        onPressed: _signInWithGoogle,
+                        icon: const Icon(Icons.g_mobiledata), // Placeholder icon
+                        label: const Text("Sign In with Google"),
+                        style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
+                      ),
+                    ],
+                  ),
             TextButton(
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterPage())),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => const RegisterPage())),
               child: const Text("Don't have an account? Register"),
             ),
           ],

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'forgot_password_page.dart';
-import 'login_page.dart';
-import 'register_page.dart';
+import 'package:citk_connect/login_page.dart';
+import 'package:citk_connect/register_page.dart';
+import 'package:citk_connect/forgot_password_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
