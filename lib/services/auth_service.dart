@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/foundation.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
@@ -17,7 +18,7 @@ class AuthService {
       );
       return result.user;
     } on FirebaseAuthException catch (e) {
-      print(e.toString());
+      debugPrint(e.toString());
       return null;
     }
   }
@@ -31,7 +32,7 @@ class AuthService {
       );
       return result.user;
     } on FirebaseAuthException catch (e) {
-      print(e.toString());
+      debugPrint(e.toString());
       return null;
     }
   }
@@ -55,7 +56,7 @@ class AuthService {
       UserCredential userCredential = await _firebaseAuth.signInWithCredential(credential);
       return userCredential.user;
     } catch (e) {
-      print(e.toString());
+      debugPrint(e.toString());
       return null;
     }
   }
@@ -65,7 +66,7 @@ class AuthService {
     try {
       return await _firebaseAuth.sendPasswordResetEmail(email: email);
     } on FirebaseAuthException catch (e) {
-      print(e.toString());
+      debugPrint(e.toString());
       rethrow;
     }
   }
@@ -76,7 +77,7 @@ class AuthService {
       await _googleSignIn.signOut();
       return await _firebaseAuth.signOut();
     } catch (e) {
-      print(e.toString());
+      debugPrint(e.toString());
     }
   }
 }
