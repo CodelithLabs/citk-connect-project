@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:myapp/login_page.dart';
-import 'package:myapp/register_page.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'forgot_password_page.dart';
+import 'login_page.dart';
+import 'register_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -46,6 +50,7 @@ class MyApp extends StatelessWidget {
       home: const LoginPage(),
       routes: {
         '/register': (context) => const RegisterPage(),
+        '/forgot-password': (context) => const ForgotPasswordPage(),
       },
     );
   }
