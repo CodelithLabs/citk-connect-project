@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-// TODO: 1. Run 'flutterfire configure' in your terminal to generate this file
 // import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // TODO: 2. Uncomment the following lines after generating firebase_options.dart
+  // Initialize Firebase
   // await Firebase.initializeApp(
   //   options: DefaultFirebaseOptions.currentPlatform,
   // );
