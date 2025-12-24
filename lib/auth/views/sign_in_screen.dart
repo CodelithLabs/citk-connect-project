@@ -1,4 +1,4 @@
-import 'package:citk_connect/auth/providers/auth_providers.dart';
+import 'package:citk_connect/auth/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

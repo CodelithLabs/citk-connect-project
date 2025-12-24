@@ -9,6 +9,6 @@ class ErrorHandler {
 }
 
 @riverpod
-ErrorHandler errorHandler(ErrorHandlerRef ref) {
+ErrorHandler errorHandler(Ref ref) {
   return ErrorHandler();
 }

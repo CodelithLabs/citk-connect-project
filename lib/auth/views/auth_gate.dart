@@ -1,4 +1,4 @@
-import 'package:citk_connect/auth/providers/auth_providers.dart';
+import 'package:citk_connect/auth/services/auth_service.dart';
 import 'package:citk_connect/auth/views/sign_in_screen.dart';
 import 'package:citk_connect/home/views/home_screen.dart';
 import 'package:flutter/material.dart';

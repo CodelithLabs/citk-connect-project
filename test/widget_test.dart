@@ -6,8 +6,7 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:citk_connect/app/app.dart';
-import 'package:citk_connect/app/auth/screens/login_screen.dart';
-import 'package:flutter/material.dart';
+import 'package:citk_connect/onboarding/views/onboarding_page.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -16,7 +15,7 @@ void main() {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const ProviderScope(child: App()));
 
-    // Verify that the login screen is shown.
-    expect(find.byType(LoginScreen), findsOneWidget);
+    // Verify that the onboarding screen is shown.
+    expect(find.byType(OnboardingPage), findsOneWidget);
   });
 }

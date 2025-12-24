@@ -1,55 +1,40 @@
-import 'package:citk_connect/app/auth/screens/login_screen.dart';
-import 'package:citk_connect/app/auth/screens/signup_screen.dart';
-import 'package:citk_connect/app/auth/services/auth_service.dart';
-import 'package:citk_connect/app/shell/app_shell.dart';
+import 'package:citk_connect/auth/services/auth_service.dart';
 import 'package:citk_connect/home/home.dart';
+import 'package:citk_connect/onboarding/views/onboarding_page.dart';
+import 'package:citk_connect/profile/views/profile_page.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'app_router.g.dart';
 
 @riverpod
-GoRouter goRouter(GoRouterRef ref) {
-  final authState = ref.watch(authStateProvider);
+GoRouter goRouter(Ref ref) {
+  final authState = ref.watch(authStateChangesProvider);
 
   return GoRouter(
-    initialLocation: '/login',
+    initialLocation: '/',
     redirect: (context, state) {
       final isAuth = authState.asData?.value != null;
 
-      final isUnauthenticated = !isAuth &&
-          (state.matchedLocation != '/login' &&
-              state.matchedLocation != '/signup');
-
-      if (isUnauthenticated) {
-        return '/login';
-      } else if (isAuth &&
-          (state.matchedLocation == '/login' ||
-              state.matchedLocation == '/signup')) {
-        return '/';
+      if (!isAuth) {
+        return '/welcome';
       }
-
       return null;
     },
     routes: [
-      ShellRoute(
-        builder: (context, state, child) {
-          return AppShell(child: child);
-        },
+      GoRoute(
+        path: '/',
+        builder: (context, state) => const HomePage(),
         routes: [
           GoRoute(
-            path: '/',
-            builder: (context, state) => const HomePage(),
+            path: 'profile',
+            builder: (context, state) => const ProfilePage(),
           ),
         ],
       ),
       GoRoute(
-        path: '/login',
-        builder: (context, state) => LoginScreen(),
-      ),
-      GoRoute(
-        path: '/signup',
-        builder: (context, state) => SignUpScreen(),
+        path: '/welcome',
+        builder: (context, state) => const OnboardingPage(),
       ),
     ],
   );
