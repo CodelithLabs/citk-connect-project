@@ -10,15 +10,35 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  firebase_core: ^2.31.0
-  firebase_auth: ^4.19.4
-  google_sign_in: ^6.2.1
+  
+  # Firebase
+  firebase_core: ^2.32.0
+  firebase_auth: ^4.16.0
+  google_sign_in: ^7.2.0
+  firebase_crashlytics: ^3.5.4 # Prepared for future integration
+
+  # State Management
+  flutter_riverpod: ^2.5.1
+  hooks_riverpod: ^2.5.1
+  flutter_hooks: ^0.20.5
+  riverpod_annotation: ^2.3.5
+
+  # Navigation
+  go_router: ^14.1.0
+
+  # UI & Animation
   cupertino_icons: ^1.0.8
+  animations: ^2.0.11 # For professional motion system
+  cloud_firestore: ^4.17.5
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  
   flutter_lints: ^3.0.0
+  riverpod_generator: ^2.4.0 # For Riverpod code generation
+  build_runner: ^2.4.9 # Code generation tool
+  go_router_builder: ^2.4.1
 
 flutter:
   uses-material-design: true
