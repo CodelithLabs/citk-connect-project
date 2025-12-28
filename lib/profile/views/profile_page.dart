@@ -7,7 +7,7 @@ class ProfilePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authStateChangesProvider).value;
+    final authState = ref.watch(authServiceProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -17,11 +17,11 @@ class ProfilePage extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('UID: ${user?.uid}'),
-            Text('Email: ${user?.email}'),
+            Text(authState.value?.uid ?? 'No ID'),
+            Text(authState.value?.email ?? 'No Email'),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () => ref.read(authServiceProvider).signOut(),
+              onPressed: () => ref.read(authServiceProvider.notifier).signOut(),
               child: const Text('Sign Out'),
             ),
           ],

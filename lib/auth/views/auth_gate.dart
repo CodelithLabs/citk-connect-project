@@ -9,7 +9,7 @@ class AuthGate extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authStateChangesProvider);
+    final authState = ref.watch(authServiceProvider);
 
     return authState.when(
       data: (user) => user != null ? const HomeScreen() : const SignInScreen(),

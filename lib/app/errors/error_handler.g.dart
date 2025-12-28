@@ -6,46 +6,21 @@ part of 'error_handler.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-// GENERATED CODE - DO NOT MODIFY BY HAND
-// ignore_for_file: type=lint, type=warning
-
-@ProviderFor(errorHandler)
-const errorHandlerProvider = ErrorHandlerProvider._();
-
-final class ErrorHandlerProvider
-    extends $FunctionalProvider<ErrorHandler, ErrorHandler, ErrorHandler>
-    with $Provider<ErrorHandler> {
-  const ErrorHandlerProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'errorHandlerProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
-
-  @override
-  String debugGetCreateSourceHash() => _$errorHandlerHash();
-
-  @$internal
-  @override
-  $ProviderElement<ErrorHandler> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
-
-  @override
-  ErrorHandler create(Ref ref) {
-    return errorHandler(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(ErrorHandler value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<ErrorHandler>(value),
-    );
-  }
-}
-
 String _$errorHandlerHash() => r'4028babe128b1f027c3f48b6a6faa19a37a48418';
+
+/// See also [errorHandler].
+@ProviderFor(errorHandler)
+final errorHandlerProvider = AutoDisposeProvider<ErrorHandler>.internal(
+  errorHandler,
+  name: r'errorHandlerProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$errorHandlerHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef ErrorHandlerRef = AutoDisposeProviderRef<ErrorHandler>;
+// ignore_for_file: type=lint
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

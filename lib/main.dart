@@ -1,13 +1,25 @@
-import 'package:citk_connect/app/app.dart';
-import 'package:citk_connect/firebase_options.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:citk_connect/app/routing/app_router.dart'; // Ensure this import exists
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  runApp(const ProviderScope(child: App()));
+void main() {
+  runApp(const App());
+}
+
+// 1. Change to ConsumerWidget
+class App extends ConsumerWidget {
+  const App({super.key});
+
+  @override
+  // 2. Add 'WidgetRef ref' parameter
+  Widget build(BuildContext context, WidgetRef ref) {
+    // 3. Watch the router provider
+    final router = ref.watch(goRouterProvider);
+
+    return MaterialApp.router(
+      routerConfig: router,
+      title: 'CITK Connect',
+      // ... rest of your code
+    );
+  }
 }

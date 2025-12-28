@@ -13,7 +13,7 @@ class SignInScreen extends ConsumerWidget {
       ),
       body: Center(
         child: ElevatedButton(
-          onPressed: () => ref.read(authServiceProvider).signInWithGoogle(),
+          onPressed: () => ref.read(authServiceProvider.notifier).signInWithGoogle(),
           child: const Text('Sign in with Google'),
         ),
       ),

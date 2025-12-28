@@ -34,7 +34,7 @@ class _OnboardingView extends HookConsumerWidget {
         title: 'Ready to Begin?',
         description: 'Sign in to start exploring.',
         child: ElevatedButton(
-          onPressed: () => ref.read(authServiceProvider).signInWithGoogle(),
+          onPressed: () => ref.read(authServiceProvider.notifier).signInWithGoogle(),
           child: const Text('Sign in with Google'),
         ),
       ),
