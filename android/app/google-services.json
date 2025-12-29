@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "895444402352-a90i2u4h1c39afptem81esr876vk8fon.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.citk.connect",
+            "certificate_hash": "5e6add74ffe573e69d194c9e9cc0c7416f395d84"
+          }
+        },
+        {
           "client_id": "895444402352-lgt36aphgik6fetg2pbhg626ig5strkl.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -29,6 +37,13 @@
             {
               "client_id": "895444402352-lgt36aphgik6fetg2pbhg626ig5strkl.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "895444402352-0bb2a59914us5ijdisiekl72o1p9qnc1.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.myapp"
+              }
             }
           ]
         }

@@ -1,5 +1,7 @@
 {
-  "projects": {},
+  "projects": {
+    "default": "citk-connect-core"
+  },
   "targets": {},
   "etags": {}
 }

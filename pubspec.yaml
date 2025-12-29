@@ -20,6 +20,11 @@ dependencies:
   # ... your other dependencies ...
   flutter_animate: ^4.5.0  # Fixes the ".ms" and "animate" errors
   google_sign_in: ^6.2.1   # Fixes the GoogleSignIn error
+  
+  #Web
+  cloud_firestore: ^5.0.0
+  
+
   # Add other existing dependencies here
 
 dev_dependencies:
@@ -36,3 +41,5 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/ # Fixes "asset_directory_does_not_exist"
+
+    
