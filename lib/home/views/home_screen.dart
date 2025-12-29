@@ -1,219 +1,201 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:citk_connect/auth/services/auth_service.dart';
-import 'package:citk_connect/home/models/weather_model.dart';
-import 'package:citk_connect/home/services/weather_service.dart';
+import 'package:go_router/go_router.dart'; // <--- RESTORED IMPORT
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authServiceProvider);
+    final user = authState.value;
+    final theme = Theme.of(context);
 
-class _HomeScreenState extends State<HomeScreen> {
-  final AuthService _authService = AuthService();
-  User? _user;
-
-  @override
-  void initState() {
-    super.initState();
-    _user = FirebaseAuth.instance.currentUser;
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text('Home'),
+        title: Text(
+          "CITK Connect",
+          style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
         actions: [
           IconButton(
-            onPressed: () async {
-              await _authService.signOut();
-              context.go('/auth');
-            },
-            icon: const Icon(Icons.logout),
-          ),
-          IconButton(
+            icon: const Icon(Icons.notifications_outlined),
             onPressed: () {},
-            icon: CircleAvatar(
-              backgroundImage: NetworkImage(_user?.photoURL ?? ''),
-            ),
           ),
         ],
       ),
       drawer: Drawer(
         child: ListView(
+          padding: EdgeInsets.zero,
           children: [
-            DrawerHeader(
-              child: Text(_user?.displayName ?? ''),
+            UserAccountsDrawerHeader(
+              decoration: BoxDecoration(color: theme.colorScheme.surface),
+              accountName: Text(
+                user?.displayName ?? "Student",
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              accountEmail: Text(user?.email ?? "No Email"),
+              currentAccountPicture: CircleAvatar(
+                backgroundColor: theme.colorScheme.primary,
+                backgroundImage: (user?.photoURL != null && user!.photoURL!.isNotEmpty)
+                    ? NetworkImage(user.photoURL!)
+                    : null,
+                child: (user?.photoURL == null || user!.photoURL!.isEmpty)
+                    ? Text((user?.displayName ?? "S")[0].toUpperCase(), style: const TextStyle(fontSize: 24, color: Colors.white))
+                    : null,
+              ),
             ),
             ListTile(
-              title: const Text('Home'),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title: const Text('Profile'),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title: const Text('Settings'),
-              onTap: () {
-                Navigator.pop(context);
+              leading: const Icon(Icons.logout, color: Colors.redAccent),
+              title: const Text('Logout', style: TextStyle(color: Colors.redAccent)),
+              onTap: () async {
+                await ref.read(authServiceProvider.notifier).signOut();
               },
             ),
           ],
         ),
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/background.jpg'),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 100),
-                Text(
-                  'Hello ${_user?.displayName ?? 'User'} 👋',
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-                ).animate().fadeIn(duration: 600.ms).slideX(),
-                const SizedBox(height: 20),
-                const WeatherCard().animate().fadeIn(delay: 300.ms, duration: 600.ms).slideX(),
-                const SizedBox(height: 20),
-                const GrayBox().animate().fadeIn(delay: 600.ms, duration: 600.ms).slideX(),
-                const SizedBox(height: 20),
-                const GrayBox().animate().fadeIn(delay: 900.ms, duration: 600.ms).slideX(),
-              ],
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Good Morning,", style: GoogleFonts.inter(fontSize: 14, color: Colors.grey)),
+                  Text(
+                    user?.displayName?.split(' ')[0] ?? "Student",
+                    style: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+                  ).animate().fadeIn().moveX(begin: -20, end: 0),
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    height: 50,
+                    decoration: BoxDecoration(color: const Color(0xFF2C2C2C), borderRadius: BorderRadius.circular(12)),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.search, color: Colors.grey),
+                        const SizedBox(width: 12),
+                        Text("Find hostels, labs, or seniors...", style: GoogleFonts.inter(color: Colors.grey)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      ),
-      bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 6.0,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            IconButton(onPressed: () {}, icon: const Icon(Icons.location_on)),
-            IconButton(onPressed: () {}, icon: const Icon(Icons.explore)),
-            const SizedBox(width: 40), // The notch
-            IconButton(onPressed: () {}, icon: const Icon(Icons.people)),
-            IconButton(onPressed: () {}, icon: const Icon(Icons.settings)),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        child: const Icon(Icons.add),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-    );
-  }
-}
-
-class WeatherCard extends StatefulWidget {
-  const WeatherCard({super.key});
-
-  @override
-  State<WeatherCard> createState() => _WeatherCardState();
-}
-
-class _WeatherCardState extends State<WeatherCard> {
-  final WeatherService _weatherService = WeatherService();
-  late Future<Weather> _weather;
-
-  @override
-  void initState() {
-    super.initState();
-    _weather = _weatherService.getWeather('London');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<Weather>(
-      future: _weather,
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          final weather = snapshot.data!;
-          return Container(
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(15.0),
-            ),
-            child: Column(
+          SliverPadding(
+            padding: const EdgeInsets.all(20),
+            sliver: SliverGrid.count(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.1,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(weather.cityName, style: const TextStyle(fontSize: 12, color: Colors.white)),
-                        const SizedBox(height: 10),
-                        Text('${weather.temperature.round()}°C', style: const TextStyle(fontSize: 48, color: Colors.white, fontWeight: FontWeight.bold)),
-                        Text(weather.weatherDescription.toUpperCase(), style: const TextStyle(fontSize: 12, color: Colors.white)),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        Image.network(
-                          'https://openweathermap.org/img/w/${weather.icon}.png',
-                          width: 50,
-                          height: 50,
-                        ),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Humidity: ${weather.humidity}%', style: const TextStyle(fontSize: 10, color: Colors.white)),
-                        Text('Wind: ${weather.windSpeed} km/h', style: const TextStyle(fontSize: 10, color: Colors.white)),
-                      ],
-                    ),
-                  ],
+                _buildFeatureCard(
+                  context,
+                  title: "Campus Map",
+                  icon: Icons.map_outlined,
+                  color: Colors.blueAccent,
+                  desc: "Navigate CITK in 3D",
+                  onTap: () { /* TODO: Open Map */ },
+                ),
+                _buildFeatureCard(
+                  context,
+                  title: "Academics",
+                  icon: Icons.school_outlined,
+                  color: Colors.orangeAccent,
+                  desc: "PYQ & Attendance",
+                  onTap: () { /* TODO: Open Academics */ },
+                ),
+                _buildFeatureCard(
+                  context,
+                  title: "Bus Tracker",
+                  icon: Icons.directions_bus_outlined,
+                  color: Colors.greenAccent,
+                  desc: "Live Status",
+                  onTap: () { /* TODO: Open Bus */ },
+                ),
+                // --- CONNECTED AI CARD ---
+                _buildFeatureCard(
+                  context,
+                  title: "AI Assistant",
+                  icon: Icons.auto_awesome_outlined,
+                  color: Colors.purpleAccent,
+                  desc: "Ask anything",
+                  onTap: () {
+                    context.push('/ai'); // <--- NAVIGATES TO CHAT
+                  },
+                ),
+                _buildFeatureCard(
+                  context,
+                  title: "Events",
+                  icon: Icons.calendar_month_outlined,
+                  color: Colors.pinkAccent,
+                  desc: "Tech Fest & more",
+                  onTap: () { /* TODO: Open Events */ },
+                ),
+                _buildFeatureCard(
+                  context,
+                  title: "Emergency",
+                  icon: Icons.local_hospital_outlined,
+                  color: Colors.redAccent,
+                  desc: "Medical & Security",
+                  onTap: () { context.push('/emergency'); },
                 ),
               ],
             ),
-          );
-        } else if (snapshot.hasError) {
-          return Text('${snapshot.error}');
-        }
-
-        return const CircularProgressIndicator();
-      },
+          ),
+        ],
+      ),
     );
   }
-}
 
-class GrayBox extends StatelessWidget {
-  const GrayBox({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 150,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.grey.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(15.0),
+  Widget _buildFeatureCard(BuildContext context, {
+    required String title,
+    required String desc,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: const Color(0xFF1E1E1E),
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
+                  const SizedBox(height: 4),
+                  Text(desc, style: GoogleFonts.inter(fontSize: 12, color: Colors.grey)),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
-    ).animate().shimmer(duration: 1200.ms);
+    ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack);
   }
 }
-
