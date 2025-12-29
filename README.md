@@ -73,6 +73,6 @@ It acts as a "Digital Senior," guiding students from their first day on campus t
 ---
 
 ## 🤝 Contributing
-Built with ❤️ by **Team Codeleth** for the Google Solutions Challenge.
+Built with ❤️ by **Team CodelithLabs** for the Google Solutions Challenge.
 
 ---
