@@ -119,7 +119,7 @@ class HomeScreen extends ConsumerWidget {
                   icon: Icons.directions_bus_outlined,
                   color: Colors.greenAccent,
                   desc: "Live Status",
-                  onTap: () { /* TODO: Open Bus */ },
+                  onTap: () { context.push('/bus'); },
                 ),
                 // --- CONNECTED AI CARD ---
                 _buildFeatureCard(
@@ -138,7 +138,7 @@ class HomeScreen extends ConsumerWidget {
                   icon: Icons.calendar_month_outlined,
                   color: Colors.pinkAccent,
                   desc: "Tech Fest & more",
-                  onTap: () { /* TODO: Open Events */ },
+                  onTap: () { context.push('/events'); },
                 ),
                 _buildFeatureCard(
                   context,
