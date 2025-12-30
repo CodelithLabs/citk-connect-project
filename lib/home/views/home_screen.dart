@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:citk_connect/auth/services/auth_service.dart';
-import 'package:go_router/go_router.dart'; // <--- RESTORED IMPORT
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -24,7 +24,9 @@ class HomeScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
+            onPressed: () {
+              // TODO: Add Notification Screen
+            },
           ),
         ],
       ),
@@ -32,6 +34,7 @@ class HomeScreen extends ConsumerWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
+            // 1. DRAWER HEADER (User Info)
             UserAccountsDrawerHeader(
               decoration: BoxDecoration(color: theme.colorScheme.surface),
               accountName: Text(
@@ -45,14 +48,28 @@ class HomeScreen extends ConsumerWidget {
                     ? NetworkImage(user.photoURL!)
                     : null,
                 child: (user?.photoURL == null || user!.photoURL!.isEmpty)
-                    ? Text((user?.displayName ?? "S")[0].toUpperCase(), style: const TextStyle(fontSize: 24, color: Colors.white))
+                    ? Text((user?.displayName ?? "S")[0].toUpperCase(),
+                        style: const TextStyle(fontSize: 24, color: Colors.white))
                     : null,
               ),
             ),
+
+            // 2. PROFILE BUTTON (Moved outside Header)
+            ListTile(
+              leading: const Icon(Icons.person_outline, color: Colors.blueAccent),
+              title: const Text('My Profile', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                context.pop(); // Close drawer
+                context.push('/profile'); // Go to profile
+              },
+            ),
+
+            // 3. LOGOUT BUTTON
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.redAccent),
               title: const Text('Logout', style: TextStyle(color: Colors.redAccent)),
               onTap: () async {
+                context.pop(); // Close drawer first
                 await ref.read(authServiceProvider.notifier).signOut();
               },
             ),
@@ -61,6 +78,7 @@ class HomeScreen extends ConsumerWidget {
       ),
       body: CustomScrollView(
         slivers: [
+          // GREETING HEADER
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
@@ -76,12 +94,14 @@ class HomeScreen extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     height: 50,
-                    decoration: BoxDecoration(color: const Color(0xFF2C2C2C), borderRadius: BorderRadius.circular(12)),
+                    decoration: BoxDecoration(
+                        color: const Color(0xFF2C2C2C), borderRadius: BorderRadius.circular(12)),
                     child: Row(
                       children: [
                         const Icon(Icons.search, color: Colors.grey),
                         const SizedBox(width: 12),
-                        Text("Find hostels, labs, or seniors...", style: GoogleFonts.inter(color: Colors.grey)),
+                        Text("Find hostels, labs, or seniors...",
+                            style: GoogleFonts.inter(color: Colors.grey)),
                       ],
                     ),
                   ),
@@ -89,6 +109,8 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
           ),
+
+          // FEATURE GRID
           SliverPadding(
             padding: const EdgeInsets.all(20),
             sliver: SliverGrid.count(
@@ -110,8 +132,8 @@ class HomeScreen extends ConsumerWidget {
                   title: "Academics",
                   icon: Icons.school_outlined,
                   color: Colors.orangeAccent,
-                  desc: "PYQ & Attendance",
-                  onTap: () { /* TODO: Open Academics */ },
+                  desc: "Routine & PYQ",
+                  onTap: () => context.push('/routine'),
                 ),
                 _buildFeatureCard(
                   context,
@@ -119,18 +141,15 @@ class HomeScreen extends ConsumerWidget {
                   icon: Icons.directions_bus_outlined,
                   color: Colors.greenAccent,
                   desc: "Live Status",
-                  onTap: () { context.push('/bus'); },
+                  onTap: () => context.push('/bus'),
                 ),
-                // --- CONNECTED AI CARD ---
                 _buildFeatureCard(
                   context,
                   title: "AI Assistant",
                   icon: Icons.auto_awesome_outlined,
                   color: Colors.purpleAccent,
                   desc: "Ask anything",
-                  onTap: () {
-                    context.push('/ai'); // <--- NAVIGATES TO CHAT
-                  },
+                  onTap: () => context.push('/ai'),
                 ),
                 _buildFeatureCard(
                   context,
@@ -138,7 +157,7 @@ class HomeScreen extends ConsumerWidget {
                   icon: Icons.calendar_month_outlined,
                   color: Colors.pinkAccent,
                   desc: "Tech Fest & more",
-                  onTap: () { context.push('/events'); },
+                  onTap: () => context.push('/events'),
                 ),
                 _buildFeatureCard(
                   context,
@@ -146,16 +165,7 @@ class HomeScreen extends ConsumerWidget {
                   icon: Icons.local_hospital_outlined,
                   color: Colors.redAccent,
                   desc: "Medical & Security",
-                  onTap: () { context.push('/emergency'); },
-                ),
-                _buildFeatureCard(
-                  context,
-                  title: "Academics",
-                  icon: Icons.school_outlined,
-                  color: Colors.orangeAccent,
-                  desc: "Routine & PYQ", // Updated description
-                  onTap: () {
-                     context.push('/routine'); },
+                  onTap: () => context.push('/emergency'),
                 ),
               ],
             ),
@@ -182,7 +192,7 @@ class HomeScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+            border: Border.all(color: Colors.white.withOpacity(0.05)), // Use withOpacity for broader compatibility
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,15 +200,19 @@ class HomeScreen extends ConsumerWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                    color: color.withOpacity(0.1), shape: BoxShape.circle),
                 child: Icon(icon, color: color, size: 24),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
+                  Text(title,
+                      style: GoogleFonts.inter(
+                          fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
                   const SizedBox(height: 4),
-                  Text(desc, style: GoogleFonts.inter(fontSize: 12, color: Colors.grey)),
+                  Text(desc,
+                      style: GoogleFonts.inter(fontSize: 12, color: Colors.grey)),
                 ],
               ),
             ],

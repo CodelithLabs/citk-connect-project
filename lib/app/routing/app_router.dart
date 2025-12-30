@@ -13,6 +13,7 @@ import 'package:citk_connect/academics/views/routine_screen.dart';
 import 'package:citk_connect/map/views/campus_map_screen.dart';
 import "package:citk_connect/map/views/bus_tracker_screen.dart";
 import 'package:citk_connect/home/views/events_screen.dart';
+import 'package:citk_connect/profile/views/profile_screen.dart';
 
 part 'app_router.g.dart';
 
@@ -31,6 +32,7 @@ GoRouter goRouter(Ref ref) {
       GoRoute(path: '/map',builder: (context, state) => const CampusMapScreen(),),
       GoRoute(path: '/bus',builder: (context, state) => const BusTrackerScreen(),),
       GoRoute(path: '/events', builder: (context, state) => const EventsScreen()),
+      GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()),
     ],
   );
 }

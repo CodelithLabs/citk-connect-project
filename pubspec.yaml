@@ -27,6 +27,7 @@ dependencies:
   url_launcher: ^6.3.2
   google_generative_ai: ^0.4.7
   google_maps_flutter: ^2.14.0
+  shared_preferences: ^2.5.4
   
 
   # Add other existing dependencies here
