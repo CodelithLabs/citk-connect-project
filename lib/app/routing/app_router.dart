@@ -9,6 +9,8 @@ import 'package:citk_connect/auth/views/auth_gate.dart';
 import 'package:citk_connect/home/views/home_screen.dart';
 import 'package:citk_connect/ai/views/chat_screen.dart';
 import 'package:citk_connect/emergency/views/emergency_screen.dart'; // Ensure folder is 'views'
+import 'package:citk_connect/academics/views/routine_screen.dart';
+import 'package:citk_connect/map/views/campus_map_screen.dart';
 
 part 'app_router.g.dart';
 
@@ -23,6 +25,9 @@ GoRouter goRouter(Ref ref) {
       GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
       GoRoute(path: '/ai', builder: (context, state) => const ChatScreen()),
       GoRoute(path: '/emergency', builder: (context, state) => const EmergencyScreen()),
+      GoRoute(path: '/routine', builder: (context, state) => const RoutineScreen()),
+      GoRoute(path: '/map',builder: (context, state) => const CampusMapScreen(),
+),
     ],
   );
 }

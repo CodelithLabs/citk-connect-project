@@ -103,7 +103,7 @@ class HomeScreen extends ConsumerWidget {
                   icon: Icons.map_outlined,
                   color: Colors.blueAccent,
                   desc: "Navigate CITK in 3D",
-                  onTap: () { /* TODO: Open Map */ },
+                  onTap: () => context.push('/map'),
                 ),
                 _buildFeatureCard(
                   context,
@@ -147,6 +147,15 @@ class HomeScreen extends ConsumerWidget {
                   color: Colors.redAccent,
                   desc: "Medical & Security",
                   onTap: () { context.push('/emergency'); },
+                ),
+                _buildFeatureCard(
+                  context,
+                  title: "Academics",
+                  icon: Icons.school_outlined,
+                  color: Colors.orangeAccent,
+                  desc: "Routine & PYQ", // Updated description
+                  onTap: () {
+                     context.push('/routine'); },
                 ),
               ],
             ),
