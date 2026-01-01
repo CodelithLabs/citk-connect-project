@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "895444402352-a90i2u4h1c39afptem81esr876vk8fon.apps.googleusercontent.com",
+          "client_id": "895444402352-2ota9eacgq5bvmdu2vfuosged70pint5.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.citk.connect",
-            "certificate_hash": "5e6add74ffe573e69d194c9e9cc0c7416f395d84"
+            "certificate_hash": "da58a67847799ef0a1411ab25a419dc04cd9c9a7"
           }
         },
         {

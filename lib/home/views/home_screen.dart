@@ -4,6 +4,7 @@ import 'package:citk_connect/auth/services/auth_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -13,6 +14,15 @@ class HomeScreen extends ConsumerWidget {
     final authState = ref.watch(authServiceProvider);
     final user = authState.value;
     final theme = Theme.of(context);
+
+    // 🛡️ SAFE NAME LOGIC
+    // If name is null OR empty, use "Student".
+    final String safeName = (user?.displayName != null && user!.displayName!.isNotEmpty)
+        ? user.displayName!
+        : "Student";
+    
+    // Get first letter safely
+    final String firstLetter = safeName.isNotEmpty ? safeName[0].toUpperCase() : "S";
 
     return Scaffold(
       appBar: AppBar(
@@ -25,8 +35,37 @@ class HomeScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
             onPressed: () {
-              // TODO: Add Notification Screen
+               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No new notifications")));
             },
+          ),
+          // 3-Dot Menu
+          PopupMenuButton<String>(
+            onSelected: (value) async {
+              if (value == 'profile') {
+                context.push('/profile');
+              } else if (value == 'logout') {
+                await FirebaseAuth.instance.signOut();
+                // Router redirects automatically
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'profile',
+                child: ListTile(
+                  leading: Icon(Icons.person),
+                  title: Text('My Profile'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: 'logout',
+                child: ListTile(
+                  leading: Icon(Icons.logout, color: Colors.red),
+                  title: Text('Log Out', style: TextStyle(color: Colors.red)),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -34,11 +73,10 @@ class HomeScreen extends ConsumerWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            // 1. DRAWER HEADER (User Info)
             UserAccountsDrawerHeader(
               decoration: BoxDecoration(color: theme.colorScheme.surface),
               accountName: Text(
-                user?.displayName ?? "Student",
+                safeName,
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               accountEmail: Text(user?.email ?? "No Email"),
@@ -48,28 +86,23 @@ class HomeScreen extends ConsumerWidget {
                     ? NetworkImage(user.photoURL!)
                     : null,
                 child: (user?.photoURL == null || user!.photoURL!.isEmpty)
-                    ? Text((user?.displayName ?? "S")[0].toUpperCase(),
-                        style: const TextStyle(fontSize: 24, color: Colors.white))
+                    ? Text(firstLetter, style: const TextStyle(fontSize: 24, color: Colors.white))
                     : null,
               ),
             ),
-
-            // 2. PROFILE BUTTON (Moved outside Header)
             ListTile(
               leading: const Icon(Icons.person_outline, color: Colors.blueAccent),
               title: const Text('My Profile', style: TextStyle(color: Colors.white)),
               onTap: () {
-                context.pop(); // Close drawer
-                context.push('/profile'); // Go to profile
+                context.pop();
+                context.push('/profile');
               },
             ),
-
-            // 3. LOGOUT BUTTON
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.redAccent),
               title: const Text('Logout', style: TextStyle(color: Colors.redAccent)),
               onTap: () async {
-                context.pop(); // Close drawer first
+                context.pop();
                 await ref.read(authServiceProvider.notifier).signOut();
               },
             ),
@@ -78,7 +111,6 @@ class HomeScreen extends ConsumerWidget {
       ),
       body: CustomScrollView(
         slivers: [
-          // GREETING HEADER
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
@@ -87,7 +119,7 @@ class HomeScreen extends ConsumerWidget {
                 children: [
                   Text("Good Morning,", style: GoogleFonts.inter(fontSize: 14, color: Colors.grey)),
                   Text(
-                    user?.displayName?.split(' ')[0] ?? "Student",
+                    safeName.split(' ')[0],
                     style: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
                   ).animate().fadeIn().moveX(begin: -20, end: 0),
                   const SizedBox(height: 20),
@@ -109,8 +141,6 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
           ),
-
-          // FEATURE GRID
           SliverPadding(
             padding: const EdgeInsets.all(20),
             sliver: SliverGrid.count(
@@ -159,14 +189,15 @@ class HomeScreen extends ConsumerWidget {
                   desc: "Tech Fest & more",
                   onTap: () => context.push('/events'),
                 ),
-                _buildFeatureCard(
-                  context,
-                  title: "Emergency",
-                  icon: Icons.local_hospital_outlined,
-                  color: Colors.redAccent,
-                  desc: "Medical & Security",
-                  onTap: () => context.push('/emergency'),
-                ),
+                // Emergency (Uncomment if route exists)
+                // _buildFeatureCard(
+                //   context,
+                //   title: "Emergency",
+                //   icon: Icons.local_hospital_outlined,
+                //   color: Colors.redAccent,
+                //   desc: "Medical & Security",
+                //   onTap: () => context.push('/emergency'),
+                // ),
               ],
             ),
           ),
@@ -192,7 +223,7 @@ class HomeScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.05)), // Use withOpacity for broader compatibility
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -201,7 +232,7 @@ class HomeScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                    color: color.withOpacity(0.1), shape: BoxShape.circle),
+                    color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
                 child: Icon(icon, color: color, size: 24),
               ),
               Column(

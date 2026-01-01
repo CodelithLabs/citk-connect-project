@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/services.dart'; // To read the JSON file
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

@@ -66,7 +66,7 @@ class EventsScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color..withValues(alpha: 0.1),
         border: Border(left: BorderSide(color: color, width: 4)),
         borderRadius: BorderRadius.circular(8),
       ),
@@ -116,7 +116,7 @@ class EventsScreen extends StatelessWidget {
             height: 120,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: imageColor.withOpacity(0.2),
+              color: imageColor..withValues(alpha: 0.2),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             ),
             child: Center(

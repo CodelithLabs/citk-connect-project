@@ -87,7 +87,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     Center(
                       child: CircleAvatar(
                         radius: 50,
-                        backgroundColor: Colors.blueAccent.withOpacity(0.2),
+                        backgroundColor: Colors.blueAccent.withValues(alpha: 0.2),
                         backgroundImage: (user?.photoURL != null) ? NetworkImage(user!.photoURL!) : null,
                         child: (user?.photoURL == null)
                             ? const Icon(Icons.person, size: 50, color: Colors.blueAccent)
