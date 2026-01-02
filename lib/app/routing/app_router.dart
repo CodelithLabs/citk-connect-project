@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -31,7 +32,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     refreshListenable: GoRouterRefreshStream(authStream),
 
-    redirect: (context, state) {
+    redirect: (context, state) async {
       final user = FirebaseAuth.instance.currentUser;
       final path = state.uri.path;
 
@@ -39,33 +40,52 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final isPublic = path == '/' ||
           path == '/login' ||
           path == '/staff-login' ||
-          path == '/onboarding' ||
-          path == '/aspirant-dashboard';
+          path == '/onboarding';
+
+      // 🌱 ASPIRANT is a special public-but-logged-in case
+      final isAspirantPath = path == '/aspirant-dashboard';
 
       // 🔐 LOGGED IN USER
       if (user != null) {
+        // Fetch user role from Firestore
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+        final role = doc.exists ? doc.data()!['role'] as String : 'aspirant';
+
         // Prevent going back to auth pages
         if (isPublic) {
-          // Staff login → Admin dashboard
-          if (path == '/staff-login') {
-            return '/admin-dashboard';
+          switch (role) {
+            case 'student':
+            case 'faculty':
+              return '/home';
+            case 'admin':
+              return '/admin-dashboard';
+            case 'driver':
+              return '/driver-dashboard';
+            case 'aspirant':
+              return '/aspirant-dashboard';
+            default:
+              return '/home'; // Fallback
           }
-
-          // Default logged-in user → Student home
-          return '/home';
         }
 
-        return null;
+        // Handle aspirant trying to access other pages
+        if (role == 'aspirant' && !isAspirantPath) {
+          return '/aspirant-dashboard';
+        }
+
+        return null; // No redirection needed
       }
 
       // ❌ NOT LOGGED IN
-      if (!isPublic) {
-        return '/login';
+      if (!isPublic && !isAspirantPath) {
+        return '/login'; // Redirect to login if trying to access protected route
       }
 
-      return null;
+      return null; // No redirection needed for public routes
     },
-
     routes: [
       // 🌟 Splash
       GoRoute(

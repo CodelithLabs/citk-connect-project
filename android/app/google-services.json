@@ -1,0 +1,62 @@
+{
+  "project_info": {
+    "project_number": "895444402352",
+    "project_id": "citk-connect-core",
+    "storage_bucket": "citk-connect-core.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:895444402352:android:9d124a82383f9ca103fb75",
+        "android_client_info": {
+          "package_name": "com.citk.connect"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "895444402352-2ota9eacgq5bvmdu2vfuosged70pint5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.citk.connect",
+            "certificate_hash": "da58a67847799ef0a1411ab25a419dc04cd9c9a7"
+          }
+        },
+        {
+          "client_id": "895444402352-a90i2u4h1c39afptem81esr876vk8fon.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.citk.connect",
+            "certificate_hash": "5e6add74ffe573e69d194c9e9cc0c7416f395d84"
+          }
+        },
+        {
+          "client_id": "895444402352-lgt36aphgik6fetg2pbhg626ig5strkl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADehtCqyvIEFsK6pltjW7Np6I-xExXfUQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "895444402352-lgt36aphgik6fetg2pbhg626ig5strkl.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "895444402352-0bb2a59914us5ijdisiekl72o1p9qnc1.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.myapp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

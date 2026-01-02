@@ -23,7 +23,9 @@ class AuthService extends StateNotifier<AsyncValue<User?>> {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    serverClientId: "895444402352-lgt36aphgik6fetg2pbhg626ig5strkl.apps.googleusercontent.com"
+  );
 
   // ============================================================
   // 1️⃣ GOOGLE SIGN-IN (Student / Faculty / Aspirant)
