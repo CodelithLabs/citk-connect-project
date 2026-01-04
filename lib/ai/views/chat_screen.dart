@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:citk_connect/ai/services/gemini_service.dart'; // Import the service
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
@@ -15,7 +16,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   
-  // Fake history for demo
+  // Initial History
   final List<Map<String, String>> _messages = [
     {'role': 'ai', 'text': 'Hello! I am your CITK Digital Senior. Ask me anything about hostels, exams, or campus life!'},
   ];
@@ -26,7 +27,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
-    // 1. Add User Message
+    // 1. Add User Message to UI
     setState(() {
       _messages.add({'role': 'user', 'text': text});
       _isTyping = true; // Show loading bubble
@@ -34,16 +35,26 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     _controller.clear();
     _scrollToBottom();
 
-    // 2. Mock AI Response (Fake Delay)
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      // 2. CALL GEMINI (The Real AI)
+      // We use ref.read to get the service and await the response
+      final response = await ref.read(geminiServiceProvider).sendMessage(text);
 
-    if (mounted) {
-      setState(() {
-        _isTyping = false;
-        // Mock response - we will connect real Gemini later
-        _messages.add({'role': 'ai', 'text': 'That is a great question about "$text". \n\nTo find the library, head to the main academic block ground floor. It is open from 9 AM to 8 PM.'});
-      });
-      _scrollToBottom();
+      if (mounted) {
+        setState(() {
+          _isTyping = false;
+          _messages.add({'role': 'ai', 'text': response});
+        });
+        _scrollToBottom();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isTyping = false;
+          _messages.add({'role': 'ai', 'text': "Oops! My brain is offline. Check your internet connection."});
+        });
+        _scrollToBottom();
+      }
     }
   }
 
@@ -75,7 +86,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => setState(() => _messages.removeRange(1, _messages.length)), // Clear chat
+            onPressed: () {
+               // In a real app, you might want to restart the Gemini chat session here too
+               setState(() => _messages.removeRange(1, _messages.length)); 
+            },
           ),
         ],
       ),
@@ -88,7 +102,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               padding: const EdgeInsets.all(16),
               itemCount: _messages.length + (_isTyping ? 1 : 0),
               itemBuilder: (context, index) {
-                // Show Typing Indicator as the last item if needed
+                // Show Typing Indicator
                 if (index == _messages.length) {
                   return _buildTypingIndicator(theme);
                 }

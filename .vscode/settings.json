@@ -1,3 +1,4 @@
 {
-    "editor.experimentalGpuAcceleration": "off"
+    "editor.experimentalGpuAcceleration": "off",
+    "java.configuration.updateBuildConfiguration": "interactive"
 }

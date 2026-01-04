@@ -19,7 +19,8 @@ class EmergencyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Emergency & Help", style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+        title: Text("Emergency & Help",
+            style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.red.shade900,
       ),
       body: ListView(
@@ -34,7 +35,8 @@ class EmergencyScreen extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(Icons.warning_amber_rounded, color: Colors.red.shade400, size: 30),
+                Icon(Icons.warning_amber_rounded,
+                    color: Colors.red.shade400, size: 30),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Text(
@@ -46,15 +48,19 @@ class EmergencyScreen extends StatelessWidget {
             ),
           ).animate().fadeIn(),
           const SizedBox(height: 24),
-          _buildContactCard(context, "Medical", "108", Icons.local_hospital, Colors.green),
-          _buildContactCard(context, "Chief Warden", "+919876543210", Icons.admin_panel_settings, Colors.blue),
-          _buildContactCard(context, "Police", "100", Icons.local_police, Colors.red),
+          _buildContactCard(
+              context, "Medical", "108", Icons.local_hospital, Colors.green),
+          _buildContactCard(context, "Chief Warden", "+919876543210",
+              Icons.admin_panel_settings, Colors.blue),
+          _buildContactCard(
+              context, "Police", "100", Icons.local_police, Colors.red),
         ],
       ),
     );
   }
 
-  Widget _buildContactCard(BuildContext context, String title, String phone, IconData icon, Color color) {
+  Widget _buildContactCard(BuildContext context, String title, String phone,
+      IconData icon, Color color) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -64,7 +70,9 @@ class EmergencyScreen extends StatelessWidget {
       ),
       child: ListTile(
         leading: Icon(icon, color: color),
-        title: Text(title, style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(title,
+            style: GoogleFonts.inter(
+                color: Colors.white, fontWeight: FontWeight.bold)),
         subtitle: Text(phone, style: GoogleFonts.inter(color: Colors.grey)),
         trailing: IconButton(
           icon: const Icon(Icons.call, color: Colors.greenAccent),

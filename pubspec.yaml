@@ -14,6 +14,7 @@ dependencies:
   hooks_riverpod: ^2.6.0
   flutter_hooks: ^0.20.0
   riverpod_annotation: ^2.6.0
+  cloud_firestore: ^5.0.0 # For the Database
   go_router: ^14.0.0
   firebase_auth: ^5.0.0
   firebase_core: ^3.0.0
@@ -23,8 +24,11 @@ dependencies:
   google_fonts: ^6.1.0     # For that clean "Google Product" look
   font_awesome_flutter: ^10.6.0 # For the Google Logo icon  
   #Web
-  cloud_firestore: ^5.0.0
   url_launcher: ^6.3.2
+  google_generative_ai: ^0.4.7
+  google_maps_flutter: ^2.14.0
+  shared_preferences: ^2.5.4
+  geolocator: ^14.0.2
   
 
   # Add other existing dependencies here
@@ -52,5 +56,14 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/ # Fixes "asset_directory_does_not_exist"
+    - assets/data/citk_data.json
 
-    
+    # Fonts 
+fonts:
+    - family: JetBrainsMono
+      fonts:
+        - asset: assets/fonts/JetBrainsMono-Regular.ttf
+        - asset: assets/fonts/JetBrainsMono-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/JetBrainsMono-Italic.ttf
+          style: italic

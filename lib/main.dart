@@ -1,56 +1,64 @@
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import 'package:citk_connect/firebase_options.dart';
 import 'package:citk_connect/app/routing/app_router.dart';
-import 'firebase_options.dart'; 
 
 void main() async {
-  // 1. Initialize Flutter Engine
+  // 1️⃣ Ensure Flutter bindings
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 2. Initialize Firebase
+  // 2️⃣ Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // 3. Run App
+  // 3️⃣ Run App with Riverpod
   runApp(
     const ProviderScope(
-      child: App(),
+      child: MyApp(),
     ),
   );
 }
 
-class App extends ConsumerWidget {
-  const App({super.key});
+class MyApp extends ConsumerWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final goRouter = ref.watch(goRouterProvider);
+    // ✅ Use ONE router provider (choose this name in app_router.dart)
+    final router = ref.watch(goRouterProvider);
 
     return MaterialApp.router(
-      routerConfig: goRouter,
       title: 'CITK Connect',
       debugShowCheckedModeBanner: false,
-      
-      // Force Dark Mode for the Hackathon/Premium feel
-      themeMode: ThemeMode.dark, 
-      
+
+      // 🔥 Force Dark Mode (Hackathon / Premium feel)
+      themeMode: ThemeMode.dark,
+
+      routerConfig: router,
+
       darkTheme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF121212), // Premium Dark Grey
+
+        scaffoldBackgroundColor: const Color(0xFF121212),
+
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF4285F4), // Google Blue
           brightness: Brightness.dark,
-          primary: const Color(0xFF8AB4F8), // Lighter Blue for Dark Mode
-          surface: const Color(0xFF1E1E1E), // Card Surface
+          primary: const Color(0xFF8AB4F8),
+          surface: const Color(0xFF1E1E1E),
         ),
-        // Google Typography
-        textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
-        
-        // Professional Input Fields
+
+        // ✨ Google Fonts (Inter)
+        textTheme: GoogleFonts.interTextTheme(
+          ThemeData.dark().textTheme,
+        ),
+
+        // 🧱 Professional Input Fields
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: const Color(0xFF2C2C2C),
@@ -60,7 +68,10 @@ class App extends ConsumerWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF8AB4F8), width: 2),
+            borderSide: const BorderSide(
+              color: Color(0xFF8AB4F8),
+              width: 2,
+            ),
           ),
         ),
       ),

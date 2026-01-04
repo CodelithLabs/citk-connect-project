@@ -16,51 +16,58 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<Map<String, dynamic>> _pages = [
     {
+      "title": "Welcome to CITK",
+      "desc": "Track buses, view routines, and access everything you need — all in one app.",
+      "icon": Icons.rocket_launch,
+    },
+    {
       "title": "Lost in Campus?",
-      "desc": "Navigate CITK like a pro with our 3D Campus Maps. Find hostels, labs, and canteens instantly.",
+      "desc": "Navigate CITK like a pro with interactive campus maps. Find hostels, labs, and canteens easily.",
       "icon": Icons.map_outlined,
     },
     {
       "title": "Need Help?",
-      "desc": "Don't struggle alone. Connect with seniors and get instant answers from our AI Assistant.",
-      "icon": Icons.people_outline,
+      "desc": "Connect with seniors and get instant help from our AI Assistant anytime.",
+      "icon": Icons.auto_awesome_outlined,
     },
     {
       "title": "Exam Ready",
-      "desc": "Access Previous Year Questions (PYQ) and organize your study schedule in one place.",
+      "desc": "Access routines, PYQs, and academic tools designed to help you succeed.",
       "icon": Icons.school_outlined,
     },
   ];
 
   void _finishOnboarding() {
-    // Navigate to Auth Screen after onboarding
-    context.go('/auth');
+    context.go('/login');
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
+     
+    Text(
+       "Welcome",
+        style: theme.textTheme.headlineMedium,
+    );
+        
+      final primaryColor = Colors.blueAccent;
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: const Color(0xFF0F1115),
       body: SafeArea(
         child: Column(
           children: [
-            // 1. SKIP BUTTON
             Align(
               alignment: Alignment.topRight,
               child: TextButton(
                 onPressed: _finishOnboarding,
-                child: Text("SKIP", style: TextStyle(color: theme.colorScheme.primary)),
+                child: Text("SKIP", style: TextStyle(color: primaryColor)),
               ),
             ),
-
-            // 2. PAGE VIEW (SWIPEABLE CONTENT)
             Expanded(
               child: PageView.builder(
                 controller: _controller,
-                onPageChanged: (index) => setState(() => _currentPage = index),
                 itemCount: _pages.length,
+                onPageChanged: (index) => setState(() => _currentPage = index),
                 itemBuilder: (context, index) {
                   final page = _pages[index];
                   return Padding(
@@ -68,43 +75,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Icon Circle
                         Container(
                           padding: const EdgeInsets.all(40),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                            color: primaryColor.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(
-                            page['icon'],
-                            size: 80,
-                            color: theme.colorScheme.primary,
-                          ),
+                          child: Icon(page['icon'], size: 80, color: primaryColor),
                         ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
-                        
                         const SizedBox(height: 40),
-                        
-                        // Title
                         Text(
                           page['title'],
-                          style: GoogleFonts.inter(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
                         ).animate().fadeIn().moveY(begin: 20, end: 0),
-                        
                         const SizedBox(height: 16),
-                        
-                        // Description
                         Text(
                           page['desc'],
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.inter(
-                            fontSize: 16,
-                            color: Colors.grey[400],
-                            height: 1.5,
-                          ),
+                          style: GoogleFonts.inter(fontSize: 16, color: Colors.grey[400], height: 1.5),
                         ).animate().fadeIn(delay: 200.ms),
                       ],
                     ),
@@ -112,14 +101,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 },
               ),
             ),
-
-            // 3. DOT INDICATORS & NEXT BUTTON
             Padding(
               padding: const EdgeInsets.all(32.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Dots
                   Row(
                     children: List.generate(
                       _pages.length,
@@ -129,34 +115,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         height: 8,
                         width: _currentPage == index ? 24 : 8,
                         decoration: BoxDecoration(
-                          color: _currentPage == index
-                              ? theme.colorScheme.primary
-                              : Colors.grey[800],
+                          color: _currentPage == index ? primaryColor : Colors.grey[800],
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
                     ),
                   ),
-
-                  // Button
                   FloatingActionButton(
+                    backgroundColor: primaryColor,
                     onPressed: () {
                       if (_currentPage < _pages.length - 1) {
-                        _controller.nextPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
+                        _controller.nextPage(duration: 300.ms, curve: Curves.easeInOut);
                       } else {
                         _finishOnboarding();
                       }
                     },
-                    backgroundColor: theme.colorScheme.primary,
-                    child: Icon(
-                      _currentPage == _pages.length - 1
-                          ? Icons.check
-                          : Icons.arrow_forward,
-                      color: Colors.white,
-                    ),
+                    child: Icon(_currentPage == _pages.length - 1 ? Icons.check : Icons.arrow_forward, color: Colors.white),
                   ),
                 ],
               ),

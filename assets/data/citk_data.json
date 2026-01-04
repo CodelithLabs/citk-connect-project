@@ -1,0 +1,12 @@
+{
+  "college_name": "Central Institute of Technology, Kokrajhar",
+  "short_name": "CITK",
+  "hostels": [
+    { "name": "RNB Hostel", "type": "Boys", "location": "Near Main Gate" },
+    { "name": "SC Girls Hostel", "type": "Girls", "location": "Behind Academic Block 1" }
+  ],
+  "bus_timing": "Bus starts from Santinagar at 8:30 AM and returns at 4:30 PM.",
+  "library_rules": "Library is open from 9 AM to 8 PM. You need your ID card.",
+  "departments": ["CSE", "ECE", "Civil", "Food Processing", "Multimedia"],
+  "exams": "Mid-term exams usually start in October. End-terms in December."
+}
