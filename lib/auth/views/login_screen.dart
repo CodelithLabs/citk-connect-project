@@ -17,49 +17,81 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  int _selectedTab = 0;
+  int _selectedTab = 0; // 0 = Student, 1 = Aspirant
   bool _isLoading = false;
 
+  // 🛠️ MAIN LOGIN LOGIC
   Future<void> _handleSmartLogin() async {
     setState(() => _isLoading = true);
+
     try {
+      // 1. Trigger Google Sign-In via Riverpod Service
       await ref.read(authServiceProvider.notifier).signInWithGoogle();
 
+      // 2. Fetch current user to validate rules
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception("Login cancelled");
 
       final email = user.email ?? "";
 
+      // ============================
+      // 🔐 STUDENT TAB SECURITY RULES
+      // ============================
       if (_selectedTab == 0) {
-        if (!email.endsWith("@cit.ac.in")) {
+        // Rule: Must end in @cit.ac.in AND have numbers (e.g. d25...)
+        final bool isStudentEmail =
+            email.endsWith("@cit.ac.in") && RegExp(r'\d').hasMatch(email.split('@')[0]);
+
+        // Exception: Explicit Developer Whitelist
+        final bool isDeveloper = email == "codelithlabs@gmail.com" ||
+            email == "work.prasanta.ray@gmail.com";
+
+        if (!isStudentEmail && !isDeveloper) {
           await FirebaseAuth.instance.signOut();
-          _showError("Access Denied: Use your @cit.ac.in email.");
+          if (mounted) {
+            _showError("Access Denied: Use your official college email (e.g., d25...@cit.ac.in).");
+          }
           return;
         }
-      } else {
+      }
+
+      // ============================
+      // 🌱 ASPIRANT TAB RULES
+      // ============================
+      if (_selectedTab == 1) {
+        // Rule: Existing students shouldn't use Aspirant tab
         if (email.endsWith("@cit.ac.in")) {
           await FirebaseAuth.instance.signOut();
-          _showError("You already have a college ID.");
+          if (mounted) {
+            _showError("You already have a college ID. Use the Student tab.");
+          }
           return;
         }
+
+        // Redirect Aspirants manually (Student flow is handled by auth_state_switch in main.dart)
         if (mounted) context.go('/aspirant-dashboard');
       }
+
     } catch (e) {
-      _showError("Google Login Failed: $e");
+      if (mounted) {
+        _showError("Login Failed: ${e.toString()}");
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _handleDevBypass() async {
-    setState(() => _isLoading = true);
-    try {
-      await FirebaseAuth.instance.signInAnonymously();
-    } catch (_) {
-      _showError("Enable Anonymous Auth in Firebase Console.");
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+  // 🛠️ MISSING FUNCTION FIXED HERE
+  void _handleDevBypass() {
+    // Shortcut to Admin/Staff login for testing
+    context.push('/staff-login');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Developer Shortcut: Opening Staff Portal 🛠️"),
+        duration: Duration(seconds: 1),
+        backgroundColor: Colors.grey,
+      ),
+    );
   }
 
   void _showError(String msg) {
@@ -83,6 +115,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
+          // Background Blob 1
           Positioned(
             top: -100,
             left: -50,
@@ -98,6 +131,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             ),
           ),
+          // Background Blob 2
           Positioned(
             bottom: -50,
             right: -50,
@@ -120,12 +154,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // HEADER ROW
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const _IdentityMorphWidget(),
                       GestureDetector(
-                        onTap: _handleDevBypass,
+                        onTap: _handleDevBypass, // ✅ Error Fixed
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(
@@ -151,6 +186,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ],
                   ),
 
+                  // MAIN TITLE & SUBTITLE
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Column(
@@ -189,8 +225,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
 
+                  // LOGIN CONTROLS
                   Column(
                     children: [
+                      // Toggle Switch
                       Container(
                         padding: const EdgeInsets.all(4),
                         height: 55,
@@ -209,6 +247,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                       const SizedBox(height: 20),
 
+                      // Main Login Button
                       SizedBox(
                         width: double.infinity,
                         height: 60,
@@ -244,6 +283,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                       const SizedBox(height: 24),
 
+                      // Staff Login Link
                       GestureDetector(
                         onTap: () => context.push('/staff-login'),
                         child: Container(
@@ -305,6 +345,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 }
 
+// 🪄 FANCY ANIMATION WIDGET
 class _IdentityMorphWidget extends StatefulWidget {
   const _IdentityMorphWidget();
 
