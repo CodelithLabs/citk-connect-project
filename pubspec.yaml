@@ -28,6 +28,7 @@ dependencies:
   google_generative_ai: ^0.4.7
   google_maps_flutter: ^2.14.0
   shared_preferences: ^2.5.4
+  geolocator: ^14.0.2
   
 
   # Add other existing dependencies here

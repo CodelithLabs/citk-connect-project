@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:citk_connect/auth/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -22,64 +23,83 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   // 🛠️ MAIN LOGIN LOGIC
   Future<void> _handleSmartLogin() async {
-    setState(() => _isLoading = true);
+  setState(() => _isLoading = true);
 
-    try {
-      // 1. Trigger Google Sign-In via Riverpod Service
-      await ref.read(authServiceProvider.notifier).signInWithGoogle();
+  try {
+    // 1️⃣ Google Sign-In
+    await ref.read(authServiceProvider.notifier).signInWithGoogle();
 
-      // 2. Fetch current user to validate rules
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) throw Exception("Login cancelled");
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception("Login cancelled");
 
-      final email = user.email ?? "";
+    final email = user.email ?? "";
 
-      // ============================
-      // 🔐 STUDENT TAB SECURITY RULES
-      // ============================
-      if (_selectedTab == 0) {
-        // Rule: Must end in @cit.ac.in AND have numbers (e.g. d25...)
-        final bool isStudentEmail =
-            email.endsWith("@cit.ac.in") && RegExp(r'\d').hasMatch(email.split('@')[0]);
+    // ============================
+    // 🔐 STUDENT TAB RULES
+    // ============================
+    if (_selectedTab == 0) {
+      final bool isStudentEmail =
+          email.endsWith("@cit.ac.in") &&
+          RegExp(r'\d').hasMatch(email.split('@')[0]);
 
-        // Exception: Explicit Developer Whitelist
-        final bool isDeveloper = email == "codelithlabs@gmail.com" ||
-            email == "work.prasanta.ray@gmail.com";
+      final bool isDeveloper =
+          email == "codelithlabs@gmail.com" ||
+          email == "work.prasanta.ray@gmail.com";
 
-        if (!isStudentEmail && !isDeveloper) {
-          await FirebaseAuth.instance.signOut();
-          if (mounted) {
-            _showError("Access Denied: Use your official college email (e.g., d25...@cit.ac.in).");
-          }
-          return;
+      if (!isStudentEmail && !isDeveloper) {
+        await FirebaseAuth.instance.signOut();
+        if (mounted) {
+          _showError(
+            "Access Denied: Use your official college email (e.g. d25xxx@cit.ac.in).",
+          );
         }
+        return;
       }
 
-      // ============================
-      // 🌱 ASPIRANT TAB RULES
-      // ============================
-      if (_selectedTab == 1) {
-        // Rule: Existing students shouldn't use Aspirant tab
-        if (email.endsWith("@cit.ac.in")) {
-          await FirebaseAuth.instance.signOut();
-          if (mounted) {
-            _showError("You already have a college ID. Use the Student tab.");
-          }
-          return;
-        }
-
-        // Redirect Aspirants manually (Student flow is handled by auth_state_switch in main.dart)
-        if (mounted) context.go('/aspirant-dashboard');
-      }
-
-    } catch (e) {
-      if (mounted) {
-        _showError("Login Failed: ${e.toString()}");
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+      // ✅ Student role is auto-handled inside AuthService
     }
+
+    // ============================
+    // 🌱 ASPIRANT TAB RULES
+    // ============================
+    if (_selectedTab == 1) {
+      if (email.endsWith("@cit.ac.in")) {
+        await FirebaseAuth.instance.signOut();
+        if (mounted) {
+          _showError("You already have a college ID. Use the Student tab.");
+        }
+        return;
+      }
+
+      // ⚡ Force Aspirant role in Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .set(
+        {
+          'uid': user.uid,
+          'email': email,
+          'displayName': user.displayName,
+          'photoURL': user.photoURL,
+          'role': 'aspirant',
+          'lastLogin': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    }
+
+    // 🚀 NOTHING ELSE HERE
+    // GoRouter + Auth State Listener handles navigation automatically
+
+  } catch (e) {
+    if (mounted) {
+      _showError("Login Failed: ${e.toString()}");
+    }
+  } finally {
+    if (mounted) setState(() => _isLoading = false);
   }
+}
+
 
   // 🛠️ MISSING FUNCTION FIXED HERE
   void _handleDevBypass() {
