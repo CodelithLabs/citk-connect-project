@@ -7,7 +7,7 @@ class App extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final goRouter = ref.watch(goRouterProvider);
+    final goRouter = ref.watch(appRouterProvider);
     return MaterialApp.router(
       routerConfig: goRouter,
       title: 'CITK Connect',

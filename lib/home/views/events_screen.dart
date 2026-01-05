@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'dart:developer' as developer;
 import 'package:cloud_firestore/cloud_firestore.dart'; // 1. Import Firestore
 
 class EventsScreen extends StatelessWidget {
@@ -14,7 +15,8 @@ class EventsScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text("Notices & Events",
-            style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.white)),
+            style: GoogleFonts.inter(
+                fontWeight: FontWeight.bold, color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: ListView(
@@ -25,15 +27,27 @@ class EventsScreen extends StatelessWidget {
               style: GoogleFonts.inter(
                   color: Colors.grey, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-          
+
           StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('notices').orderBy('timestamp', descending: true).snapshots(),
+            stream: FirebaseFirestore.instance
+                .collection('notices')
+                .orderBy('timestamp', descending: true)
+                .limit(50) // 🛡️ Safety: Prevent unbounded reads
+                .snapshots(),
             builder: (context, snapshot) {
-              if (snapshot.hasError) return const Text("Error loading notices", style: TextStyle(color: Colors.red));
-              if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-              
+              if (snapshot.hasError) {
+                developer.log('❌ Notices Error',
+                    error: snapshot.error, name: 'FIRESTORE');
+                return const Text("Error loading notices",
+                    style: TextStyle(color: Colors.red));
+              }
+              if (!snapshot.hasData)
+                return const Center(child: CircularProgressIndicator());
+
               final docs = snapshot.data!.docs;
-              if (docs.isEmpty) return const Text("No new updates.", style: TextStyle(color: Colors.grey));
+              if (docs.isEmpty)
+                return const Text("No new updates.",
+                    style: TextStyle(color: Colors.grey));
 
               // Convert Firestore Docs to Widgets
               return Column(
@@ -44,8 +58,12 @@ class EventsScreen extends StatelessWidget {
                     date: data['date'] ?? 'Just now',
                     type: data['type'] ?? 'INFO',
                     // Logic to pick color based on type
-                    color: (data['type'] == 'URGENT') ? Colors.redAccent : Colors.orangeAccent,
-                    icon: (data['type'] == 'URGENT') ? Icons.priority_high : Icons.info_outline,
+                    color: (data['type'] == 'URGENT')
+                        ? Colors.redAccent
+                        : Colors.orangeAccent,
+                    icon: (data['type'] == 'URGENT')
+                        ? Icons.priority_high
+                        : Icons.info_outline,
                   );
                 }).toList(),
               );
@@ -61,13 +79,24 @@ class EventsScreen extends StatelessWidget {
           const SizedBox(height: 10),
 
           StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('events').orderBy('date_sort', descending: false).snapshots(),
+            stream: FirebaseFirestore.instance
+                .collection('events')
+                .orderBy('date_sort', descending: false)
+                .limit(50) // 🛡️ Safety: Prevent unbounded reads
+                .snapshots(),
             builder: (context, snapshot) {
-              if (snapshot.hasError) return const SizedBox(); // Hide if error
-              if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+              if (snapshot.hasError) {
+                developer.log('❌ Events Error',
+                    error: snapshot.error, name: 'FIRESTORE');
+                return const SizedBox();
+              }
+              if (!snapshot.hasData)
+                return const Center(child: CircularProgressIndicator());
 
               final docs = snapshot.data!.docs;
-              if (docs.isEmpty) return const Text("No upcoming events.", style: TextStyle(color: Colors.grey));
+              if (docs.isEmpty)
+                return const Text("No upcoming events.",
+                    style: TextStyle(color: Colors.grey));
 
               return Column(
                 children: docs.map((doc) {
@@ -77,7 +106,7 @@ class EventsScreen extends StatelessWidget {
                     date: data['date_display'] ?? 'TBA',
                     location: data['location'] ?? 'Campus',
                     // Random-ish color assignment or stored in DB
-                    imageColor: _getColorFromHex(data['color_hex']), 
+                    imageColor: _getColorFromHex(data['color_hex']),
                   );
                 }).toList(),
               );
@@ -126,7 +155,8 @@ class EventsScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(4)),
+                          color: color.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(4)),
                       child: Text(type,
                           style: GoogleFonts.inter(
                               fontSize: 10,
@@ -176,7 +206,10 @@ class EventsScreen extends StatelessWidget {
             height: 120,
             width: double.infinity,
             decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [imageColor.withValues(alpha: 0.4), imageColor.withValues(alpha: 0.1)]),
+              gradient: LinearGradient(colors: [
+                imageColor.withValues(alpha: 0.4),
+                imageColor.withValues(alpha: 0.1)
+              ]),
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(16)),
             ),

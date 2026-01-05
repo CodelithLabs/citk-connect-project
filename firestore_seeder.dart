@@ -1,0 +1,55 @@
+import 'dart:developer' as developer;
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+/// 🚜 FIRESTORE SEEDER
+/// Run this to populate the database with initial data.
+/// Usage: await FirestoreSeeder.seedFleet();
+class FirestoreSeeder {
+  static const String _collection = 'fleet';
+
+  /// Seeds the 'fleet' collection with default vehicles.
+  /// ⚠️ WARNING: Overwrites existing data for these IDs.
+  static Future<void> seedFleet() async {
+    final firestore = FirebaseFirestore.instance;
+
+    final List<Map<String, dynamic>> fleetData = [
+      {
+        'id': 'BUS-01',
+        'pin': '1234', // ⚠️ Change this in production
+        'plateNumber': 'AS-16-C-1234',
+        'status': 'active',
+        'type': 'bus',
+      },
+      {
+        'id': 'BUS-02',
+        'pin': '5678',
+        'plateNumber': 'AS-16-C-5678',
+        'status': 'active',
+        'type': 'bus',
+      },
+      {
+        'id': 'SHUTTLE-01',
+        'pin': '9999',
+        'plateNumber': 'AS-16-C-9999',
+        'status': 'maintenance',
+        'type': 'shuttle',
+      },
+    ];
+
+    try {
+      for (final vehicle in fleetData) {
+        final id = vehicle['id'] as String;
+        final data = Map<String, dynamic>.from(vehicle)..remove('id');
+
+        await firestore
+            .collection(_collection)
+            .doc(id)
+            .set(data, SetOptions(merge: true));
+        developer.log('✅ Seeded vehicle: $id', name: 'SEEDER');
+      }
+      developer.log('🎉 Fleet collection seeded successfully!', name: 'SEEDER');
+    } catch (e) {
+      developer.log('❌ Error seeding fleet: $e', name: 'SEEDER');
+    }
+  }
+}

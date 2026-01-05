@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:citk_connect/auth/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class StaffLoginScreen extends ConsumerStatefulWidget {
   const StaffLoginScreen({super.key});
@@ -92,13 +93,20 @@ class _StaffLoginScreenState extends ConsumerState<StaffLoginScreen> {
       return;
     }
 
-    if (pin != "1234") {
-      _showError("Invalid Access PIN.");
-      setState(() => _isLoading = false);
-      return;
-    }
-
     try {
+      // 🔒 SECURE PIN VERIFICATION (Fleet Registry)
+      final doc = await FirebaseFirestore.instance
+          .collection('fleet')
+          .doc(vehicleId)
+          .get();
+
+      if (!doc.exists || doc.data()?['pin'] != pin) {
+        // Generic error message for security
+        _showError("Access Denied: Invalid Vehicle ID or PIN.");
+        setState(() => _isLoading = false);
+        return;
+      }
+
       await ref.read(authServiceProvider.notifier).signInAsDriver(vehicleId);
       _toast("Vehicle system online.");
       // context.go('/driver-dashboard'); // add later

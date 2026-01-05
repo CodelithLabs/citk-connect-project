@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// 🚌 BUS DATA MODEL
@@ -49,6 +50,12 @@ class BusService {
   // 📡 DRIVER: Broadcast Location to Cloud
   Future<void> broadcastLocation(String busId, double lat, double lng,
       double heading, double speed, String condition, String occupancy) async {
+    // 🛡️ Security: Verify user is logged in
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw Exception("Unauthorized: Must be logged in to broadcast.");
+    }
+
     await _db.collection('buses').doc(busId).set({
       'lat': lat,
       'lng': lng,
@@ -58,6 +65,7 @@ class BusService {
       'condition': condition,
       'occupancy': occupancy,
       'lastUpdated': FieldValue.serverTimestamp(),
+      'driverId': user.uid, // 🔑 Link update to specific driver
     }, SetOptions(merge: true));
   }
 
@@ -79,5 +87,22 @@ class BusService {
       }
       return BusData.fromMap(snapshot.data()!, snapshot.id);
     });
+  }
+
+  // 🗺️ ROUTE: Fetch dynamic path from Cloud
+  Future<List<Map<String, double>>> getRoute(String busId) async {
+    try {
+      final doc = await _db.collection('routes').doc(busId).get();
+      if (doc.exists && doc.data()?['points'] != null) {
+        final List<dynamic> data = doc.data()!['points'];
+        return data
+            .map((p) => {
+                  'lat': (p['lat'] as num).toDouble(),
+                  'lng': (p['lng'] as num).toDouble(),
+                })
+            .toList();
+      }
+    } catch (_) {}
+    return []; // Return empty if failed, UI handles fallback
   }
 }

@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -12,7 +14,7 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   // 10 Facts about CITK (Mix of history and student life)
-  final List<String> _facts = [
+  List<String> _facts = [
     "Did you know? CITK was established on December 19, 2006.",
     "CITK is centrally funded by the Ministry of HRD, Govt. of India.",
     "The campus spans over huge acres of lush greenery in Kokrajhar.",
@@ -31,6 +33,9 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    _fetchRemoteFacts(); // ☁️ Fetch dynamic facts
+    _facts.shuffle(); // 🔀 Randomize facts so it's different every time
+
     // Rotate facts every 2.5 seconds
     _timer = Timer.periodic(const Duration(milliseconds: 2500), (timer) {
       setState(() {
@@ -42,6 +47,46 @@ class _SplashScreenState extends State<SplashScreen> {
     Future.delayed(const Duration(seconds: 8), () {
       if (mounted) context.go('/onboarding'); // Go to onboarding first!
     });
+  }
+
+  // ☁️ REMOTE CONFIG: Fetch facts from Firestore
+  Future<void> _fetchRemoteFacts() async {
+    final prefs = await SharedPreferences.getInstance();
+    const cacheKey = 'splash_facts_cache';
+
+    // 1. Load Cache First (Instant UI)
+    final cachedFacts = prefs.getStringList(cacheKey);
+    if (cachedFacts != null && cachedFacts.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          _facts = cachedFacts;
+          _facts.shuffle();
+        });
+      }
+    }
+
+    // 2. Fetch Fresh Data
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('app_config')
+          .doc('splash')
+          .get();
+      if (doc.exists && doc.data()?['facts'] != null) {
+        final newFacts = List<String>.from(doc.data()!['facts']);
+
+        // Save to Cache
+        await prefs.setStringList(cacheKey, newFacts);
+
+        if (mounted) {
+          setState(() {
+            _facts = newFacts;
+            _facts.shuffle();
+            _currentFactIndex =
+                0; // 🛡️ Safety: Reset index to prevent RangeError
+          });
+        }
+      }
+    } catch (_) {} // Silent fail: keep default facts
   }
 
   @override
@@ -64,35 +109,42 @@ class _SplashScreenState extends State<SplashScreen> {
                   center: Alignment.topCenter,
                   radius: 1.5,
                   colors: [
-                    Theme.of(context).colorScheme.primary.withValues(alpha: 0.15), // FIXED
+                    Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withValues(alpha: 0.15), // FIXED
                     Colors.transparent,
                   ],
                 ),
               ),
             ),
           ),
-          
+
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Spacer(),
-              
+
               // Animated Logo
               const Icon(Icons.hub, size: 80, color: Colors.white)
-                  .animate(onPlay: (controller) => controller.repeat(reverse: true))
-                  .scale(duration: 1000.ms, begin: const Offset(1, 1), end: const Offset(1.1, 1.1))
+                  .animate(
+                      onPlay: (controller) => controller.repeat(reverse: true))
+                  .scale(
+                      duration: 1000.ms,
+                      begin: const Offset(1, 1),
+                      end: const Offset(1.1, 1.1))
                   .then()
                   .shimmer(duration: 2000.ms, color: const Color(0xFF4285F4)),
 
               const SizedBox(height: 20),
-              
+
               Text(
                 "CITK CONNECT",
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.5,
-                  color: Colors.white,
-                ),
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.5,
+                      color: Colors.white,
+                    ),
               ).animate().fadeIn(duration: 800.ms).moveY(begin: 20, end: 0),
 
               const Spacer(),
@@ -104,7 +156,8 @@ class _SplashScreenState extends State<SplashScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 40),
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 500),
-                    transitionBuilder: (Widget child, Animation<double> animation) {
+                    transitionBuilder:
+                        (Widget child, Animation<double> animation) {
                       return FadeTransition(
                         opacity: animation,
                         child: SlideTransition(
@@ -118,24 +171,24 @@ class _SplashScreenState extends State<SplashScreen> {
                     },
                     child: Text(
                       _facts[_currentFactIndex],
-                      key: ValueKey<int>(_currentFactIndex), // Important for animation
+                      key: ValueKey<int>(_currentFactIndex), // ✅ Has key
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.white70,
-                        height: 1.5,
-                      ),
+                            color: Colors.white70,
+                            height: 1.5,
+                          ),
                     ),
                   ),
                 ),
               ),
 
               const SizedBox(height: 20),
-              
+
               // Google Colored Loader
               const CircularProgressIndicator(
                 color: Color(0xFF4285F4), // Google Blue
               ),
-              
+
               const SizedBox(height: 50),
             ],
           ),

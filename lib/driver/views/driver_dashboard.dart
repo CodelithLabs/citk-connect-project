@@ -1,11 +1,12 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:citk_connect/map/views/bus_service.dart' as bus_service;
+import 'package:citk_connect/map/services/bus_service.dart' as bus_service;
 
 class DriverDashboard extends ConsumerStatefulWidget {
   const DriverDashboard({super.key});
@@ -17,6 +18,7 @@ class DriverDashboard extends ConsumerStatefulWidget {
 class _DriverDashboardState extends ConsumerState<DriverDashboard> {
   bool _isBroadcasting = false;
   StreamSubscription<Position>? _positionStream;
+  DateTime? _lastBroadcastTime; // 🧠 Smart Batching Tracker
 
   // 🚌 DYNAMIC CONFIG
   String _selectedBusId = "bus_04"; // Default to Bus 4
@@ -57,23 +59,74 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
       setState(() => _isBroadcasting = false);
     } else {
       // START BROADCASTING
+      // 0. Check GPS Service Status
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) _showLocationServiceDialog();
+        return;
+      }
+
       // 1. Check Permissions
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) return;
+        if (permission == LocationPermission.denied) return; // User rejected
       }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) _showPermissionDialog();
+        return;
+      }
+
+      // 🛡️ MEMORY LEAK FIX: Prevent stream start if widget was disposed during permission check
+      if (!mounted) return;
 
       setState(() => _isBroadcasting = true);
 
-      // 2. Start Stream (High Accuracy)
-      _positionStream = Geolocator.getPositionStream(
-        locationSettings: const LocationSettings(
+      // 2. Configure Background Settings
+      LocationSettings locationSettings;
+
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        locationSettings = AndroidSettings(
           accuracy: LocationAccuracy.high,
-          distanceFilter: 10, // Only update if moved 10 meters
-        ),
+          distanceFilter: 0, // ⚡ Get all updates (filter in code)
+          intervalDuration:
+              const Duration(seconds: 3), // ⚡ Force update every 3s
+          // 🔔 Foreground Notification: Keeps service alive when minimized
+          foregroundNotificationConfig: const ForegroundNotificationConfig(
+            notificationTitle: "CITK Driver Active",
+            notificationText: "Broadcasting location to campus...",
+            enableWakeLock: true,
+          ),
+        );
+      } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+        locationSettings = AppleSettings(
+          accuracy: LocationAccuracy.high,
+          activityType: ActivityType.automotiveNavigation,
+          distanceFilter: 0, // ⚡ Get all updates
+          pauseLocationUpdatesAutomatically: false,
+          showBackgroundLocationIndicator: true,
+        );
+      } else {
+        locationSettings = const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 0,
+        );
+      }
+
+      // 3. Start Stream
+      _positionStream = Geolocator.getPositionStream(
+        locationSettings: locationSettings,
       ).listen((Position position) {
-        // 3. Send to Cloud
+        // 🧠 SMART BATCHING: Throttle Firestore Writes
+        final now = DateTime.now();
+        if (_lastBroadcastTime != null &&
+            now.difference(_lastBroadcastTime!) < const Duration(seconds: 3)) {
+          return; // ⏳ Throttle: Prevent Firestore spam
+        }
+        _lastBroadcastTime = now;
+
+        // 4. Send to Cloud
         ref.read(bus_service.busServiceProvider).broadcastLocation(
               _selectedBusId,
               position.latitude,
@@ -85,6 +138,70 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
             );
       });
     }
+  }
+
+  void _showLocationServiceDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF181B21),
+        title: Text("GPS Disabled",
+            style: GoogleFonts.inter(
+                color: Colors.white, fontWeight: FontWeight.bold)),
+        content: Text(
+          "Location services are turned off. Please enable GPS to broadcast.",
+          style: GoogleFonts.inter(color: Colors.grey[400]),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Cancel", style: GoogleFonts.inter(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Geolocator.openLocationSettings();
+            },
+            child: Text("Enable",
+                style: GoogleFonts.inter(
+                    color: const Color(0xFF6C63FF),
+                    fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPermissionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF181B21),
+        title: Text("Location Required",
+            style: GoogleFonts.inter(
+                color: Colors.white, fontWeight: FontWeight.bold)),
+        content: Text(
+          "To broadcast bus location, please enable location permissions in App Settings.",
+          style: GoogleFonts.inter(color: Colors.grey[400]),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Cancel", style: GoogleFonts.inter(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Geolocator.openAppSettings();
+            },
+            child: Text("Open Settings",
+                style: GoogleFonts.inter(
+                    color: const Color(0xFF6C63FF),
+                    fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

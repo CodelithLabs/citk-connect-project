@@ -6,7 +6,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:citk_connect/map/views/bus_service.dart';
+import 'package:citk_connect/map/models/bus_data.dart';
+import 'package:citk_connect/map/services/bus_service.dart';
 
 class BusTrackerScreen extends ConsumerStatefulWidget {
   const BusTrackerScreen({super.key});
@@ -19,20 +20,16 @@ class _BusTrackerScreenState extends ConsumerState<BusTrackerScreen>
     with SingleTickerProviderStateMixin {
   final Completer<GoogleMapController> _controller = Completer();
 
-  // 🗺️ STATIC ROUTE (Visual Guide Only)
-  // We keep this to show the "Path" line, even though the bus moves via GPS.
-  final List<LatLng> _routePoints = [
-    const LatLng(26.4700, 90.2700), // Santinagar (Start)
-    const LatLng(26.4720, 90.2680),
-    const LatLng(26.4750, 90.2660),
-    const LatLng(26.4780, 90.2640),
-    const LatLng(26.4800, 90.2620),
-    const LatLng(26.4820, 90.2600),
-    const LatLng(26.4850, 90.2590),
-    const LatLng(26.4862, 90.2582), // CITK Campus (End)
+  // 🗺️ DYNAMIC ROUTE (Fetched from Cloud)
+  List<LatLng> _routePoints = [
+    const LatLng(26.4700, 90.2700), // Default Start
+    const LatLng(26.4862, 90.2582), // Default End
   ];
 
-  // 🚌 REAL-TIME STATE
+  // 📜 HISTORY PATH
+  final List<LatLng> _historyPoints = [];
+
+  //  REAL-TIME STATE
   Marker? _busMarker;
   String _selectedBusId = "bus_04"; // Default
   final List<String> _buses = ["bus_01", "bus_02", "bus_03", "bus_04"];
@@ -54,6 +51,7 @@ class _BusTrackerScreenState extends ConsumerState<BusTrackerScreen>
   void initState() {
     super.initState();
     _checkAccess();
+    _fetchRoute(); // 🚀 Load dynamic route
     // Initialize Animation Controller (runs for 2 seconds per update)
     _animController = AnimationController(
       vsync: this,
@@ -75,6 +73,15 @@ class _BusTrackerScreenState extends ConsumerState<BusTrackerScreen>
       // Handle edge case or guest
     }
     setState(() => _isLoading = false);
+  }
+
+  Future<void> _fetchRoute() async {
+    final points = await ref.read(busServiceProvider).getRoute(_selectedBusId);
+    if (mounted && points.isNotEmpty) {
+      setState(() {
+        _routePoints = points.map((p) => LatLng(p['lat']!, p['lng']!)).toList();
+      });
+    }
   }
 
   @override
@@ -126,6 +133,12 @@ class _BusTrackerScreenState extends ConsumerState<BusTrackerScreen>
     // 2. Set new Target
     _targetPosition = LatLng(data.lat, data.lng);
     _targetHeading = data.heading;
+
+    // 🆕 Add to History
+    if (_historyPoints.isEmpty || _historyPoints.last != _targetPosition) {
+      _historyPoints.add(_targetPosition);
+    }
+
     _currentCondition = data.condition;
     _currentOccupancy = data.occupancy;
 
@@ -180,8 +193,15 @@ class _BusTrackerScreenState extends ConsumerState<BusTrackerScreen>
               Polyline(
                 polylineId: const PolylineId('route'),
                 points: _routePoints,
-                color: const Color(0xFF6C63FF),
+                color: const Color(0xFF6C63FF).withValues(alpha: 0.3),
                 width: 5,
+              ),
+              // 📜 History Polyline
+              Polyline(
+                polylineId: const PolylineId('history'),
+                points: _historyPoints,
+                color: Colors.greenAccent,
+                width: 4,
               ),
             },
             markers: _busMarker != null ? {_busMarker!} : {},
@@ -334,7 +354,10 @@ class _BusTrackerScreenState extends ConsumerState<BusTrackerScreen>
                   final busId = _buses[index];
                   final isSelected = busId == _selectedBusId;
                   return GestureDetector(
-                    onTap: () => setState(() => _selectedBusId = busId),
+                    onTap: () {
+                      setState(() => _selectedBusId = busId);
+                      _fetchRoute(); // 🔄 Fetch new route for selected bus
+                    },
                     child: Container(
                       margin: const EdgeInsets.only(right: 10),
                       padding: const EdgeInsets.symmetric(

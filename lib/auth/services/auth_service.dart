@@ -6,17 +6,22 @@ import 'google_signin_config.dart';
 import 'cit_parser.dart'; // Don't forget this import
 
 final authServiceProvider =
-    StateNotifierProvider<AuthService, AsyncValue<User?>>((ref) => AuthService());
+    StateNotifierProvider<AuthService, AsyncValue<User?>>(
+        (ref) => AuthService());
 
 class AuthService extends StateNotifier<AsyncValue<User?>> {
   // 🟢 OLD CODE: The constructor listener is crucial
   AuthService() : super(const AsyncValue.data(null)) {
     _auth.authStateChanges().listen((user) async {
-      if (user != null) {
-        // ⚡ NEW FEATURE: Trigger the smart sync
-        await _syncUserData(user);
+      try {
+        if (user != null) {
+          // ⚡ NEW FEATURE: Trigger the smart sync
+          await _syncUserData(user);
+        }
+        if (mounted) state = AsyncValue.data(user);
+      } catch (e, st) {
+        if (mounted) state = AsyncValue.error(e, st);
       }
-      state = AsyncValue.data(user);
     });
   }
 
@@ -35,37 +40,38 @@ class AuthService extends StateNotifier<AsyncValue<User?>> {
     if (!email.endsWith("@cit.ac.in")) return;
 
     final userRef = _db.collection('users').doc(user.uid);
-    
+
     try {
-      // Check if user has "locked" their profile (Manual Override)
-      final doc = await userRef.get();
-      if (doc.exists && doc.data()?['isManualOverride'] == true) {
-        return; 
-      }
+      // 🛡️ Transaction: Prevents race conditions if multiple logins happen
+      await _db.runTransaction((transaction) async {
+        final doc = await transaction.get(userRef);
 
-      // Parse Data
-      final data = CITParser.parseEmail(email);
+        // Check if user has "locked" their profile (Manual Override)
+        if (doc.exists && doc.data()?['isManualOverride'] == true) {
+          return; // Stop! Don't overwrite manual data
+        }
 
-      // Data to Write
-      Map<String, dynamic> updateData = {
-        'uid': user.uid,
-        'email': email,
-        'role': data.role,
-        'degree': data.degree,
-        'branch': data.branch,
-        'department': data.department,
-        'batch': data.batch,
-        'rollNumber': data.rollNumber,
-        'isGraduated': data.isGraduated,
-        'last_synced': FieldValue.serverTimestamp(),
-      };
+        // Parse Data
+        final data = CITParser.parseEmail(email);
 
-      // 🛡️ Safety: Only overwrite Semester if NOT manual override
-      // (We already checked override above, but this double checks logic flow)
-      updateData['semester'] = data.semester;
+        // Data to Write
+        Map<String, dynamic> updateData = {
+          'uid': user.uid,
+          'email': email,
+          'role': data.role,
+          'degree': data.degree,
+          'branch': data.branch,
+          'department': data.department,
+          'batch': data.batch,
+          'rollNumber': data.rollNumber,
+          'isGraduated': data.isGraduated,
+          'last_synced': FieldValue.serverTimestamp(),
+          'semester': data.semester,
+        };
 
-      await userRef.set(updateData, SetOptions(merge: true));
-
+        // Write safely within transaction
+        transaction.set(userRef, updateData, SetOptions(merge: true));
+      });
     } catch (e) {
       print("Sync Error: $e");
     }
@@ -82,9 +88,11 @@ class AuthService extends StateNotifier<AsyncValue<User?>> {
         state = const AsyncValue.data(null);
         return;
       }
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
       final OAuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken, idToken: googleAuth.idToken,
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
       );
       await _auth.signInWithCredential(credential);
     } catch (e, st) {
@@ -109,15 +117,19 @@ class AuthService extends StateNotifier<AsyncValue<User?>> {
   // 3️⃣ MANUAL STUDENT REGISTRATION (Preserved from OLD CODE)
   // ============================================================
   Future<void> signUpWithEmailAndPassword({
-    required String email, required String password, required String name,
-    required String department, required String semester,
+    required String email,
+    required String password,
+    required String name,
+    required String department,
+    required String semester,
   }) async {
     try {
-      final cred = await _auth.createUserWithEmailAndPassword(email: email, password: password);
+      final cred = await _auth.createUserWithEmailAndPassword(
+          email: email, password: password);
       final user = cred.user;
       if (user != null) {
         await user.updateDisplayName(name);
-        
+
         // Save Manually - AND set 'isManualOverride' to true
         // This prevents the Parser from overwriting this data later
         await _db.collection('users').doc(user.uid).set({
@@ -161,7 +173,7 @@ class AuthService extends StateNotifier<AsyncValue<User?>> {
   // ============================================================
   // 5️⃣ UTILS (Preserved)
   // ============================================================
-  Future<void> sendPasswordResetEmail(String email) async => 
+  Future<void> sendPasswordResetEmail(String email) async =>
       await _auth.sendPasswordResetEmail(email: email);
 
   Future<void> signOut() async {

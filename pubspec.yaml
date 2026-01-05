@@ -29,7 +29,8 @@ dependencies:
   google_maps_flutter: ^2.14.0
   shared_preferences: ^2.5.4
   geolocator: ^14.0.2
-  
+  share_plus: ^12.0.1
+  flutter_tts: ^4.2.3
 
   # Add other existing dependencies here
 
