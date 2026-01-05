@@ -68,4 +68,8 @@ Built with **Flutter** & **Google Gemini AI**.
     ```
 
 ---
-Made with ❤️ by **Codeleth Labs** for the Google GenAI Hackathon.
+
+## 🤝 Contributing
+Built with ❤️ by **Team CodelithLabs** for the Google Solutions Challenge.
+
+---
