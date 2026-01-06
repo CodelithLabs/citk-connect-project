@@ -97,7 +97,7 @@ class _RoleDispatcherState extends ConsumerState<RoleDispatcher> {
           // 2️⃣ ERROR STATE (Network issues, permission denied, etc.)
           // ─────────────────────────────────────────────────────────────────
           if (snapshot.hasError) {
-            _logError('Firestore stream error', snapshot.error);
+            _logError('Firestore stream error', snapshot.error ?? 'Unknown Firestore error');
             return _ErrorStateWidget(
               error: snapshot.error.toString(),
               onRetry: _retryCount < _maxRetries ? _handleRetry : null,

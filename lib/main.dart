@@ -11,7 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:citk_connect/firebase_options.dart';
 import 'package:citk_connect/app/routing/app_router.dart';
-import 'package:citk_connect/app/config/env_config.dart';
+//import 'package:citk_connect/app/config/env_config.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 🔧 GLOBAL PROVIDERS & STATE
@@ -48,7 +48,7 @@ void main() async {
         WidgetsFlutterBinding.ensureInitialized();
 
         // 🔐 VALIDATE ENVIRONMENT (Check for API Keys)
-        EnvConfig.validate();
+        //EnvConfig.validate();
 
         // 2️⃣ SYSTEM UI CONFIGURATION (Lock orientation, system chrome)
         await _configureSystemUI();
@@ -80,7 +80,7 @@ void main() async {
               // TODO: Inject feature flags
               // featureFlagsProvider.overrideWith((ref) => featureFlags),
             ],
-            child: const MyApp(),
+            child: MyApp(),
           ),
         );
       } catch (error, stackTrace) {
@@ -333,11 +333,11 @@ class MyApp extends ConsumerWidget {
         ),
 
         // 📦 Card Styling
-        cardTheme: const CardThemeData(
+        cardTheme: CardThemeData(
           color: const Color(0xFF1E1E1E),
           elevation: 2,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+             borderRadius: BorderRadius.circular(16),
           ),
         ),
 

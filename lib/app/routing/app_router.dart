@@ -14,7 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../splash/splash_screen.dart';
 import '../../auth/views/login_screen.dart';
 import '../../auth/views/staff_login_screen.dart';
-import '../../onboarding/onboarding_page.dart'; // TODO: Create this if missing
+import '../../onboarding/views/onboarding_screen.dart';
 import 'role_dispatcher.dart';
 import '../../auth/providers/auth_provider.dart';
 
@@ -32,7 +32,7 @@ import 'package:citk_connect/main.dart' show onboardingStateProvider;
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   // Watch authentication state changes
-  final authStream = ref.watch(authStateChangesProvider.notifier).stream;
+  final authStream = ref.watch(authStateChangesProvider.stream);
 
   // Watch onboarding completion state
   final seenOnboarding = ref.watch(onboardingStateProvider);
@@ -95,7 +95,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/onboarding',
         name: 'onboarding',
         builder: (context, state) {
-          return const OnboardingPage();
+          return const OnboardingScreen();
         },
       ),
 
