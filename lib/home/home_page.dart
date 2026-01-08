@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:citk_connect/aspirant/views/aspirant_dashboard.dart';
@@ -31,7 +32,11 @@ final updatesStreamProvider =
   // Fetch more if searching to allow client-side filtering
   final limit = search.isEmpty ? 1 : 20;
 
-  return query.orderBy('timestamp', descending: true).limit(limit).snapshots().map((snapshot) {
+  return query
+      .orderBy('timestamp', descending: true)
+      .limit(limit)
+      .snapshots()
+      .map((snapshot) {
     if (search.isEmpty) return snapshot.docs;
     return snapshot.docs.where((doc) {
       final data = doc.data() as Map<String, dynamic>;
@@ -117,215 +122,227 @@ class _StudentDashboard extends ConsumerWidget {
     final searchQuery = ref.watch(searchQueryProvider);
 
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: Stack(
+        children: [
+          const Positioned.fill(child: _SnowfallBackground()),
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const _MorphingHeader(),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Good Morning,',
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          color: Colors.grey,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const _MorphingHeader(),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Good Morning,',
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          Text(
+                            displayName,
+                            style: GoogleFonts.inter(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        displayName,
-                        style: GoogleFonts.inter(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF2C2C2C),
+                          shape: BoxShape.circle,
                         ),
+                        clipBehavior: Clip.antiAlias,
+                        child: user?.photoURL != null
+                            ? CachedNetworkImage(
+                                imageUrl: user!.photoURL!,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => const Center(
+                                  child: SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2)),
+                                ),
+                                errorWidget: (context, url, error) =>
+                                    const Icon(Icons.person,
+                                        color: Colors.white),
+                              )
+                            : const Icon(Icons.person, color: Colors.white),
                       ),
                     ],
                   ),
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF2C2C2C),
-                      shape: BoxShape.circle,
+                  const SizedBox(height: 32),
+
+                  // Feature Cards
+                  _buildFeatureCard(
+                    context,
+                    title: 'Bus Tracker',
+                    subtitle: 'Live location & ETA',
+                    icon: Icons.directions_bus,
+                    color: const Color(0xFF6C63FF),
+                    onTap: () => context.go('/bus'),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildFeatureCard(
+                    context,
+                    title: 'AI Assistant',
+                    subtitle: 'Ask about exams & hostels',
+                    icon: Icons.chat_bubble_outline,
+                    color: Colors.orangeAccent,
+                    onTap: () => context.go('/chat'),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildFeatureCard(
+                    context,
+                    title: 'Virtual Tour',
+                    subtitle: 'Explore campus in 360°',
+                    icon: Icons.video_camera_back_outlined,
+                    color: Colors.blueAccent,
+                    onTap: () => _launchVirtualTour(context),
+                  ),
+
+                  const SizedBox(height: 32),
+                  // Search Bar
+                  TextField(
+                    onChanged: (val) =>
+                        ref.read(searchQueryProvider.notifier).state = val,
+                    style: GoogleFonts.inter(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: 'Search updates...',
+                      hintStyle: GoogleFonts.inter(color: Colors.grey),
+                      prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                      filled: true,
+                      fillColor: const Color(0xFF181B21),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
                     ),
-                    clipBehavior: Clip.antiAlias,
-                    child: user?.photoURL != null
-                        ? CachedNetworkImage(
-                            imageUrl: user!.photoURL!,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => const Center(
-                              child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                  ),
+                  const SizedBox(height: 32),
+                  Text(
+                    'Recent Updates',
+                    style: GoogleFonts.inter(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Filter Chips
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: ['All', 'Exam', 'Event', 'General'].map((cat) {
+                        final isSelected = filter == cat;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Text(cat),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              if (selected) {
+                                ref
+                                    .read(updateCategoryFilterProvider.notifier)
+                                    .state = cat;
+                              }
+                            },
+                            backgroundColor: const Color(0xFF181B21),
+                            selectedColor:
+                                const Color(0xFF6C63FF).withValues(alpha: 0.2),
+                            labelStyle: GoogleFonts.inter(
+                              color: isSelected
+                                  ? const Color(0xFF6C63FF)
+                                  : Colors.grey,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
                             ),
-                            errorWidget: (context, url, error) => const Icon(Icons.person, color: Colors.white),
-                          )
-                        : const Icon(Icons.person, color: Colors.white),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(
+                                  color: isSelected
+                                      ? const Color(0xFF6C63FF)
+                                      : Colors.white.withValues(alpha: 0.1)),
+                            ),
+                            showCheckmark: false,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  updatesAsync.when(
+                    data: (docs) {
+                      if (docs.isEmpty && searchQuery.isNotEmpty) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Text(
+                              "No updates found",
+                              style: GoogleFonts.inter(color: Colors.grey),
+                            ),
+                          ),
+                        );
+                      }
+
+                      // 🛡️ Default/Fallback Data (Shows if DB is empty and not searching)
+                      if (docs.isEmpty) {
+                        return _buildUpdateCard(
+                          context,
+                          ref,
+                          title: 'Early Access',
+                          message:
+                              'Welcome to the beta version of CITK Connect. More features coming soon!',
+                          timestamp: null,
+                          docId: null,
+                          readUpdates: readUpdates,
+                        );
+                      }
+
+                      return Column(
+                        children: docs.map((doc) {
+                          final data = doc.data() as Map<String, dynamic>;
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _buildUpdateCard(
+                              context,
+                              ref,
+                              title: data['title'] ?? 'Update',
+                              message: data['message'] ?? '',
+                              timestamp: data['timestamp'] as Timestamp?,
+                              docId: doc.id,
+                              readUpdates: readUpdates,
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    },
+                    loading: () => const _UpdatesShimmerLoading(),
+                    error: (e, _) => Text('Error loading updates',
+                        style: GoogleFonts.inter(color: Colors.redAccent)),
                   ),
                 ],
               ),
-              const SizedBox(height: 32),
-
-              // Feature Cards
-              _buildFeatureCard(
-                context,
-                title: 'Bus Tracker',
-                subtitle: 'Live location & ETA',
-                icon: Icons.directions_bus,
-                color: const Color(0xFF6C63FF),
-                onTap: () => context.go('/bus'),
-              ),
-              const SizedBox(height: 16),
-              _buildFeatureCard(
-                context,
-                title: 'AI Assistant',
-                subtitle: 'Ask about exams & hostels',
-                icon: Icons.chat_bubble_outline,
-                color: Colors.orangeAccent,
-                onTap: () => context.go('/chat'),
-              ),
-              const SizedBox(height: 16),
-              _buildFeatureCard(
-                context,
-                title: 'Virtual Tour',
-                subtitle: 'Explore campus in 360°',
-                icon: Icons.video_camera_back_outlined,
-                color: Colors.blueAccent,
-                onTap: () => _launchVirtualTour(context),
-              ),
-
-              const SizedBox(height: 32),
-              // Search Bar
-              TextField(
-                onChanged: (val) =>
-                    ref.read(searchQueryProvider.notifier).state = val,
-                style: GoogleFonts.inter(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Search updates...',
-                  hintStyle: GoogleFonts.inter(color: Colors.grey),
-                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                  filled: true,
-                  fillColor: const Color(0xFF181B21),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                ),
-              ),
-              const SizedBox(height: 32),
-              Text(
-                'Recent Updates',
-                style: GoogleFonts.inter(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            const SizedBox(height: 12),
-            // Filter Chips
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: ['All', 'Exam', 'Event', 'General'].map((cat) {
-                  final isSelected = filter == cat;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(cat),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        if (selected) {
-                          ref.read(updateCategoryFilterProvider.notifier).state =
-                              cat;
-                        }
-                      },
-                      backgroundColor: const Color(0xFF181B21),
-                      selectedColor:
-                          const Color(0xFF6C63FF).withValues(alpha: 0.2),
-                      labelStyle: GoogleFonts.inter(
-                        color: isSelected
-                            ? const Color(0xFF6C63FF)
-                            : Colors.grey,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        side: BorderSide(
-                            color: isSelected
-                                ? const Color(0xFF6C63FF)
-                                : Colors.white.withValues(alpha: 0.1)),
-                      ),
-                      showCheckmark: false,
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            updatesAsync.when(
-              data: (docs) {
-                if (docs.isEmpty && searchQuery.isNotEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(
-                        "No updates found",
-                        style: GoogleFonts.inter(color: Colors.grey),
-                      ),
-                    ),
-                  );
-                }
-
-                // 🛡️ Default/Fallback Data (Shows if DB is empty and not searching)
-                if (docs.isEmpty) {
-                  return _buildUpdateCard(
-                    context,
-                    ref,
-                    title: 'Early Access',
-                    message:
-                        'Welcome to the beta version of CITK Connect. More features coming soon!',
-                    timestamp: null,
-                    docId: null,
-                    readUpdates: readUpdates,
-                  );
-                }
-
-                return Column(
-                  children: docs.map((doc) {
-                    final data = doc.data() as Map<String, dynamic>;
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _buildUpdateCard(
-                        context,
-                        ref,
-                        title: data['title'] ?? 'Update',
-                        message: data['message'] ?? '',
-                        timestamp: data['timestamp'] as Timestamp?,
-                        docId: doc.id,
-                        readUpdates: readUpdates,
-                      ),
-                    );
-                  }).toList(),
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Text('Error loading updates',
-                  style: GoogleFonts.inter(color: Colors.redAccent)),
-              ),
-            ],
+            )
+                .animate()
+                .fadeIn(duration: 600.ms)
+                .slideY(begin: 0.1, curve: Curves.easeOut),
           ),
-        )
-            .animate()
-            .fadeIn(duration: 600.ms)
-            .slideY(begin: 0.1, curve: Curves.easeOut),
+        ],
       ),
     );
   }
@@ -354,6 +371,13 @@ class _StudentDashboard extends ConsumerWidget {
           color: const Color(0xFF181B21),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF6C63FF).withValues(alpha: 0.05),
+              blurRadius: 15,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -513,59 +537,224 @@ class _StudentDashboard extends ConsumerWidget {
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFF181B21).withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.2),
+              blurRadius: 20,
+              spreadRadius: -5,
+              offset: const Offset(0, 8),
             ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF181B21).withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, color: color, size: 24),
                   ),
-                  child: Icon(icon, color: color, size: 24),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                      Text(
-                        subtitle,
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: Colors.grey,
+                        Text(
+                          subtitle,
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const Icon(Icons.arrow_forward_ios,
-                    color: Colors.grey, size: 16),
-              ],
+                  const Icon(Icons.arrow_forward_ios,
+                      color: Colors.grey, size: 16),
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
+}
+
+class _UpdatesShimmerLoading extends StatelessWidget {
+  const _UpdatesShimmerLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: List.generate(3, (index) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF181B21),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title placeholder
+                Container(
+                  width: 100,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Message line 1
+                Container(
+                  width: double.infinity,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Message line 2
+                Container(
+                  width: 200,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
+            ),
+          ).animate(onPlay: (controller) => controller.repeat()).shimmer(
+                duration: 1500.ms,
+                color: Colors.white.withValues(alpha: 0.05),
+                angle: 0.25,
+              ),
+        );
+      }),
+    );
+  }
+}
+
+class _SnowfallBackground extends StatefulWidget {
+  const _SnowfallBackground();
+
+  @override
+  State<_SnowfallBackground> createState() => _SnowfallBackgroundState();
+}
+
+class _SnowfallBackgroundState extends State<_SnowfallBackground>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  final List<_Snowflake> _snowflakes = [];
+  final Random _random = Random();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller =
+        AnimationController(vsync: this, duration: const Duration(seconds: 1))
+          ..repeat();
+    for (int i = 0; i < 50; i++) {
+      _snowflakes.add(_generateSnowflake());
+    }
+  }
+
+  _Snowflake _generateSnowflake() {
+    return _Snowflake(
+      x: _random.nextDouble(),
+      y: _random.nextDouble(),
+      size: _random.nextDouble() * 2 + 1,
+      speed: _random.nextDouble() * 0.002 + 0.001,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          for (var flake in _snowflakes) {
+            flake.y += flake.speed;
+            if (flake.y > 1.0) {
+              flake.y = 0.0;
+              flake.x = _random.nextDouble();
+            }
+          }
+          return CustomPaint(
+            painter: _SnowPainter(_snowflakes),
+            size: Size.infinite,
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _Snowflake {
+  double x;
+  double y;
+  double size;
+  double speed;
+  _Snowflake(
+      {required this.x,
+      required this.y,
+      required this.size,
+      required this.speed});
+}
+
+class _SnowPainter extends CustomPainter {
+  final List<_Snowflake> snowflakes;
+  _SnowPainter(this.snowflakes);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = Colors.white.withValues(alpha: 0.15);
+    for (var flake in snowflakes) {
+      canvas.drawCircle(Offset(flake.x * size.width, flake.y * size.height),
+          flake.size, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
 // 🚌 DRIVER DASHBOARD (Gen Z Professional)
@@ -736,7 +925,7 @@ class _DriverDashboard extends HookConsumerWidget {
             ],
           ),
         ),
-      ),
+      ), // Closing parenthesis for Padding
     );
   }
 }

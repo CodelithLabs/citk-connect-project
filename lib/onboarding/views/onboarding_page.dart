@@ -1,5 +1,5 @@
 import 'package:citk_connect/auth/services/auth_service.dart';
-import 'package:citk_connect/common/widgets/floating_role_toggle.dart';
+//import 'package:citk_connect/common/widgets/floating_role_toggle.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -179,9 +179,10 @@ class _OnboardingView extends HookConsumerWidget {
             left: 0,
             right: 0,
             child: Center(
-              child: FloatingRoleToggle(
-                isStudent: isStudent.value,
+              child: Switch(
+                value: isStudent.value,
                 onChanged: (val) => isStudent.value = val,
+                activeThumbColor: const Color(0xFF6C63FF),
               ),
             ),
           ),

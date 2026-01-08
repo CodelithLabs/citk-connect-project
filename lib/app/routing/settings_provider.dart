@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../data/settings_repository.dart';
@@ -7,12 +8,11 @@ part 'settings_provider.g.dart';
 
 // 1. Provider for SharedPreferences instance
 @Riverpod(keepAlive: true)
-SharedPreferences sharedPreferences(SharedPreferencesRef ref) =>
-    throw UnimplementedError();
+SharedPreferences sharedPreferences(Ref ref) => throw UnimplementedError();
 
 // 2. Provider for the Repository
 @riverpod
-SettingsRepository settingsRepository(SettingsRepositoryRef ref) {
+SettingsRepository settingsRepository(Ref ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
   return SettingsRepository(prefs);
 }

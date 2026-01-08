@@ -167,9 +167,9 @@ class _BusTrackerScreenState extends ConsumerState<BusTrackerScreen>
             },
             child: GoogleMap(
               initialCameraPosition: _kCitCampus,
+              style: _darkMapStyle,
               onMapCreated: (GoogleMapController controller) {
                 _controller.complete(controller);
-                controller.setMapStyle(_darkMapStyle);
               },
               markers: _currentBusData != null
                   ? {

@@ -7,7 +7,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
 
 final notificationsEnabledProvider = StateProvider<bool>((ref) => true);
@@ -199,7 +198,7 @@ class ProfileScreen extends ConsumerWidget {
                             child: const Icon(Icons.dark_mode_outlined,
                                 color: Color(0xFF6C63FF), size: 20),
                           ),
-                          activeColor: const Color(0xFF6C63FF),
+                          activeThumbColor: const Color(0xFF6C63FF),
                           activeTrackColor:
                               const Color(0xFF6C63FF).withValues(alpha: 0.4),
                           inactiveThumbColor: Colors.grey,
@@ -251,7 +250,7 @@ class ProfileScreen extends ConsumerWidget {
                             child: const Icon(Icons.notifications_outlined,
                                 color: Color(0xFF6C63FF), size: 20),
                           ),
-                          activeColor: const Color(0xFF6C63FF),
+                          activeThumbColor: const Color(0xFF6C63FF),
                           activeTrackColor:
                               const Color(0xFF6C63FF).withValues(alpha: 0.4),
                           inactiveThumbColor: Colors.grey,

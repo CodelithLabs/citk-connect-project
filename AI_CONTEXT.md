@@ -154,3 +154,9 @@ This batch of fixes addresses the diagnostics provided by the user.
     *   Navigation on completion now correctly points to `/login`.
     *   Corrected a typo in a `flutter_animate` import.
     *   Cleaned up styling to be more consistent with the app's theme, replacing hardcoded colors with `Theme.of(context).colorScheme` values.
+## 10. ONGOING FIXES (Batch 4)
+
+This batch of fixes addresses the diagnostics provided by the user.
+
+*   **`settings_provider.dart` Fix:**
+    *   Resolved an `Undefined class 'Ref'` error in `lib/app/routing/settings_provider.dart` by adding the missing `import 'package:flutter_riverpod/flutter_riverpod.dart';`. The `Ref` type is part of the core Riverpod package and was not being imported.
