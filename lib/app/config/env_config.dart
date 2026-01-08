@@ -45,6 +45,8 @@ class EnvConfig {
   static bool get enableLogging => isDevelopment;
   static bool get enableVerboseLogging => isDevelopment;
 
+  static bool get enableCrashlytics => isProduction;
+
   /// Initialize environment-specific settings
   static Future<void> initialize() async {
     if (isDevelopment) {

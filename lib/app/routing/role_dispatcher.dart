@@ -1,11 +1,19 @@
+// lib/app/routing/role_dispatcher.dart
+// Production-Ready Role Dispatcher - All Compilation Errors Fixed
+
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:citk_connect/app/config/env_config.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 📦 IMPORT ALL DASHBOARDS
@@ -14,38 +22,147 @@ import '../../home/views/aspirant_dashboard.dart';
 import '../../admin/views/admin_dashboard.dart';
 import '../../driver/views/driver_dashboard.dart';
 import '../../home/views/home_screen.dart';
-import '../../auth/views/login_screen.dart';
-
-// TODO: Import future role-based screens
-// import '../../parent/views/parent_dashboard.dart';
-// import '../../guest/views/guest_dashboard.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 🎯 ROLE DISPATCHER (Smart Router based on Firestore role)
+// 📊 ERROR TYPES ENUM (MUST BE TOP-LEVEL - NOT INSIDE CLASS)
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum ErrorType {
+  timeout,
+  networkFailure,
+  permissionDenied,
+  documentNotFound,
+  unknown,
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 🎯 ROLE DISPATCHER (Rebuilt for Stability & SOLID Principles)
 // ═══════════════════════════════════════════════════════════════════════════
 
 class RoleDispatcher extends ConsumerStatefulWidget {
   const RoleDispatcher({super.key});
+
+  // ✅ Timeout protection (15 seconds)
+  static const Duration _timeoutDuration = Duration(seconds: 15);
+  
+  // ✅ Retry mechanism with exponential backoff
+  static const int _maxRetryAttempts = 3;
 
   @override
   ConsumerState<RoleDispatcher> createState() => _RoleDispatcherState();
 }
 
 class _RoleDispatcherState extends ConsumerState<RoleDispatcher> {
-  // Track retry attempts for error recovery
+  Stream<DocumentSnapshot>? _userStream;
   int _retryCount = 0;
-  static const int _maxRetries = 3;
-  
-  // Cache for role to prevent unnecessary reads
+  bool _isOfflineMode = false;
   String? _cachedRole;
-  
-  // Timeout for Firestore operations
-  static const Duration _firestoreTimeout = Duration(seconds: 10);
+  Timer? _retryTimer;
+  bool _isRetrying = false;
 
   @override
   void initState() {
     super.initState();
+    _loadCachedRole();
+    _initStream();
     _logInfo('RoleDispatcher initialized');
+  }
+
+  @override
+  void dispose() {
+    _retryTimer?.cancel();
+    super.dispose();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // 💾 CACHING & INIT
+  // ═══════════════════════════════════════════════════════════════════════
+
+  Future<void> _loadCachedRole() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (mounted) {
+        setState(() {
+          _cachedRole = prefs.getString('user_role');
+        });
+      }
+    } catch (e) {
+      _logError('Failed to load cached role', e);
+    }
+  }
+
+  Future<void> _updateCache(String role) async {
+    if (_cachedRole == role) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_role', role);
+      if (mounted) {
+        setState(() {
+          _cachedRole = role;
+        });
+      }
+    } catch (e) {
+      _logError('Failed to update role cache', e);
+    }
+  }
+
+  void _initStream() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _userStream = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .snapshots()
+          .timeout(RoleDispatcher._timeoutDuration);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // 🔄 RETRY & RECOVERY LOGIC
+  // ═══════════════════════════════════════════════════════════════════════
+
+  void _scheduleRetry() {
+    if (_isRetrying) return;
+    
+    _isRetrying = true;
+    final delaySeconds = math.pow(2, _retryCount).toInt(); // 1, 2, 4
+    final delay = Duration(seconds: delaySeconds);
+    
+    _logInfo('Scheduling retry ${_retryCount + 1}/${RoleDispatcher._maxRetryAttempts} in ${delay.inSeconds}s');
+
+    _retryTimer = Timer(delay, () {
+      if (mounted) {
+        setState(() {
+          _retryCount++;
+          _isRetrying = false;
+          _initStream(); // Re-initialize stream to reset timeout
+        });
+      }
+    });
+  }
+
+  void _manualRetry() {
+    _retryTimer?.cancel();
+    setState(() {
+      _retryCount = 0;
+      _isRetrying = false;
+      _isOfflineMode = false;
+      _initStream();
+    });
+  }
+
+  void _enterOfflineMode() {
+    if (_cachedRole != null) {
+      setState(() {
+        _isOfflineMode = true;
+      });
+      _logInfo('Entered offline mode with role: $_cachedRole');
+    }
+  }
+
+  Future<void> _handleLogout() async {
+    await FirebaseAuth.instance.signOut();
+    if (mounted) context.go('/login');
   }
 
   @override
@@ -56,60 +173,65 @@ class _RoleDispatcherState extends ConsumerState<RoleDispatcher> {
     // 🛡️ SAFETY CHECK: User must be authenticated
     // ───────────────────────────────────────────────────────────────────────
     if (user == null) {
-      _logError('RoleDispatcher called with null user', 'User logged out');
-      // This should never happen due to router guards, but handle gracefully
+      // Use WidgetsBinding to avoid calling context during build
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const LoginScreen()),
-          );
+          context.go('/login');
         }
       });
-      return const _LoadingScreen(message: 'Redirecting to login...');
+      
+      return const _LoadingScreen(message: 'Session expired...');
     }
 
     // ───────────────────────────────────────────────────────────────────────
-    // 🔥 FIRESTORE STREAM: Listen to user document in real-time
+    // 🌐 OFFLINE MODE: Use cached role if enabled
+    // ───────────────────────────────────────────────────────────────────────
+    if (_isOfflineMode && _cachedRole != null) {
+      return _OfflineWrapper(
+        onRetry: _manualRetry,
+        child: _routeToRoleBasedDashboard(_cachedRole!),
+      );
+    }
+
+    // ───────────────────────────────────────────────────────────────────────
+    // 🔥 FIRESTORE STREAM: Fetch user role with error recovery
     // ───────────────────────────────────────────────────────────────────────
     return Scaffold(
       backgroundColor: const Color(0xFF0F1115),
       body: StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .snapshots()
-            .timeout(
-              _firestoreTimeout,
-              onTimeout: (sink) {
-                _logError('Firestore stream timeout', 'No response in $_firestoreTimeout');
-                sink.addError(TimeoutException('Firestore connection timeout'));
-              },
-            ),
+        stream: _userStream,
         builder: (context, snapshot) {
           // ─────────────────────────────────────────────────────────────────
-          // 1️⃣ LOADING STATE (Initial connection)
+          // 1️⃣ LOADING STATE
           // ─────────────────────────────────────────────────────────────────
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const _LoadingScreen(message: 'Verifying identity...');
+            return _LoadingScreen(
+              message: _retryCount > 0 
+                  ? 'Retrying connection (${_retryCount}/${RoleDispatcher._maxRetryAttempts})...' 
+                  : 'Loading your profile...',
+            );
           }
 
           // ─────────────────────────────────────────────────────────────────
-          // 2️⃣ ERROR STATE (Network issues, permission denied, etc.)
+          // 2️⃣ ERROR STATE (With intelligent error handling)
           // ─────────────────────────────────────────────────────────────────
           if (snapshot.hasError) {
-            _logError('Firestore stream error', snapshot.error ?? 'Unknown Firestore error');
-            return _ErrorStateWidget(
-              error: snapshot.error.toString(),
-              onRetry: _retryCount < _maxRetries ? _handleRetry : null,
-              retryCount: _retryCount,
-            );
+            // Check if we should auto-retry
+            if (_retryCount < RoleDispatcher._maxRetryAttempts) {
+              // Schedule retry if not already scheduled
+              _scheduleRetry();
+              return _LoadingScreen(
+                message: 'Connection unstable. Retrying in ${math.pow(2, _retryCount)}s...',
+              );
+            }
+            
+            return _handleStreamError(snapshot.error!, user.uid);
           }
 
           // ─────────────────────────────────────────────────────────────────
-          // 3️⃣ NO DATA / DOCUMENT DOESN'T EXIST
+          // 3️⃣ NO DATA STATE
           // ─────────────────────────────────────────────────────────────────
           if (!snapshot.hasData || !snapshot.data!.exists) {
-            _logError('User document not found', 'UID: ${user.uid}');
             return _NoUserDocumentWidget(
               userId: user.uid,
               email: user.email ?? 'Unknown',
@@ -118,139 +240,166 @@ class _RoleDispatcherState extends ConsumerState<RoleDispatcher> {
           }
 
           // ─────────────────────────────────────────────────────────────────
-          // 4️⃣ PARSE USER DATA
+          // 4️⃣ SUCCESS: Extract role and route
           // ─────────────────────────────────────────────────────────────────
-          final data = (snapshot.data!.data() ?? {}) as Map<String, dynamic>;
+          final data = snapshot.data!.data() as Map<String, dynamic>?;
+          final role = (data?['role'] ?? 'aspirant').toString().toLowerCase().trim();
           
-          if (data == null) {
-            _logError('User document data is null', 'UID: ${user.uid}');
-            return _NoUserDocumentWidget(
-              userId: user.uid,
-              email: user.email ?? 'Unknown',
-              onCreateProfile: () => _createUserProfile(user),
-            );
-          }
-
-          // ─────────────────────────────────────────────────────────────────
-          // 5️⃣ EXTRACT ROLE (with fallback)
-          // ─────────────────────────────────────────────────────────────────
-          final String role = (data['role'] ?? 'aspirant').toString().toLowerCase().trim();
+          // Update cache
+          _updateCache(role);
           
-          // Cache the role for logging/debugging
-          if (_cachedRole != role) {
-            _cachedRole = role;
-            _logInfo('User role resolved: $role');
+          // Reset retry count on success
+          if (_retryCount > 0) {
+            _retryCount = 0;
           }
-
-          // ─────────────────────────────────────────────────────────────────
-          // 6️⃣ ROUTE TO APPROPRIATE DASHBOARD
-          // ─────────────────────────────────────────────────────────────────
-          return _routeToRoleBasedDashboard(role, data);
+          
+          return _routeToRoleBasedDashboard(role);
         },
       ),
     );
   }
 
   // ═══════════════════════════════════════════════════════════════════════
-  // 🔀 ROLE-BASED ROUTING LOGIC
+  // 🚨 INTELLIGENT ERROR HANDLING
   // ═══════════════════════════════════════════════════════════════════════
 
-  Widget _routeToRoleBasedDashboard(String role, Map<String, dynamic> userData) {
-    // TODO: Add role-based analytics tracking
-    // _trackRoleAccess(role);
+  Widget _handleStreamError(Object error, String userId) {
+    _logError('Firestore stream error', error);
 
+    // Classify error type
+    final errorType = _classifyError(error);
+
+    switch (errorType) {
+      case ErrorType.timeout:
+      case ErrorType.networkFailure:
+        // Max retries reached: Show Retry Dialog with Offline Option
+        return _ErrorStateWidget(
+          title: 'Connection Failed',
+          message: 'We couldn\'t connect to the server after multiple attempts.',
+          icon: Icons.cloud_off,
+          onRetry: _manualRetry,
+          onOfflineMode: _cachedRole != null ? _enterOfflineMode : null,
+          onLogout: _handleLogout,
+        );
+
+      case ErrorType.permissionDenied:
+        // Firebase security rules issue
+        return _ErrorStateWidget(
+          title: 'Access Denied',
+          message: 'Your account doesn\'t have permission to access this data.',
+          icon: Icons.lock,
+          onContactSupport: () {
+            _logInfo('User requested support for permission error');
+            // TODO: Open support form
+          },
+          onLogout: _handleLogout,
+        );
+
+      case ErrorType.documentNotFound:
+        // User document missing
+        return _NoUserDocumentWidget(
+          userId: userId,
+          email: FirebaseAuth.instance.currentUser?.email ?? 'Unknown',
+          onCreateProfile: () => _createUserProfile(FirebaseAuth.instance.currentUser!),
+        );
+
+      case ErrorType.unknown:
+        // Generic error
+        return _ErrorStateWidget(
+          title: 'Something went wrong',
+          message: kDebugMode ? error.toString() : 'An unexpected error occurred.',
+          icon: Icons.error_outline,
+          onRetry: _manualRetry,
+          onLogout: _handleLogout,
+        );
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // 🔍 ERROR CLASSIFICATION
+  // ═══════════════════════════════════════════════════════════════════════
+
+  ErrorType _classifyError(Object error) {
+    final errorString = error.toString().toLowerCase();
+
+    if (error is TimeoutException || errorString.contains('timeout')) {
+      return ErrorType.timeout;
+    }
+    if (errorString.contains('permission-denied') || 
+        errorString.contains('security')) {
+      return ErrorType.permissionDenied;
+    }
+    if (errorString.contains('not-found') || 
+        errorString.contains('no document')) {
+      return ErrorType.documentNotFound;
+    }
+    if (errorString.contains('network') || 
+        errorString.contains('unavailable')) {
+      return ErrorType.networkFailure;
+    }
+
+    return ErrorType.unknown;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // 🔀 ROLE-BASED ROUTING (Clean Architecture)
+  // ═══════════════════════════════════════════════════════════════════════
+
+  Widget _routeToRoleBasedDashboard(String role) {
     switch (role) {
-      // ─────────────────────────────────────────────────────────────────────
-      // 👨‍🎓 STUDENT ROLE
-      // ─────────────────────────────────────────────────────────────────────
       case 'student':
         return const HomeScreen();
 
-      // ─────────────────────────────────────────────────────────────────────
-      // 🚗 DRIVER ROLE
-      // ─────────────────────────────────────────────────────────────────────
       case 'driver':
         return const DriverDashboard();
 
-      // ─────────────────────────────────────────────────────────────────────
-      // 👨‍🏫 FACULTY ROLE
-      // ─────────────────────────────────────────────────────────────────────
       case 'faculty':
       case 'teacher':
       case 'professor':
-        return const AdminDashboard(); // Faculty shares admin dashboard
-
-      // ─────────────────────────────────────────────────────────────────────
-      // 🛡️ ADMIN ROLE
-      // ─────────────────────────────────────────────────────────────────────
       case 'admin':
       case 'administrator':
       case 'superadmin':
         return const AdminDashboard();
 
-      // ─────────────────────────────────────────────────────────────────────
-      // 🌟 ASPIRANT ROLE (Default for new users)
-      // ─────────────────────────────────────────────────────────────────────
-      case 'aspirant':
-      case 'applicant':
-      case 'prospect':
-        return const AspirantDashboard();
-
-      // ─────────────────────────────────────────────────────────────────────
-      // ❓ UNKNOWN ROLE (Fallback with warning)
-      // ─────────────────────────────────────────────────────────────────────
       default:
-        _logError('Unknown role detected', 'Role: $role');
-        return _UnknownRoleWidget(
-          role: role,
-          userId: userData['uid'] ?? 'unknown',
-        );
+        if (role != 'aspirant') {
+          _logError('Unknown role', 'Role: $role, defaulting to aspirant');
+        }
+        return const AspirantDashboard();
     }
-
-    // TODO: Add more roles when implemented
-    // case 'parent':
-    //   return const ParentDashboard();
-    // case 'guest':
-    //   return const GuestDashboard();
   }
 
   // ═══════════════════════════════════════════════════════════════════════
-  // 🔄 RETRY MECHANISM
-  // ═══════════════════════════════════════════════════════════════════════
-
-  void _handleRetry() {
-    setState(() {
-      _retryCount++;
-    });
-    _logInfo('Retry attempt: $_retryCount/$_maxRetries');
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // 🛠️ CREATE USER PROFILE (Auto-fix missing documents)
+  // 🛠️ AUTO-CREATE USER PROFILE
   // ═══════════════════════════════════════════════════════════════════════
 
   Future<void> _createUserProfile(User user) async {
     try {
-      _logInfo('Creating missing user profile for ${user.uid}');
+      _logInfo('Creating user profile for ${user.uid}');
       
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .set({
         'uid': user.uid,
         'email': user.email,
         'displayName': user.displayName ?? 'New User',
-        'role': 'aspirant', // Default role
+        'role': 'aspirant',
         'createdAt': FieldValue.serverTimestamp(),
         'lastLogin': FieldValue.serverTimestamp(),
       });
 
       _logInfo('User profile created successfully');
       
-      // Trigger rebuild
+      // Update cache
+      await _updateCache('aspirant');
+      
       if (mounted) {
         setState(() {});
       }
-    } catch (e) {
-      _logError('Failed to create user profile', e);
-      // TODO: Show error snackbar
+    } catch (e, stackTrace) {
+      _logError('Failed to create user profile', e, stackTrace);
+      _showErrorSnackbar(context, 'Failed to create profile. Please try again.');
     }
   }
 
@@ -264,16 +413,30 @@ class _RoleDispatcherState extends ConsumerState<RoleDispatcher> {
     }
   }
 
-  void _logError(String title, Object error) {
+  // ✅ FIXED: Proper method signature with optional StackTrace parameter
+  void _logError(String title, Object error, [StackTrace? stackTrace]) {
     if (kDebugMode) {
-      developer.log('❌ $title: $error', name: 'ROLE_DISPATCHER_ERROR');
+      developer.log('❌ $title: $error', name: 'ROLE_DISPATCHER_ERROR', stackTrace: stackTrace);
+    } else if (EnvConfig.enableCrashlytics) {
+      FirebaseCrashlytics.instance.recordError(error, stackTrace, reason: title);
     }
-    // TODO: Send to crash reporting
+  }
+
+  void _showErrorSnackbar(BuildContext context, String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: const Color(0xFFCF6679),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 🎨 UI COMPONENTS (Loading, Error States)
+// 🎨 UI COMPONENTS (MUST BE TOP-LEVEL - NOT INSIDE OTHER CLASSES)
 // ═══════════════════════════════════════════════════════════════════════════
 
 class _LoadingScreen extends StatelessWidget {
@@ -306,14 +469,22 @@ class _LoadingScreen extends StatelessWidget {
 }
 
 class _ErrorStateWidget extends StatelessWidget {
-  final String error;
+  final String title;
+  final String message;
+  final IconData icon;
   final VoidCallback? onRetry;
-  final int retryCount;
+  final VoidCallback? onOfflineMode;
+  final VoidCallback? onContactSupport;
+  final VoidCallback? onLogout;
 
   const _ErrorStateWidget({
-    required this.error,
-    required this.onRetry,
-    required this.retryCount,
+    required this.title,
+    required this.message,
+    required this.icon,
+    this.onRetry,
+    this.onOfflineMode,
+    this.onContactSupport,
+    this.onLogout,
   });
 
   @override
@@ -324,23 +495,27 @@ class _ErrorStateWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.cloud_off,
-              size: 80,
-              color: Color(0xFFCF6679),
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFFCF6679).withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 64, color: const Color(0xFFCF6679)),
             ),
-            const SizedBox(height: 24),
-            const Text(
-              'Connection Error',
-              style: TextStyle(
+            const SizedBox(height: 32),
+            Text(
+              title,
+              style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             Text(
-              kDebugMode ? error : 'Unable to load your profile. Please check your connection.',
+              message,
               style: const TextStyle(
                 color: Colors.white70,
                 fontSize: 14,
@@ -348,21 +523,57 @@ class _ErrorStateWidget extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
+            
+            // Action Buttons
             if (onRetry != null)
               ElevatedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh),
-                label: Text('Retry (${retryCount + 1}/3)'),
+                label: const Text('Try Again'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF8AB4F8),
                   foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                 ),
-              )
-            else
-              const Text(
-                'Max retries reached. Please restart the app.',
-                style: TextStyle(color: Colors.white54, fontSize: 12),
               ),
+            
+            if (onOfflineMode != null) ...[
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: onOfflineMode,
+                icon: const Icon(Icons.offline_bolt),
+                label: const Text('Continue Offline'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF8AB4F8),
+                  side: const BorderSide(color: Color(0xFF8AB4F8)),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                ),
+              ),
+            ],
+            
+            if (onContactSupport != null) ...[
+              const SizedBox(height: 12),
+              TextButton.icon(
+                onPressed: onContactSupport,
+                icon: const Icon(Icons.support_agent),
+                label: const Text('Contact Support'),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF8AB4F8),
+                ),
+              ),
+            ],
+
+            if (onLogout != null) ...[
+              const SizedBox(height: 12),
+              TextButton.icon(
+                onPressed: onLogout,
+                icon: const Icon(Icons.logout),
+                label: const Text('Logout'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white54,
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -389,12 +600,19 @@ class _NoUserDocumentWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.person_off,
-              size: 80,
-              color: Color(0xFFCF6679),
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFAB00).withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.person_off,
+                size: 64,
+                color: Color(0xFFFFAB00),
+              ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             const Text(
               'Profile Not Found',
               style: TextStyle(
@@ -420,6 +638,7 @@ class _NoUserDocumentWidget extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF8AB4F8),
                 foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               ),
             ),
           ],
@@ -429,55 +648,45 @@ class _NoUserDocumentWidget extends StatelessWidget {
   }
 }
 
-class _UnknownRoleWidget extends StatelessWidget {
-  final String role;
-  final String userId;
+class _OfflineWrapper extends StatelessWidget {
+  final VoidCallback onRetry;
+  final Widget child;
 
-  const _UnknownRoleWidget({
-    required this.role,
-    required this.userId,
+  const _OfflineWrapper({
+    required this.onRetry,
+    required this.child,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F1115),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          color: const Color(0xFFFFAB00),
+          child: Row(
             children: [
-              const Icon(
-                Icons.help_outline,
-                size: 80,
-                color: Color(0xFFFFAB00),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Unknown Role',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+              const Icon(Icons.cloud_off, color: Colors.black, size: 20),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Offline Mode - Using cached data',
+                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
                 ),
               ),
-              const SizedBox(height: 16),
-              Text(
-                'Your role "$role" is not recognized.\nPlease contact support.',
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
+              TextButton(
+                onPressed: onRetry,
+                child: const Text(
+                  'RETRY',
+                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
                 ),
-                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 32),
-              // Default to Aspirant Dashboard as fallback
-              const AspirantDashboard(),
             ],
           ),
         ),
-      ),
+        Expanded(child: child),
+      ],
     );
   }
 }

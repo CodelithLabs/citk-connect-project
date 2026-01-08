@@ -1,319 +1,197 @@
+import 'package:flutter/foundation.dart';
+
+/// 📦 THE DATA PACKET
+/// This holds all the extracted identity info
 class CITParsedData {
-  final String role;
-  final String degree;
-  final String branch;
-  final int batch;
-  final String semester;
-  final String rollNumber;
-  final String department;
+  final String role;        // 'student', 'faculty', 'aspirant', 'driver'
+  final String degree;      // 'B.Tech', 'Diploma', 'M.Tech', 'PhD'
+  final String branch;      // 'Computer Science', etc.
+  final String department;  // 'CSE', 'ECE', etc.
+  final int batch;          // 2025, 2026, etc.
+  final String semester;    // '3rd Sem', 'Graduated'
+  final String rollNumber;  // 'CIT/25/CSE/001'
   final bool isGraduated;
 
   CITParsedData({
     required this.role,
     required this.degree,
     required this.branch,
+    required this.department,
     required this.batch,
     required this.semester,
     required this.rollNumber,
-    required this.department,
     required this.isGraduated,
   });
 }
 
+/// 🧠 THE INTELLIGENCE ENGINE
 class CITParser {
-  // 📚 MAPPING DATABASE
-  static const Map<String, String> branchMap = {
+  
+  // 📖 1. KNOWLEDGE BASE: Department Codes
+  static const Map<String, String> _branchMap = {
     'cse': 'Computer Science & Engineering',
-    'co': 'Computer Science',
-    'it': 'Information Technology',
+    'co':  'Computer Science',
+    'it':  'Information Technology',
     'ece': 'Electronics & Communication',
-    'et': 'Electronics & Telecommunication',
-    'ie': 'Instrumentation Engineering',
+    'ie':  'Instrumentation Engineering',
     'fet': 'Food Engineering & Technology',
-    'fpt': 'Food Processing Technology',
-    'ce': 'Civil Engineering',
-    'ct': 'Construction Technology',
-    'mcd': 'Multimedia Communication & Design',
+    'ce':  'Civil Engineering',
+    'ct':  'Construction Technology',
+    'mcd': 'Multimedia Communication',
     'amt': 'Animation & Multimedia',
     'bdes': 'Design',
-    'me': 'Mechanical Engineering',
-    'ee': 'Electrical Engineering',
+    'me':  'Mechanical Engineering',
+    'ee':  'Electrical Engineering',
   };
 
-  // 📅 Academic Calendar Configuration
-  static const int oddSemStartMonth = 7; // July
-  static const int evenSemStartMonth = 1; // January
-  static const int summerBreakStartMonth = 5; // May
-  static const int summerBreakEndMonth = 6; // June
-
+  // 🚀 2. MAIN PARSER FUNCTION
   static CITParsedData parseEmail(String email) {
-    // 🛡️ ENHANCED SECURITY: Multi-layer email validation
-    
-    // Layer 1: Basic format check
-    if (email.isEmpty || !email.contains('@')) {
-      return _createGuestUser('INVALID-EMPTY');
-    }
-
-    // Layer 2: Split and validate parts
-    final parts = email.split('@');
-    if (parts.length != 2) {
-      // Handles multiple @ symbols (e.g., test@@cit.ac.in)
-      return _createGuestUser('INVALID-MULTIPLE-AT');
-    }
-
-    final localPart = parts[0];
-    final domain = parts[1];
-
-    // Layer 3: Check for empty parts
-    if (localPart.isEmpty || domain.isEmpty) {
-      return _createGuestUser('INVALID-EMPTY-PARTS');
-    }
-
-    // Layer 4: Validate against comprehensive email regex
-    // This regex ensures:
-    // - Only ASCII characters (no unicode like tést)
-    // - Valid email structure
-    // - Proper domain format
-    final emailRegex = RegExp(
-      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-      caseSensitive: false,
-    );
-    
-    if (!emailRegex.hasMatch(email)) {
-      return _createGuestUser('INVALID-FORMAT');
-    }
-
-    // Layer 5: Additional security checks
-    // Prevent injection attacks through unusual characters
-    final safeCharsRegex = RegExp(r'^[a-zA-Z0-9._-]+$');
-    if (!safeCharsRegex.hasMatch(localPart)) {
-      return _createGuestUser('INVALID-CHARS');
-    }
-
-    final localPartLower = localPart.toLowerCase();
-
-    // 1. 🕵️‍♂️ Faculty Check (No numbers = Faculty)
-    if (!RegExp(r'\d').hasMatch(localPartLower)) {
-      return _parseFacultyEmail(localPartLower);
-    }
-
-    // 2. 🎓 Student Parsing
-    return _parseStudentEmail(localPartLower);
-  }
-
-  // Helper: Create guest user for invalid emails
-  static CITParsedData _createGuestUser(String reason) {
-    return CITParsedData(
-      role: 'guest',
-      degree: 'N/A',
-      branch: 'N/A',
-      batch: 0,
-      semester: 'N/A',
-      rollNumber: reason,
-      department: 'N/A',
-      isGraduated: false,
-    );
-  }
-
-  // Helper: Parse faculty email
-  static CITParsedData _parseFacultyEmail(String localPart) {
-    String dept = 'General';
-    for (var key in branchMap.keys) {
-      if (localPart.contains(key)) {
-        dept = branchMap[key]!;
-        break;
-      }
-    }
-    return CITParsedData(
-      role: 'faculty',
-      degree: 'N/A',
-      branch: 'N/A',
-      batch: 0,
-      semester: 'N/A',
-      rollNumber: 'FAC-${localPart.toUpperCase()}',
-      department: dept,
-      isGraduated: false,
-    );
-  }
-
-  // Helper: Parse student email with enhanced semester calculation
-  static CITParsedData _parseStudentEmail(String localPart) {
     try {
-      // Regex: Prefix(d/u/m/p) + Year(2 digits) + Branch(letters) + ID(digits)
+      // A. SECURITY CHECK: Is it a college email?
+      if (!email.endsWith('@cit.ac.in') && !email.endsWith('@citk.ac.in')) {
+        return _guestUser(); // It's an Aspirant/Guest
+      }
+
+      final localPart = email.split('@')[0].toLowerCase();
+
+      // B. FACULTY CHECK: No numbers in email? (e.g., 'p.ray@cit...')
+      if (!RegExp(r'\d').hasMatch(localPart)) {
+        return _facultyUser(localPart);
+      }
+
+      // C. STUDENT PARSING (The Heavy Logic)
+      // Regex Breakdown:
+      // ^        : Start
+      // ([a-z]+) : Prefix (d=diploma, u=btech, m=mtech) -> Group 1
+      // (\d{2})  : Batch (25 = 2025) -> Group 2
+      // ([a-z]+) : Branch (cse) -> Group 3
+      // (\d+)    : Roll ID (001) -> Group 4
       final match = RegExp(r'^([a-z]+)(\d{2})([a-z]+)(\d+)$').firstMatch(localPart);
 
-      if (match == null) throw Exception("Format mismatch");
+      if (match == null) {
+        // Has numbers but doesn't look like a student ID -> Staff/Admin
+        return _facultyUser(localPart);
+      }
 
+      // Extract Raw Data
       final prefix = match.group(1)!;
-      final batchStr = match.group(2)!;
+      final batchCode = match.group(2)!;
       final branchCode = match.group(3)!;
-      final idNo = match.group(4)!;
+      final idCode = match.group(4)!;
 
-      final batchYear = int.parse("20$batchStr");
-      final branch = branchMap[branchCode] ?? branchCode.toUpperCase();
-
-      // Degree Rules
-      String degree = "B.Tech"; // Default case
-      int maxSem = 8;
-
-      if (prefix.startsWith('d')) {
-        degree = "Diploma";
-        maxSem = 6;
-      } else if (prefix.startsWith('u')) {
-        degree = "B.Tech";
-        maxSem = 8;
-      } else if (prefix.startsWith('m')) {
-        degree = "M.Tech";
-        maxSem = 4;
-      } else if (prefix.startsWith('p')) {
-        degree = "PhD";
-        maxSem = 12;
-      }
-
-      // 🔧 ENHANCED SEMESTER CALCULATION
-      final now = DateTime.now();
-      final currentMonth = now.month;
-      final currentYear = now.year;
-
-      // Calculate base semester considering academic year starts in July
-      int sem = _calculateSemester(batchYear, currentYear, currentMonth);
-
-      // Apply constraints: minimum 1, maximum based on degree
-      sem = sem.clamp(1, maxSem + 2); // +2 buffer for late graduates
-
-      // Graduation Check
-      bool isGraduated = false;
-      String semStr = "$sem${_getOrdinal(sem)} Sem";
-      String role = 'student';
-
-      if (sem > maxSem) {
-        role = 'alumni';
-        isGraduated = true;
-        semStr = "Graduated";
-      }
-
-      // Handle summer break period (May-June)
-      if (currentMonth >= summerBreakStartMonth && 
-          currentMonth <= summerBreakEndMonth && 
-          !isGraduated) {
-        semStr = "$sem${_getOrdinal(sem)} Sem (Summer Break)";
-      }
-
-      return CITParsedData(
-        role: role,
-        degree: degree,
-        branch: branch,
-        batch: batchYear,
-        semester: semStr,
-        rollNumber: "CIT/$batchStr/${branchCode.toUpperCase()}/$idNo",
-        department: branch,
-        isGraduated: isGraduated,
-      );
-    } catch (e) {
-      // Fallback for irregular emails
-      return CITParsedData(
-        role: 'student',
-        degree: 'Unknown',
-        branch: 'Unknown',
-        batch: 0,
-        semester: '1st Sem',
-        rollNumber: localPart.toUpperCase(),
-        department: 'Unknown',
-        isGraduated: false,
-      );
-    }
-  }
-
-  /// 📊 Enhanced semester calculation logic
-  /// Handles:
-  /// - Academic year boundary (July start)
-  /// - Mid-year enrollments (January lateral entry)
-  /// - Proper semester progression
-  static int _calculateSemester(int batchYear, int currentYear, int currentMonth) {
-    // Calculate years elapsed since batch started
-    int yearsElapsed = currentYear - batchYear;
-    
-    // Determine current academic year position
-    // If before July, we're still in the previous academic year's even semester
-    // If July or after, we've started the new academic year's odd semester
-    
-    int baseSemester;
-    
-    if (currentMonth >= oddSemStartMonth) {
-      // July onwards: odd semester (1st, 3rd, 5th, 7th)
-      // Year 0 (joined) → Sem 1
-      // Year 1 → Sem 3
-      // Year 2 → Sem 5
-      baseSemester = (yearsElapsed * 2) + 1;
-    } else {
-      // January to June: even semester (2nd, 4th, 6th, 8th)
-      // But belongs to previous academic year
-      // Year 1 → Sem 2
-      // Year 2 → Sem 4
-      baseSemester = (yearsElapsed * 2);
+      // Process Data
+      final int batchYear = int.parse("20$batchCode"); // 25 -> 2025
+      final String branchName = _branchMap[branchCode] ?? branchCode.toUpperCase();
       
-      // Handle special case: first year students before July
-      if (baseSemester < 1) {
-        baseSemester = 1; // They're still in 1st semester
-      }
+      // Determine Degree
+      String degree = "B.Tech";
+      int maxSemesters = 8;
+      
+      if (prefix.startsWith('d')) { degree = "Diploma"; maxSemesters = 6; }
+      else if (prefix.startsWith('m')) { degree = "M.Tech"; maxSemesters = 4; }
+      else if (prefix.startsWith('p')) { degree = "PhD"; maxSemesters = 10; }
+
+      // ⏳ TIME TRAVEL LOGIC: Calculate Semester
+      final semData = _calculateAutonomousSemester(batchYear, maxSemesters);
+
+      return CITParsedData(
+        role: semData['isGraduated'] ? 'alumni' : 'student',
+        degree: degree,
+        branch: branchName,
+        department: branchCode.toUpperCase(),
+        batch: batchYear,
+        semester: semData['semString'],
+        rollNumber: "CIT/$batchCode/${branchCode.toUpperCase()}/$idCode",
+        isGraduated: semData['isGraduated'],
+      );
+
+    } catch (e) {
+      // Failsafe: If anything explodes, return a Guest user instead of crashing
+      if (kDebugMode) print("Parser Error: $e");
+      return _guestUser();
     }
-    
-    return baseSemester;
   }
 
-  static String _getOrdinal(int n) {
-    if (n >= 11 && n <= 13) return "th";
+  // ⏳ 3. THE TIME MACHINE (Calculates Semester based on Today)
+  static Map<String, dynamic> _calculateAutonomousSemester(int joinYear, int maxSemesters) {
+    final now = DateTime.now();
+    final currentYear = now.year;
+    final currentMonth = now.month; // 1=Jan, 12=Dec
+
+    // Logic: 
+    // Academic year starts in July (Month 7).
+    // If we are in Jan-June (Months 1-6), we are in the EVEN semester of previous year.
+    // If we are in July-Dec (Months 7-12), we are in the ODD semester of current year.
+
+    int yearsElapsed = currentYear - joinYear;
+    int currentSem;
+
+    if (currentMonth >= 7) {
+      // July-Dec: Odd Sem (1, 3, 5...)
+      // Year 0 -> Sem 1
+      // Year 1 -> Sem 3
+      currentSem = (yearsElapsed * 2) + 1;
+    } else {
+      // Jan-June: Even Sem (2, 4, 6...)
+      // But acts as part of previous academic year
+      // Year 1 -> Sem 2
+      // Year 2 -> Sem 4
+      currentSem = (yearsElapsed * 2);
+    }
+
+    // Edge Case: Pre-session (Just joined but session hasn't started)
+    if (currentSem < 1) currentSem = 1;
+
+    // Check Graduation
+    if (currentSem > maxSemesters) {
+      return {
+        'semString': 'Graduated',
+        'isGraduated': true,
+      };
+    }
+
+    return {
+      'semString': '${_ordinal(currentSem)} Semester',
+      'isGraduated': false,
+    };
+  }
+
+  // Helper: Guest User Template
+  static CITParsedData _guestUser() {
+    return CITParsedData(
+      role: 'aspirant',
+      degree: 'N/A',
+      branch: 'N/A',
+      department: 'N/A',
+      batch: 0,
+      semester: 'N/A',
+      rollNumber: 'N/A',
+      isGraduated: false,
+    );
+  }
+
+  // Helper: Faculty Template
+  static CITParsedData _facultyUser(String emailPart) {
+    return CITParsedData(
+      role: 'faculty',
+      degree: 'PhD', // Assumed default
+      branch: 'Faculty Member',
+      department: 'General',
+      batch: 0,
+      semester: 'N/A',
+      rollNumber: emailPart.toUpperCase(),
+      isGraduated: false,
+    );
+  }
+
+  // Helper: "1st", "2nd", "3rd"
+  static String _ordinal(int n) {
+    if (n >= 11 && n <= 13) return "${n}th";
     switch (n % 10) {
-      case 1:
-        return "st";
-      case 2:
-        return "nd";
-      case 3:
-        return "rd";
-      default:
-        return "th";
+      case 1: return "${n}st";
+      case 2: return "${n}nd";
+      case 3: return "${n}rd";
+      default: return "${n}th";
     }
-  }
-}
-
-// 🧪 TESTING UTILITIES
-class CITParserTests {
-  static void runAllTests() {
-    print("🧪 Running CIT Parser Security Tests\n");
-    
-    // Test Issue #12: Email Validation
-    print("📧 EMAIL VALIDATION TESTS:");
-    _testEmail("test@@cit.ac.in", "INVALID-MULTIPLE-AT");
-    _testEmail("@cit.ac.in", "INVALID-EMPTY-PARTS");
-    _testEmail("tést@cit.ac.in", "INVALID-FORMAT");
-    _testEmail("test@cit..ac.in", "INVALID-FORMAT");
-    _testEmail("", "INVALID-EMPTY");
-    
-    // Valid emails
-    _testEmail("u21cse001@cit.ac.in", "student", expectValid: true);
-    _testEmail("hod_cse@cit.ac.in", "faculty", expectValid: true);
-    
-    // Test Issue #13: Semester Calculation
-    print("\n📅 SEMESTER CALCULATION TESTS:");
-    // Simulate different dates for testing
-    _testSemesterLogic();
-  }
-  
-  static void _testEmail(String email, String expected, {bool expectValid = false}) {
-    final result = CITParser.parseEmail(email);
-    final passed = expectValid 
-      ? result.role == expected 
-      : result.rollNumber.contains(expected);
-    
-    print("${passed ? '✅' : '❌'} $email → ${expectValid ? result.role : result.rollNumber}");
-  }
-  
-  static void _testSemesterLogic() {
-    // Test cases for different enrollment dates
-    print("Testing semester calculation for u21cse001 (joined 2021):");
-    print("- Current: Jan 2025 → Should be 8th Sem (even)");
-    print("- Current: Jul 2024 → Should be 7th Sem (odd)");
-    print("- Current: May 2024 → Should be 6th Sem (Summer Break)");
-    print("- Graduated: Sep 2025 → Should be Alumni");
   }
 }

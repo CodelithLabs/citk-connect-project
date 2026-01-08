@@ -1,40 +1,60 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../main.dart'; // Import to find onboardingStateProvider
 
-class OnboardingScreen extends StatefulWidget {
+// 1. Change to ConsumerStatefulWidget
+class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
   @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
+  ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final PageController _controller = PageController();
   int _currentPage = 0;
 
   final List<Map<String, dynamic>> _pages = [
     {
       "title": "Lost in Campus?",
-      "desc": "Navigate CITK like a pro with our 3D Campus Maps. Find hostels, labs, and canteens instantly.",
+      "desc":
+          "Navigate CITK like a pro with our 3D Campus Maps. Find hostels, labs, and canteens instantly.",
       "icon": Icons.map_outlined,
     },
     {
       "title": "Need Help?",
-      "desc": "Don't struggle alone. Connect with seniors and get instant answers from our AI Assistant.",
+      "desc":
+          "Don't struggle alone. Connect with seniors and get instant answers from our AI Assistant.",
       "icon": Icons.people_outline,
     },
     {
       "title": "Exam Ready",
-      "desc": "Access Previous Year Questions (PYQ) and organize your study schedule in one place.",
+      "desc":
+          "Access Previous Year Questions (PYQ) and organize your study schedule in one place.",
       "icon": Icons.school_outlined,
     },
   ];
 
-  void _finishOnboarding() {
-    // Navigate to Auth Screen after onboarding
-    context.go('/auth');
+  // 2. Update this function
+  Future<void> _finishOnboarding() async {
+    // A. Save to disk (Persistent)
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('seenOnboarding', true);
+
+    // B. Update State (Reactive)
+    // This tells AppRouter: "User has officially seen onboarding!"
+    ref.read(onboardingStateProvider.notifier).state = true;
+
+    // C. Navigate
+    // The router listener will likely trigger this automatically,
+    // but we add this line for safety.
+    if (mounted) {
+      context.go('/login');
+    }
   }
 
   @override
@@ -51,7 +71,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               alignment: Alignment.topRight,
               child: TextButton(
                 onPressed: _finishOnboarding,
-                child: Text("SKIP", style: TextStyle(color: theme.colorScheme.primary)),
+                child: Text("SKIP",
+                    style: TextStyle(color: theme.colorScheme.primary)),
               ),
             ),
 
@@ -72,7 +93,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Container(
                           padding: const EdgeInsets.all(40),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                            color: theme.colorScheme.primary.withAlpha(25),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -80,29 +101,32 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             size: 80,
                             color: theme.colorScheme.primary,
                           ),
-                        ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
-                        
+                        )
+                            .animate()
+                            .scale(duration: 600.ms, curve: Curves.easeOutBack),
+
                         const SizedBox(height: 40),
-                        
+
                         // Title
                         Text(
                           page['title'],
                           style: GoogleFonts.inter(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: theme.colorScheme.onSurface,
                           ),
                         ).animate().fadeIn().moveY(begin: 20, end: 0),
-                        
+
                         const SizedBox(height: 16),
-                        
+
                         // Description
                         Text(
                           page['desc'],
                           textAlign: TextAlign.center,
                           style: GoogleFonts.inter(
                             fontSize: 16,
-                            color: Colors.grey[400],
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.7),
                             height: 1.5,
                           ),
                         ).animate().fadeIn(delay: 200.ms),
@@ -131,7 +155,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         decoration: BoxDecoration(
                           color: _currentPage == index
                               ? theme.colorScheme.primary
-                              : Colors.grey[800],
+                              : theme.colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
@@ -155,7 +179,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       _currentPage == _pages.length - 1
                           ? Icons.check
                           : Icons.arrow_forward,
-                      color: Colors.white,
+                      color: theme.colorScheme.onPrimary,
                     ),
                   ),
                 ],

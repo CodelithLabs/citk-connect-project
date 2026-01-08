@@ -1,12 +1,31 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.citk.connect">  <!-- ✅ CRITICAL: Must match build.gradle applicationId -->
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- 🌐 PERMISSIONS -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    
     <application
-        android:label="citk_connect"
+        android:label="CITK Connect"
         android:name="${applicationName}"
-        android:icon="@mipmap/launcher_icon">
+        android:icon="@mipmap/launcher_icon"
+        android:usesCleartextTraffic="false"
+        android:networkSecurityConfig="@xml/network_security_config">
         
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- 🗺️ GOOGLE MAPS API KEY -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyCCGy6iOdFSvq_Agq6QQP_FbwWmM4Q2pOc"/>
+        
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- 🚀 MAIN ACTIVITY -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -19,23 +38,52 @@
             
             <meta-data
               android:name="io.flutter.embedding.android.NormalTheme"
-              android:resource="@style/NormalTheme"
-              />
+              android:resource="@style/NormalTheme"/>
+            
+            <!-- Launcher Intent -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            
+            <!-- Deep Linking Intent (for event/:eventId routes) -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data
+                    android:scheme="https"
+                    android:host="citk-connect-core.web.app"
+                    android:pathPrefix="/event"/>
+            </intent-filter>
         </activity>
         
+        <!-- Flutter Embedding Version -->
         <meta-data
             android:name="flutterEmbedding"
-            android:value="2" />
+            android:value="2"/>
     </application>
 
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- 📱 QUERIES (for Android 11+) -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
     <queries>
+        <!-- Allow text processing intents -->
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        
+        <!-- Allow viewing web URLs -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
+        </intent>
+        
+        <!-- Allow phone calls (for emergency feature) -->
+        <intent>
+            <action android:name="android.intent.action.DIAL"/>
+            <data android:scheme="tel"/>
         </intent>
     </queries>
 </manifest>

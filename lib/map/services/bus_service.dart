@@ -53,7 +53,8 @@ class BusService {
         'speed': speed,
         'condition': condition, // e.g., "OK", "TRAFFIC", "ISSUE"
         'occupancy': occupancy, // e.g., "LOW", "MED", "FULL"
-        'timestamp': FieldValue.serverTimestamp(), // Use server time for consistency
+        'timestamp':
+            FieldValue.serverTimestamp(), // Use server time for consistency
       });
     } catch (e) {
       // Basic error handling. Prints the error to the console.
@@ -92,6 +93,19 @@ class BusService {
         {'lat': 26.4700, 'lng': 90.2700}, // CIT Campus Gate
         {'lat': 26.4750, 'lng': 90.2650}, // Academic Complex
       ];
+    }
+  }
+
+  /// Reports an issue with a specific bus.
+  Future<void> reportIssue(String busId, String issue) async {
+    try {
+      await _firestore.collection('bus_reports').add({
+        'busId': busId,
+        'issue': issue,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('Error reporting issue: $e');
     }
   }
 }

@@ -6,7 +6,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:citk_connect/providers/theme_provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 //import 'package:citk_connect/app/theme/theme_notifier.dart';
+import 'package:citk_connect/home/views/smart_attendance_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -127,7 +129,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 backgroundColor: theme.colorScheme.primary,
                 backgroundImage:
                     (user?.photoURL != null && user!.photoURL!.isNotEmpty)
-                        ? NetworkImage(user.photoURL!)
+                        ? CachedNetworkImageProvider(user.photoURL!)
                         : null,
                 child: (user?.photoURL == null || user!.photoURL!.isEmpty)
                     ? Text(firstLetter,
@@ -208,6 +210,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
             ),
+            // 🧠 SMART ATTENDANCE WIDGET
+            const SliverToBoxAdapter(
+              child: SmartAttendanceCard(),
+            ),
             SliverPadding(
               padding: const EdgeInsets.all(20),
               sliver: SliverGrid.count(
@@ -224,7 +230,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           icon: Icons.map_outlined,
                           color: Colors.blueAccent,
                           desc: "Navigate CITK in 3D",
-                          onTap: () => context.push('/map'),
+                          onTap: () => context.push('/campus-map'),
                         ),
                         _buildFeatureCard(
                           context,
@@ -240,7 +246,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           icon: Icons.directions_bus_outlined,
                           color: Colors.greenAccent,
                           desc: "Live Status",
-                          onTap: () => context.push('/bus'),
+                          onTap: () => context.push('/bus-tracker'),
                         ),
                         _buildFeatureCard(
                           context,
@@ -248,7 +254,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           icon: Icons.auto_awesome_outlined,
                           color: Colors.purpleAccent,
                           desc: "Ask anything",
-                          onTap: () => context.push('/ai'),
+                          onTap: () => context.push('/ai-chat'),
                         ),
                         _buildFeatureCard(
                           context,
@@ -259,14 +265,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           onTap: () => context.push('/events'),
                         ),
                         // Emergency (Uncomment if route exists)
-                        // _buildFeatureCard(
-                        //   context,
-                        //   title: "Emergency",
-                        //   icon: Icons.local_hospital_outlined,
-                        //   color: Colors.redAccent,
-                        //   desc: "Medical & Security",
-                        //   onTap: () => context.push('/emergency'),
-                        // ),
+                        _buildFeatureCard(
+                          context,
+                          title: "Emergency",
+                          icon: Icons.local_hospital_outlined,
+                          color: Colors.redAccent,
+                          desc: "Medical & Security",
+                          onTap: () => context.push('/emergency'),
+                        ),
                       ],
               ),
             ),

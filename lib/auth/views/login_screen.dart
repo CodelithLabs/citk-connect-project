@@ -1,14 +1,10 @@
 import 'dart:ui';
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:citk_connect/auth/services/auth_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../auth/services/auth_service.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -18,416 +14,263 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  int _selectedTab = 0; // 0 = Student, 1 = Aspirant
-  bool _isLoading = false;
-
-  // 🛠️ MAIN LOGIN LOGIC
-  Future<void> _handleSmartLogin() async {
-  setState(() => _isLoading = true);
-
-  try {
-    // 1️⃣ Google Sign-In
-    await ref.read(authServiceProvider.notifier).signInWithGoogle();
-
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception("Login cancelled");
-
-    final email = user.email ?? "";
-
-    // ============================
-    // 🔐 STUDENT TAB RULES
-    // ============================
-    if (_selectedTab == 0) {
-      final bool isStudentEmail =
-          email.endsWith("@cit.ac.in") &&
-          RegExp(r'\d').hasMatch(email.split('@')[0]);
-
-      final bool isDeveloper =
-          email == "codelithlabs@gmail.com" ||
-          email == "work.prasanta.ray@gmail.com";
-
-      if (!isStudentEmail && !isDeveloper) {
-        await FirebaseAuth.instance.signOut();
-        if (mounted) {
-          _showError(
-            "Access Denied: Use your official college email (e.g. d25xxx@cit.ac.in).",
-          );
-        }
-        return;
-      }
-
-      // ✅ Student role is auto-handled inside AuthService
-    }
-
-    // ============================
-    // 🌱 ASPIRANT TAB RULES
-    // ============================
-    if (_selectedTab == 1) {
-      if (email.endsWith("@cit.ac.in")) {
-        await FirebaseAuth.instance.signOut();
-        if (mounted) {
-          _showError("You already have a college ID. Use the Student tab.");
-        }
-        return;
-      }
-
-      // ⚡ Force Aspirant role in Firestore
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .set(
-        {
-          'uid': user.uid,
-          'email': email,
-          'displayName': user.displayName,
-          'photoURL': user.photoURL,
-          'role': 'aspirant',
-          'lastLogin': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
-    }
-
-    // 🚀 NOTHING ELSE HERE
-    // GoRouter + Auth State Listener handles navigation automatically
-
-  } catch (e) {
-    if (mounted) {
-      _showError("Login Failed: ${e.toString()}");
-    }
-  } finally {
-    if (mounted) setState(() => _isLoading = false);
-  }
-}
-
-
-  // 🛠️ MISSING FUNCTION FIXED HERE
-  void _handleDevBypass() {
-    // Shortcut to Admin/Staff login for testing
-    context.push('/staff-login');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Developer Shortcut: Opening Staff Portal 🛠️"),
-        duration: Duration(seconds: 1),
-        backgroundColor: Colors.grey,
-      ),
-    );
-  }
-
-  void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg, style: GoogleFonts.inter(color: Colors.white)),
-        backgroundColor: Colors.redAccent.withValues(alpha: 0.9),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
+  // Toggle for Driver Mode
+  bool _isDriverMode = false;
+  
+  // Driver Form Controllers
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _nameController = TextEditingController(); // For registration
+  bool _isRegisteringDriver = false; // Toggle login/register for driver
+  
   @override
   Widget build(BuildContext context) {
-    const bgDark = Color(0xFF0F1115);
-    const surface = Color(0xFF181B21);
-    const primary = Colors.white;
+    // Watch Auth State for loading/error
+    final authState = ref.watch(authServiceProvider);
+    final isLoading = authState is AsyncLoading;
 
     return Scaffold(
-      backgroundColor: bgDark,
-      resizeToAvoidBottomInset: false,
+      backgroundColor: const Color(0xFF0F1115),
+      // 🎨 RESIZE HANDLING: Prevents keyboard overlap errors
+      resizeToAvoidBottomInset: true, 
       body: Stack(
         children: [
-          // Background Blob 1
+          // 1. AMBIENT BACKGROUND (Optimized for performance)
           Positioned(
             top: -100,
-            left: -50,
-            child: ImageFiltered(
-              imageFilter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
-              child: Container(
-                width: 300,
-                height: 300,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.blueAccent.withValues(alpha: 0.15),
-                ),
-              ),
-            ),
+            right: -50,
+            child: _buildBlurBlob(const Color(0xFF4285F4).withValues(alpha: 0.15)),
           ),
-          // Background Blob 2
           Positioned(
             bottom: -50,
-            right: -50,
-            child: ImageFiltered(
-              imageFilter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.purpleAccent.withValues(alpha: 0.1),
+            left: -50,
+            child: _buildBlurBlob(const Color(0xFFAB47BC).withValues(alpha: 0.1)),
+          ),
+
+          // 2. MAIN CONTENT
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24.0),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 500),
+                  transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: SlideTransition(position: Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(anim), child: child)),
+                  // 🔀 LOGIC SWITCHER: Show Google Login OR Driver Form
+                  child: _isDriverMode 
+                    ? _buildDriverForm(isLoading) 
+                    : _buildMainLogin(isLoading),
                 ),
               ),
             ),
           ),
-
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // HEADER ROW
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const _IdentityMorphWidget(),
-                      GestureDetector(
-                        onTap: _handleDevBypass, // ✅ Error Fixed
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-                          ),
-                          child: Row(
-                            children: const [
-                              Icon(Icons.bug_report, size: 12, color: Colors.grey),
-                              SizedBox(width: 4),
-                              Text(
-                                "DEBUG",
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.grey,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // MAIN TITLE & SUBTITLE
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _selectedTab == 0
-                              ? "Student\nPortal."
-                              : "Future\nStudent.",
-                          style: GoogleFonts.inter(
-                            fontSize: 42,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            height: 1.1,
-                          ),
-                        )
-                            .animate(key: ValueKey('title-$_selectedTab'))
-                            .fadeIn()
-                            .moveY(begin: 20.0, end: 0.0),
-
-                        const SizedBox(height: 16),
-
-                        Text(
-                          _selectedTab == 0
-                              ? "Your digital campus gateway.\nBus tracking, Routine & AI Assistant."
-                              : "Dreaming of CITK?\nExplore admission details & campus life.",
-                          style: GoogleFonts.inter(
-                            fontSize: 15,
-                            color: Colors.grey[400],
-                            height: 1.5,
-                          ),
-                        )
-                            .animate(key: ValueKey('subtitle-$_selectedTab'))
-                            .fadeIn(delay: 200.ms),
-                      ],
-                    ),
-                  ),
-
-                  // LOGIN CONTROLS
-                  Column(
-                    children: [
-                      // Toggle Switch
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        height: 55,
-                        decoration: BoxDecoration(
-                          color: surface,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-                        ),
-                        child: Row(
-                          children: [
-                            _buildTab("Student", 0),
-                            _buildTab("Aspirant", 1),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // Main Login Button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 60,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _handleSmartLogin,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primary,
-                            foregroundColor: bgDark,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: _isLoading
-                              ? const CircularProgressIndicator(strokeWidth: 2)
-                              : Text(
-                                  _selectedTab == 0
-                                      ? "Continue with College Email"
-                                      : "Explore with Google",
-                                  style: GoogleFonts.inter(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                        ),
-                      )
-                          .animate()
-                          .scale(
-                            begin: const Offset(0.95, 0.95),
-                            end: const Offset(1.0, 1.0),
-                            duration: 300.ms,
-                            curve: Curves.easeOutBack,
-                          ),
-
-                      const SizedBox(height: 24),
-
-                      // Staff Login Link
-                      GestureDetector(
-                        onTap: () => context.push('/staff-login'),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(30),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.shield_outlined, size: 16, color: Colors.grey[400]),
-                              const SizedBox(width: 10),
-                              Text(
-                                "Faculty & Driver Access",
-                                style: GoogleFonts.inter(
-                                  color: Colors.grey[300],
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+          
+          // 3. LOADING OVERLAY (If needed globally)
+          if (isLoading)
+            const Positioned.fill(
+              child: ColoredBox(
+                color: Colors.black45,
+                child: Center(child: CircularProgressIndicator()),
               ),
             ),
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildTab(String label, int index) {
-    final isSelected = _selectedTab == index;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _selectedTab = index),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF2A2D35) : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🏢 VIEW 1: MAIN LOGIN (Students/Faculty/Aspirants)
+  // ═══════════════════════════════════════════════════════════════════════════
+  Widget _buildMainLogin(bool isLoading) {
+    return Column(
+      key: const ValueKey('main'),
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // LOGO ANIMATION
+        const Icon(Icons.hub, size: 80, color: Colors.white)
+            .animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
+        const SizedBox(height: 24),
+        Text(
+          "CITK CONNECT",
+          style: GoogleFonts.inter(
+            fontSize: 28,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 2.0,
+            color: Colors.white,
           ),
+        ).animate().fadeIn().moveY(begin: 10, end: 0),
+        
+        const SizedBox(height: 8),
+        Text(
+          "Central Institute of Technology, Kokrajhar",
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.grey[400], fontSize: 14),
+        ).animate().fadeIn(delay: 200.ms),
+
+        const SizedBox(height: 60),
+
+        // 🔵 GOOGLE BUTTON
+        _buildButton(
+          label: "Continue with College Email",
+          icon: FontAwesomeIcons.google,
+          color: const Color(0xFF4285F4),
+          onTap: () => ref.read(authServiceProvider.notifier).signInWithGoogle(),
+        ).animate().fadeIn(delay: 400.ms),
+
+        const SizedBox(height: 16),
+        
+        // ASPIRANT HINT
+        Text(
+          "Aspirant? Sign in with any Gmail account.",
+          style: TextStyle(color: Colors.white24, fontSize: 12),
+        ).animate().fadeIn(delay: 600.ms),
+
+        const SizedBox(height: 80),
+
+        // 🚗 TOGGLE TO DRIVER MODE
+        TextButton.icon(
+          onPressed: () => setState(() => _isDriverMode = true),
+          icon: const Icon(Icons.directions_bus, size: 16, color: Colors.white54),
+          label: const Text("Driver / Staff Login", style: TextStyle(color: Colors.white54)),
+        ).animate().fadeIn(delay: 800.ms),
+      ],
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 🚌 VIEW 2: DRIVER FORM (Email/Password)
+  // ═══════════════════════════════════════════════════════════════════════════
+  Widget _buildDriverForm(bool isLoading) {
+    return Column(
+      key: const ValueKey('driver'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // BACK BUTTON
+        Align(
+          alignment: Alignment.centerLeft,
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => setState(() => _isDriverMode = false),
+          ),
+        ),
+        const SizedBox(height: 20),
+        
+        Text(
+          _isRegisteringDriver ? "Register Driver" : "Driver Login",
+          style: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          "Authorized transport staff only.",
+          style: TextStyle(color: Colors.grey[400]),
+        ),
+        const SizedBox(height: 40),
+
+        // FORM FIELDS
+        if (_isRegisteringDriver)
+          _buildTextField("Full Name", Icons.person, _nameController),
+        
+        const SizedBox(height: 16),
+        _buildTextField("Email Address", Icons.email, _emailController),
+        const SizedBox(height: 16),
+        _buildTextField("Password", Icons.lock, _passwordController, isPassword: true),
+
+        const SizedBox(height: 32),
+
+        // ACTION BUTTON
+        _buildButton(
+          label: _isRegisteringDriver ? "Create Account" : "Login",
+          icon: _isRegisteringDriver ? Icons.person_add : Icons.login,
+          color: const Color(0xFF43A047), // Green for Drivers
+          onTap: _handleDriverSubmit,
+        ),
+
+        const SizedBox(height: 20),
+
+        // TOGGLE LOGIN / REGISTER
+        TextButton(
+          onPressed: () => setState(() => _isRegisteringDriver = !_isRegisteringDriver),
           child: Text(
-            label,
-            style: GoogleFonts.inter(
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              color: isSelected ? Colors.white : Colors.grey[600],
-            ),
+            _isRegisteringDriver ? "Already have an account? Login" : "Need an account? Register",
+            style: const TextStyle(color: Colors.white70),
           ),
+        ),
+      ],
+    );
+  }
+
+  // 🛠️ DRIVER SUBMIT LOGIC
+  Future<void> _handleDriverSubmit() async {
+    final auth = ref.read(authServiceProvider.notifier);
+    final email = _emailController.text.trim();
+    final pass = _passwordController.text.trim();
+    final name = _nameController.text.trim();
+
+    if (email.isEmpty || pass.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Fill all fields")));
+      return;
+    }
+
+    try {
+      if (_isRegisteringDriver) {
+        if (name.isEmpty) return;
+        await auth.registerDriver(email: email, password: pass, name: name);
+        if(mounted) setState(() => _isRegisteringDriver = false); // Go to login after reg
+        if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Account Created! Login now.")));
+      } else {
+        await auth.signInWithEmail(email: email, password: pass);
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+    }
+  }
+
+  // 🎨 WIDGET BUILDERS
+  Widget _buildTextField(String label, IconData icon, TextEditingController controller, {bool isPassword = false}) {
+    return TextField(
+      controller: controller,
+      obscureText: isPassword,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, size: 18, color: Colors.white54),
+        filled: true,
+        fillColor: const Color(0xFF1E1E1E),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+        labelStyle: const TextStyle(color: Colors.white54),
+      ),
+    );
+  }
+
+  Widget _buildButton({required String label, required IconData icon, required Color color, required VoidCallback onTap}) {
+    return SizedBox(
+      height: 56,
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 4,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 20),
+            const SizedBox(width: 12),
+            Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
         ),
       ),
     );
   }
-}
 
-// 🪄 FANCY ANIMATION WIDGET
-class _IdentityMorphWidget extends StatefulWidget {
-  const _IdentityMorphWidget();
-
-  @override
-  State<_IdentityMorphWidget> createState() => _IdentityMorphWidgetState();
-}
-
-class _IdentityMorphWidgetState extends State<_IdentityMorphWidget> {
-  int _index = 0;
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 3), (_) {
-      if (mounted) setState(() => _index = (_index + 1) % 2);
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 500),
-      transitionBuilder: (child, animation) {
-        final slide = Tween<Offset>(
-          begin: const Offset(0.0, 1.0),
-          end: Offset.zero,
-        ).animate(animation);
-
-        return FadeTransition(
-          opacity: animation,
-          child: SlideTransition(position: slide, child: child),
-        );
-      },
-      child: _index == 0
-          ? _row("CITK CONNECT", Icons.hub, const ValueKey('citk'))
-          : _row("CODELITH LABS", Icons.code, const ValueKey('codelith')),
-    );
-  }
-
-  Widget _row(String text, IconData icon, Key key) {
-    return Row(
-      key: key,
-      children: [
-        Icon(icon, color: Colors.white.withValues(alpha: 0.9), size: 20),
-        const SizedBox(width: 10),
-        Text(
-          text,
-          style: GoogleFonts.inter(
-            color: Colors.white.withValues(alpha: 0.9),
-            fontWeight: FontWeight.w700,
-            letterSpacing: 2.5,
-            fontSize: 13,
-          ),
-        ),
-      ],
+  Widget _buildBlurBlob(Color color) {
+    return Container(
+      width: 250,
+      height: 250,
+      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+      child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80), child: Container(color: Colors.transparent)),
     );
   }
 }

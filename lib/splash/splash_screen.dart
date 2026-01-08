@@ -43,9 +43,11 @@ class _SplashScreenState extends State<SplashScreen> {
       });
     });
 
-    // Navigate to Auth/Home after 8 seconds (or however long your loading logic takes)
-    Future.delayed(const Duration(seconds: 8), () {
-      if (mounted) context.go('/onboarding'); // Go to onboarding first!
+    // Navigate to Auth/Home after 4 seconds (or however long your loading logic takes)
+    Future.delayed(const Duration(seconds: 4), () {
+      if (mounted) { // Go to onboarding first!
+        context.go('/');
+      }
     });
   }
 

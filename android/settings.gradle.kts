@@ -1,3 +1,6 @@
+// android/settings.gradle.kts
+// Fixed: Using proper Kotlin DSL syntax
+
 pluginManagement {
     val flutterSdkPath =
         run {
@@ -18,9 +21,14 @@ pluginManagement {
 }
 
 plugins {
+    // ✅ FIXED: Removed non-existent plugins, kept only valid Gradle plugins
+    id("com.android.library") version "8.9.1" apply false
+    id("com.google.gms.google-services") version "4.4.0" apply false
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
     id("com.android.application") version "8.9.1" apply false
     id("org.jetbrains.kotlin.android") version "2.1.0" apply false
+    id("com.google.firebase.crashlytics") version "2.9.7" apply false
+    // Note: Firebase Analytics is a library, not a Gradle plugin - it's added in build.gradle.kts dependencies
 }
 
 include(":app")

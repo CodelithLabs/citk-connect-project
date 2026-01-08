@@ -1,13 +1,19 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'dart:ui';
 import 'package:citk_connect/map/models/bus_data.dart';
 import 'package:citk_connect/map/services/bus_service.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
+
+// Helper Provider to stream a specific bus
+final busStreamProvider = StreamProvider.family<BusData, String>((ref, busId) {
+  final service = ref.watch(busServiceProvider);
+  return service.streamBus(busId);
+});
 
 class BusTrackerScreen extends ConsumerStatefulWidget {
   const BusTrackerScreen({super.key});
@@ -19,69 +25,71 @@ class BusTrackerScreen extends ConsumerStatefulWidget {
 class _BusTrackerScreenState extends ConsumerState<BusTrackerScreen>
     with SingleTickerProviderStateMixin {
   final Completer<GoogleMapController> _controller = Completer();
-
-  // 🗺️ DYNAMIC ROUTE (Fetched from Cloud)
-  List<LatLng> _routePoints = [
-    const LatLng(26.4700, 90.2700), // Default Start
-    const LatLng(26.4862, 90.2582), // Default End
-  ];
-
-  // 📜 HISTORY PATH
-  final List<LatLng> _historyPoints = [];
-
-  //  REAL-TIME STATE
-  Marker? _busMarker;
-  String _selectedBusId = "bus_04"; // Default
-  final List<String> _buses = ["bus_01", "bus_02", "bus_03", "bus_04"];
-  String _currentCondition = "OK";
-  String _currentOccupancy = "LOW";
-
-  // 🎥 ANIMATION ENGINE (The "Zomato" Smoothness)
   late AnimationController _animController;
-  LatLng _prevPosition = const LatLng(26.4700, 90.2700);
-  LatLng _targetPosition = const LatLng(26.4700, 90.2700);
-  double _prevHeading = 0.0;
-  double _targetHeading = 0.0;
 
-  // ⏱️ ETA LOGIC
-  String _etaText = "Calculating...";
-  bool _isLoading = true;
+  // 🎥 Interpolation State
+  Set<Polyline> _polylines = {};
+  BusData? _currentBusData;
+  BusData? _prevBusData;
+  double _lat = 0, _lng = 0, _heading = 0;
+  bool _isAutoFollow = true; // 🎥 Auto-follow state
+
+  //  CIT Kokrajhar Coordinates
+  static const CameraPosition _kCitCampus = CameraPosition(
+    target: LatLng(26.4700, 90.2700),
+    zoom: 14.4746,
+  );
+
+  // 🌑 Cyberpunk Map Style JSON
+  static const String _darkMapStyle = '''
+    [
+      { "elementType": "geometry", "stylers": [{ "color": "#242f3e" }] },
+      { "elementType": "labels.text.stroke", "stylers": [{ "color": "#242f3e" }] },
+      { "elementType": "labels.text.fill", "stylers": [{ "color": "#746855" }] },
+      { "featureType": "administrative.locality", "elementType": "labels.text.fill", "stylers": [{ "color": "#d59563" }] },
+      { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [{ "color": "#d59563" }] },
+      { "featureType": "poi.park", "elementType": "geometry", "stylers": [{ "color": "#263c3f" }] },
+      { "featureType": "poi.park", "elementType": "labels.text.fill", "stylers": [{ "color": "#6b9a76" }] },
+      { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#38414e" }] },
+      { "featureType": "road", "elementType": "geometry.stroke", "stylers": [{ "color": "#212a37" }] },
+      { "featureType": "road", "elementType": "labels.text.fill", "stylers": [{ "color": "#9ca5b3" }] },
+      { "featureType": "road.highway", "elementType": "geometry", "stylers": [{ "color": "#746855" }] },
+      { "featureType": "road.highway", "elementType": "geometry.stroke", "stylers": [{ "color": "#1f2835" }] },
+      { "featureType": "road.highway", "elementType": "labels.text.fill", "stylers": [{ "color": "#f3d19c" }] },
+      { "featureType": "transit", "elementType": "geometry", "stylers": [{ "color": "#2f3948" }] },
+      { "featureType": "transit.station", "elementType": "labels.text.fill", "stylers": [{ "color": "#d59563" }] },
+      { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#17263c" }] },
+      { "featureType": "water", "elementType": "labels.text.fill", "stylers": [{ "color": "#515c6d" }] },
+      { "featureType": "water", "elementType": "labels.text.stroke", "stylers": [{ "color": "#17263c" }] }
+    ]
+  ''';
 
   @override
   void initState() {
     super.initState();
-    _checkAccess();
-    _fetchRoute(); // 🚀 Load dynamic route
-    // Initialize Animation Controller (runs for 2 seconds per update)
+    // 🎬 Animation Controller for smooth movement (2 seconds to match update rate)
     _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2000),
-    )..addListener(_updateMarkerPosition);
-  }
+        vsync: this, duration: const Duration(milliseconds: 2000))
+      ..addListener(() {
+        if (_prevBusData != null && _currentBusData != null) {
+          setState(() {
+            final t = _animController.value;
+            _lat = lerpDouble(_prevBusData!.lat, _currentBusData!.lat, t) ??
+                _currentBusData!.lat;
+            _lng = lerpDouble(_prevBusData!.lng, _currentBusData!.lng, t) ??
+                _currentBusData!.lng;
 
-  // 🔒 SECURITY: Ensure only Students/Staff access this
-  Future<void> _checkAccess() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    final doc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .get();
-    // Allow students, faculty, and aspirants
-    if (!doc.exists && mounted) {
-      // Handle edge case or guest
-    }
-    setState(() => _isLoading = false);
-  }
-
-  Future<void> _fetchRoute() async {
-    final points = await ref.read(busServiceProvider).getRoute(_selectedBusId);
-    if (mounted && points.isNotEmpty) {
-      setState(() {
-        _routePoints = points.map((p) => LatLng(p['lat']!, p['lng']!)).toList();
+            // 🔄 Smart Rotation (Shortest Path)
+            double start = _prevBusData!.heading;
+            double end = _currentBusData!.heading;
+            double diff = end - start;
+            if (diff > 180) diff -= 360;
+            if (diff < -180) diff += 360;
+            _heading = start + (diff * t);
+          });
+        }
       });
-    }
+    _loadRoute();
   }
 
   @override
@@ -90,310 +98,418 @@ class _BusTrackerScreenState extends ConsumerState<BusTrackerScreen>
     super.dispose();
   }
 
-  // Called every frame during animation to slide the marker
-  void _updateMarkerPosition() {
-    if (!mounted) return;
+  Future<void> _loadRoute() async {
+    final service = ref.read(busServiceProvider);
+    // Fetch route points (Hardcoded 'bus_01' for demo)
+    final routePoints = await service.getRoute('bus_01');
 
-    // Linear Interpolation (Lerp)
-    final double t = _animController.value;
-    final double lat = _prevPosition.latitude +
-        (_targetPosition.latitude - _prevPosition.latitude) * t;
-    final double lng = _prevPosition.longitude +
-        (_targetPosition.longitude - _prevPosition.longitude) * t;
+    final latLngs =
+        routePoints.map((p) => LatLng(p['lat']!, p['lng']!)).toList();
 
-    // Heading Interpolation (shortest path)
-    double diff = _targetHeading - _prevHeading;
-    if (diff > 180) diff -= 360;
-    if (diff < -180) diff += 360;
-    final double heading = _prevHeading + diff * t;
-
-    final newPos = LatLng(lat, lng);
-
-    setState(() {
-      _busMarker = Marker(
-        markerId: const MarkerId('college_bus'),
-        position: newPos,
-        rotation: heading,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-        anchor: const Offset(0.5, 0.5), // Center the icon
-        infoWindow:
-            const InfoWindow(title: 'CITK Bus 04', snippet: 'Live Tracking'),
-      );
-    });
-  }
-
-  // Called when Firestore sends new data
-  void _onNewLocationData(BusData data) {
-    // 1. Save current state as "Previous"
-    if (_busMarker != null) {
-      _prevPosition = _busMarker!.position;
-      _prevHeading = _busMarker!.rotation;
+    if (mounted) {
+      setState(() {
+        _polylines = {
+          Polyline(
+            polylineId: const PolylineId('route_01'),
+            points: latLngs,
+            color: const Color(0xFF6C63FF), // Gen Z Periwinkle
+            width: 5,
+            startCap: Cap.roundCap,
+            endCap: Cap.roundCap,
+          ),
+        };
+      });
     }
-
-    // 2. Set new Target
-    _targetPosition = LatLng(data.lat, data.lng);
-    _targetHeading = data.heading;
-
-    // 🆕 Add to History
-    if (_historyPoints.isEmpty || _historyPoints.last != _targetPosition) {
-      _historyPoints.add(_targetPosition);
-    }
-
-    _currentCondition = data.condition;
-    _currentOccupancy = data.occupancy;
-
-    if (data.status == 'OFFLINE') {
-      setState(() => _etaText = "🔴 BUS IS OFFLINE");
-      return;
-    }
-
-    // 2.5 Calculate ETA (Distance to Campus End Point)
-    // In a real app, use Google Distance Matrix API. Here we use Haversine for free.
-    final double distanceInMeters = Geolocator.distanceBetween(data.lat,
-        data.lng, _routePoints.last.latitude, _routePoints.last.longitude);
-
-    // Assuming avg speed of 30km/h (8.3 m/s) if data.speed is 0 or unreliable
-    final double speed = (data.speed > 1) ? data.speed : 8.3;
-    final int minutes = (distanceInMeters / speed / 60).round();
-    setState(() => _etaText = "$minutes min to Campus");
-
-    // 3. Reset and Start Animation to slide to new target
-    _animController.forward(from: 0.0);
-
-    // 4. Move Camera if distance is significant
-    _moveCamera(_targetPosition);
-  }
-
-  Future<void> _moveCamera(LatLng pos) async {
-    final GoogleMapController controller = await _controller.future;
-    controller.animateCamera(CameraUpdate.newLatLng(pos));
   }
 
   @override
   Widget build(BuildContext context) {
-    // 🎧 LISTEN TO THE CLOUD
-    if (_isLoading) {
-      return const Scaffold(
-          backgroundColor: Color(0xFF0F1115),
-          body: Center(child: CircularProgressIndicator()));
-    }
+    // 🎧 Listening to 'bus_01' (Hardcoded for demo)
+    final busAsync = ref.watch(busStreamProvider('bus_01'));
+
+    // ⚡ Trigger Animation when new data arrives
+    ref.listen(busStreamProvider('bus_01'), (prev, next) {
+      next.whenData((newData) {
+        setState(() {
+          if (_currentBusData == null) {
+            _lat = newData.lat;
+            _lng = newData.lng;
+            _heading = newData.heading;
+          } else {
+            // Start animation from CURRENT visual position to avoid jumps
+            _prevBusData = BusData(
+                id: newData.id,
+                lat: _lat,
+                lng: _lng,
+                heading: _heading,
+                speed: newData.speed,
+                condition: newData.condition,
+                occupancy: newData.occupancy);
+            _animController.forward(from: 0.0);
+          }
+          _currentBusData = newData;
+        });
+
+        if (_isAutoFollow) {
+          _moveCamera(newData.lat, newData.lng);
+        }
+      });
+    });
 
     return Scaffold(
       body: Stack(
         children: [
-          // 1. THE MAP
-          GoogleMap(
-            mapType: MapType.normal,
-            // Dark Mode Map Style (Optional: Add JSON style here for Gen Z look)
-            initialCameraPosition: CameraPosition(
-              target: _routePoints[0],
-              zoom: 15,
+          // 🗺️ Google Map Layer
+          Listener(
+            onPointerDown: (_) {
+              // 🛑 User touched map -> Stop auto-following
+              if (_isAutoFollow) setState(() => _isAutoFollow = false);
+            },
+            child: GoogleMap(
+              initialCameraPosition: _kCitCampus,
+              onMapCreated: (GoogleMapController controller) {
+                _controller.complete(controller);
+                controller.setMapStyle(_darkMapStyle);
+              },
+              markers: _currentBusData != null
+                  ? {
+                      _createBusMarker(BusData(
+                          id: _currentBusData!.id,
+                          lat: _lat,
+                          lng: _lng,
+                          heading: _heading,
+                          speed: _currentBusData!.speed,
+                          condition: _currentBusData!.condition,
+                          occupancy: _currentBusData!.occupancy))
+                    }
+                  : {},
+              polylines: _polylines,
+              myLocationEnabled: true,
+              zoomControlsEnabled: false,
             ),
-            polylines: {
-              Polyline(
-                polylineId: const PolylineId('route'),
-                points: _routePoints,
-                color: const Color(0xFF6C63FF).withValues(alpha: 0.3),
-                width: 5,
-              ),
-              // 📜 History Polyline
-              Polyline(
-                polylineId: const PolylineId('history'),
-                points: _historyPoints,
-                color: Colors.greenAccent,
-                width: 4,
-              ),
-            },
-            markers: _busMarker != null ? {_busMarker!} : {},
-            onMapCreated: (GoogleMapController controller) {
-              _controller.complete(controller);
-            },
           ),
 
-          // 2. DATA LISTENER (Invisible Logic)
-          StreamBuilder<BusData>(
-            stream: ref.read(busServiceProvider).streamBus(_selectedBusId),
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                // Trigger animation when data changes
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (_targetPosition.latitude != snapshot.data!.lat) {
-                    _onNewLocationData(snapshot.data!);
-                  }
-                });
-              }
-              return const SizedBox.shrink();
-            },
-          ),
-
-          // 3. GEN Z HEADER CARD
+          // 🔙 Back Button
           Positioned(
             top: 50,
             left: 20,
-            right: 20,
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF181B21)
-                    .withValues(alpha: 0.9), // Glass Dark
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      blurRadius: 20)
-                ],
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF181B21),
+                  shape: BoxShape.circle,
+                  border:
+                      Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                ),
+                child: const Icon(Icons.arrow_back, color: Colors.white),
               ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF6C63FF).withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.directions_bus,
-                        color: Color(0xFF6C63FF), size: 24),
-                  ),
-                  const SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(_selectedBusId.toUpperCase().replaceAll('_', ' '),
-                          style: GoogleFonts.robotoMono(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: Colors.white)),
-                      Text(_etaText, // ⏱️ LIVE ETA
-                          style: GoogleFonts.inter(
-                              color: Colors.greenAccent,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600)),
+            ),
+          ),
+
+          // 🎯 Recenter Button (Only shows when auto-follow is OFF)
+          if (!_isAutoFollow)
+            Positioned(
+              top: 50,
+              right: 20,
+              child: GestureDetector(
+                onTap: () {
+                  setState(() => _isAutoFollow = true);
+                  if (_currentBusData != null) {
+                    _moveCamera(_currentBusData!.lat, _currentBusData!.lng);
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6C63FF),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF6C63FF).withValues(alpha: 0.4),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
                     ],
                   ),
-                  const Spacer(),
-                  // 🚦 STATUS PILL
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: (_currentCondition == "ISSUE"
-                              ? Colors.red
-                              : Colors.green)
-                          .withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                          color: (_currentCondition == "ISSUE"
-                                  ? Colors.red
-                                  : Colors.green)
-                              .withValues(alpha: 0.5)),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                                color: (_currentCondition == "ISSUE"
-                                    ? Colors.red
-                                    : Colors.green),
-                                shape: BoxShape.circle)),
-                        const SizedBox(width: 6),
-                        Text(_currentCondition == "ISSUE" ? "DELAY" : "LIVE",
-                            style: GoogleFonts.inter(
-                                color: (_currentCondition == "ISSUE"
-                                    ? Colors.red
-                                    : Colors.green),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 10)),
-                      ],
+                  child: const Icon(Icons.gps_fixed, color: Colors.white),
+                ),
+              ).animate().scale(duration: 200.ms, curve: Curves.easeOutBack),
+            ),
+
+          // 🚦 Bus Status Card (The Answer to your Request)
+          Positioned(
+            bottom: 40,
+            left: 20,
+            right: 20,
+            child: busAsync.when(
+              data: (bus) => BusInfoCard(bus: bus),
+              loading: () => const SizedBox.shrink(), // Don't show until loaded
+              error: (e, _) => const SizedBox.shrink(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _moveCamera(double lat, double lng) async {
+    final controller = await _controller.future;
+    controller.animateCamera(CameraUpdate.newLatLng(LatLng(lat, lng)));
+  }
+
+  Marker _createBusMarker(BusData bus) {
+    return Marker(
+      markerId: MarkerId(bus.id),
+      position: LatLng(bus.lat, bus.lng),
+      rotation: bus.heading,
+      // In a real app, use BitmapDescriptor.fromAssetImage for a custom bus icon
+      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+    );
+  }
+
+  // REMOVED: _buildBusInfoCard, _showReportDialog, _buildReportOption
+  // These are now part of the BusInfoCard class below to prevent rebuilds.
+}
+
+class BusInfoCard extends ConsumerWidget {
+  final BusData bus;
+
+  const BusInfoCard({super.key, required this.bus});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // 🎨 Logic to determine color based on traffic
+    Color statusColor;
+    String statusText;
+
+    switch (bus.condition) {
+      case 'HIGH':
+        statusColor = const Color(0xFFFF5252);
+        statusText = 'Heavy Traffic';
+        break;
+      case 'MED':
+        statusColor = Colors.orangeAccent;
+        statusText = 'Moderate Traffic';
+        break;
+      case 'LOW':
+      default:
+        statusColor = const Color(0xFF00E676);
+        statusText = 'Clear Road';
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF181B21).withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Bus No. 1',
+                    style: GoogleFonts.inter(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  // 👥 OCCUPANCY PILL (New Feature)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: (_currentOccupancy == "FULL"
-                              ? Colors.red
-                              : Colors.blue)
-                          .withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                          color: (_currentOccupancy == "FULL"
-                                  ? Colors.red
-                                  : Colors.blue)
-                              .withValues(alpha: 0.5)),
-                    ),
-                    child: Text(_currentOccupancy,
-                        style: GoogleFonts.inter(
-                            color: (_currentOccupancy == "FULL"
-                                ? Colors.red
-                                : Colors.blue),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 10)),
+                  Text(
+                    'Arriving in ~5 mins', // Mock ETA
+                    style: GoogleFonts.inter(fontSize: 14, color: Colors.grey),
                   ),
                 ],
               ),
-            ),
-          ),
-
-          // 4. BUS SELECTOR (Floating Pills)
-          Positioned(
-            top: 130,
-            left: 0,
-            right: 0,
-            child: SizedBox(
-              height: 40,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: _buses.length,
-                itemBuilder: (context, index) {
-                  final busId = _buses[index];
-                  final isSelected = busId == _selectedBusId;
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() => _selectedBusId = busId);
-                      _fetchRoute(); // 🔄 Fetch new route for selected bus
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 10),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? const Color(0xFF6C63FF)
-                            : Colors.black54,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: isSelected ? Colors.white : Colors.white24,
-                        ),
-                      ),
-                      child: Text(
-                        busId.toUpperCase().replaceAll('_', ' '),
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  );
-                },
+              //  Speedometer
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6C63FF).withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${(bus.speed * 3.6).toStringAsFixed(0)} km/h', // m/s to km/h
+                  style: GoogleFonts.robotoMono(
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF6C63FF),
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
+          const SizedBox(height: 20),
+          // 🚦 Traffic & Occupancy Indicators
+          Row(
+            children: [
+              _StatusBadge(
+                  label: statusText, color: statusColor, icon: Icons.traffic),
+              const SizedBox(width: 12),
+              _StatusBadge(
+                  label: 'Occupancy: ${bus.occupancy}',
+                  color: Colors.blueAccent,
+                  icon: Icons.people),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // 📤 Share & ⚠️ Report Buttons
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Share.share(
+                        'Hey! Bus No. 1 is arriving at CIT Kokrajhar in ~5 mins. Track it on CITK Connect! 🚌💨');
+                  },
+                  icon: const Icon(Icons.share, size: 16),
+                  label: const Text('Share'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        const Color(0xFF6C63FF).withValues(alpha: 0.2),
+                    foregroundColor: const Color(0xFF6C63FF),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => _showReportDialog(context, ref, bus.id),
+                  icon: const Icon(Icons.report_problem, size: 16),
+                  label: const Text('Report'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        const Color(0xFFFF5252).withValues(alpha: 0.2),
+                    foregroundColor: const Color(0xFFFF5252),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ).animate().slideY(begin: 0.2, curve: Curves.easeOut);
+  }
 
-          // 5. BACK BUTTON
-          Positioned(
-            bottom: 30,
-            left: 20,
-            child: FloatingActionButton(
-              onPressed: () => Navigator.pop(context),
-              backgroundColor: const Color(0xFF181B21),
-              child: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+  void _showReportDialog(BuildContext context, WidgetRef ref, String busId) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: const Color(0xFF181B21),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'REPORT ISSUE',
+                style: GoogleFonts.inter(
+                  color: const Color(0xFFFF5252),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'What is wrong with this bus?',
+                style: GoogleFonts.inter(color: Colors.white70),
+              ),
+              const SizedBox(height: 24),
+              _buildReportOption(context, ref, busId, 'Breakdown', Icons.build),
+              _buildReportOption(
+                  context, ref, busId, 'Accident', Icons.medical_services),
+              _buildReportOption(
+                  context, ref, busId, 'Heavy Delay', Icons.timer_off),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Cancel',
+                      style: GoogleFonts.inter(color: Colors.grey)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReportOption(BuildContext context, WidgetRef ref, String busId,
+      String label, IconData icon) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.white70),
+      title: Text(label, style: GoogleFonts.inter(color: Colors.white)),
+      onTap: () {
+        Navigator.pop(context);
+        ref.read(busServiceProvider).reportIssue(busId, label);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Reported: $label. Admin notified.'),
+            backgroundColor: const Color(0xFFFF5252),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  final String label;
+  final Color color;
+  final IconData icon;
+
+  const _StatusBadge(
+      {required this.label, required this.color, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: color,
             ),
           ),
         ],

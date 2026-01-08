@@ -141,3 +141,16 @@ This batch of fixes addresses the diagnostics provided by the user.
 
 *   **Outstanding Issues:**
     *   Errors in `lib/ai/views/chat_screen.dart` related to `share_plus` and `flutter_tts` could not be resolved as `flutter pub get` is not available. This is likely an IDE synchronization issue.
+---
+
+## 9. ONGOING FIXES (Batch 3)
+
+This batch of fixes addresses the diagnostics provided by the user.
+
+*   **Onboarding Logic Update:**
+    *   Converted `OnboardingScreen` (`lib/onboarding/views/onboarding_screen.dart`) to a `ConsumerStatefulWidget` to integrate with Riverpod state management.
+    *   The `_finishOnboarding` function now correctly persists the `seenOnboarding` flag to `SharedPreferences`.
+    *   The `onboardingStateProvider` is now updated upon completion, signaling the `AppRouter` to allow navigation to the main application.
+    *   Navigation on completion now correctly points to `/login`.
+    *   Corrected a typo in a `flutter_animate` import.
+    *   Cleaned up styling to be more consistent with the app's theme, replacing hardcoded colors with `Theme.of(context).colorScheme` values.
