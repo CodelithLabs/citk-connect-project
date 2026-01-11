@@ -11,17 +11,20 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # 1. Update Python to 3.11 (Fixes the "No matching distribution" error)
+      # 1. Switch to Python 3.10 (Very stable for AI libs)
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11' 
+          python-version: '3.10' 
 
-      # 2. Upgrade pip first (Crucial for AI libraries)
+      # 2. Upgrade pip cleanly
       - name: Upgrade pip
         run: python -m pip install --upgrade pip
 
+      # 3. Install libs with --no-cache-dir to force finding the package
       - name: Install Libs
-        run: pip install requests beautifulsoup4 firebase-admin google-generative-ai
+        run: |
+          python -m pip install --no-cache-dir requests beautifulsoup4 firebase-admin
+          python -m pip install --no-cache-dir google-generative-ai
 
       - name: Run Scraper
         env:
