@@ -2,31 +2,35 @@ name: CITK Live Sync
 
 on:
   schedule:
+    # Runs automatically every 15 minutes
     - cron: '*/15 * * * *'
-  workflow_dispatch:
+  workflow_dispatch: 
+    # Allows you to click "Run Now" manually for testing
 
 jobs:
   run-scraper:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-      # 1. Switch to Python 3.10 (Very stable for AI libs)
-      - uses: actions/setup-python@v4
+      # Use Python 3.10 (Most stable for AI libraries)
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.10' 
 
-      # 2. Upgrade pip cleanly
-      - name: Upgrade pip
+      - name: Upgrade PIP
         run: python -m pip install --upgrade pip
 
-      # 3. Install libs with --no-cache-dir to force finding the package
-      - name: Install Libs
+      # CRITICAL: Installing 'google-generativeai' (No Dash)
+      - name: Install Dependencies
         run: |
           python -m pip install --no-cache-dir requests beautifulsoup4 firebase-admin
-          python -m pip install --no-cache-dir google-generative-ai
+          python -m pip install --no-cache-dir google-generativeai
 
-      - name: Run Scraper
+      - name: Run The Bot
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           FIREBASE_JSON_BASE64: ${{ secrets.FIREBASE_JSON_BASE64 }}

@@ -46,3 +46,5 @@ app.*.map.json
 
 # Secret config files
 /lib/auth/services/google_signin_config.dart
+
+.venv/
