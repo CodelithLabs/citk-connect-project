@@ -76,6 +76,7 @@ dev_dependencies:
   riverpod_generator: ^2.6.0
   custom_lint: ^0.7.0
   riverpod_lint: ^2.6.0
+  cupertino_icons: ^1.0.8
 
 flutter_launcher_icons:
   android: "launcher_icon"

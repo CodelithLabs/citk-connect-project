@@ -35,18 +35,58 @@
   <!-- 🗺️ Google Maps SDK for Web (REQUIRED) -->
   <!-- Replace YOUR_API_KEY with your actual Google Maps API Key -->
   <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
+  <style>
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      -ms-transform: translate(-50%, -50%);
+      transform: translate(-50%, -50%);
+    }
+    .loader {
+      border: 16px solid #f3f3f3;
+      border-radius: 50%;
+      border-top: 16px solid #4285F4;
+      border-right: 16px solid white;
+      border-bottom: 16px solid #4285F4;
+      border-left: 16px solid white;
+      width: 80px;
+      height: 80px;
+      -webkit-animation: spin 2s linear infinite;
+      animation: spin 2s linear infinite;
+    }
+    @-webkit-keyframes spin {
+      0% { -webkit-transform: rotate(0deg); }
+      100% { -webkit-transform: rotate(360deg); }
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
+  <div id="loading_indicator" class="loading">
+    <div class="loader"></div>
+  </div>
   <script src="flutter.js" defer></script>
   <script>
     window.addEventListener('load', function(ev) {
+      var loading = document.querySelector('#loading_indicator');
       // Download main.dart.js
-      _flutter.loader.loadEntrypoint({
-        serviceWorker: {
-          serviceWorkerVersion: serviceWorkerVersion,
+      _flutter.loader.load({
+        serviceWorkerSettings: {
+          serviceWorkerVersion: window.serviceWorkerVersion || null,
         },
         onEntrypointLoaded: function(engineInitializer) {
           engineInitializer.initializeEngine().then(function(appRunner) {
+            if (loading) {
+              loading.remove();
+            }
             appRunner.runApp();
           });
         }
