@@ -2,30 +2,68 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // 🚌 BUSES: Public Read, Driver Write
+    // 🛡️ HELPER FUNCTIONS
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    // 🔐 CLAIM-BASED ADMIN CHECK (Fast & Secure)
+    function isSuperAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    // ️ PERMISSION CHECK (Granular)
+    function hasPermission(perm) {
+      let userPerms = get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions;
+      return isSignedIn() && (userPerms.hasAny([perm]) || userPerms.hasAny(['*']));
+    }
+
+    //  BUSES: Public Read, Driver Write
     match /buses/{busId} {
       allow read: if true;
-      allow write: if request.auth != null 
-                   && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver';
+      allow write: if hasPermission('broadcast_location');
     }
     
     // 👤 USERS: Owner Write, Auth Read
     match /users/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow read: if isSignedIn();
+      // 🚫 DENY ROLE/PERMISSION UPDATES FROM CLIENT
+      // Users can update profile info, but NOT 'role' or 'permissions'
+      allow update: if (isOwner(userId) && 
+                       !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'permissions'])) 
+                    || isSuperAdmin();
+      allow create: if isOwner(userId); // Initial creation allowed
     }
 
     // 📢 NOTICES & EVENTS: Public Read
-    match /notices/{noticeId} { allow read: if true; }
-    match /events/{eventId} { allow read: if true; }
+    match /notices/{noticeId} { allow read: if true; allow write: if hasPermission('post_notice'); }
+    match /events/{eventId} { allow read: if true; allow write: if hasPermission('post_notice'); }
 
     // 🤖 AI FEEDBACK: Public Create, Faculty Read
     match /ai_feedback/{feedbackId} {
       allow create: if true;
-      allow read, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'faculty';
+      allow read, delete: if hasPermission('view_analytics');
     }
 
     // ⚙️ APP CONFIG: Public Read (For Splash Screen)
-    match /app_config/{configId} { allow read: if true; }
+    match /app_config/{configId} { 
+      allow read: if true; 
+      allow write: if false; // Config is read-only for clients
+    }
+    
+    // 🔐 DRIVER SECRETS: NO ACCESS (Backend Only)
+    match /app_config/driver_secrets {
+      allow read: if false; 
+      allow write: if false;
+    }
+
+    // 📝 AUDIT LOGS: Write Only (or Backend Only)
+    match /audit_logs/{logId} {
+      allow read: if isSuperAdmin();
+      allow write: if false; // Only Cloud Functions can write here
+    }
   }
 }

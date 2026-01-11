@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../../main.dart'; // Import to find onboardingStateProvider
+import '../../auth/services/onboarding_service.dart';
 
 // 1. Change to ConsumerStatefulWidget
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -40,21 +38,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   ];
 
   // 2. Update this function
-  Future<void> _finishOnboarding() async {
-    // A. Save to disk (Persistent)
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('seenOnboarding', true);
-
-    // B. Update State (Reactive)
-    // This tells AppRouter: "User has officially seen onboarding!"
-    ref.read(onboardingStateProvider.notifier).state = true;
-
-    // C. Navigate
-    // The router listener will likely trigger this automatically,
-    // but we add this line for safety.
-    if (mounted) {
-      context.go('/login');
-    }
+  void _finishOnboarding() {
+    // Logic delegated to service. Router handles redirection automatically.
+    ref.read(onboardingServiceProvider.notifier).completeOnboarding();
   }
 
   @override

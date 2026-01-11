@@ -14,6 +14,7 @@ import 'package:citk_connect/firebase_options.dart';
 import 'package:citk_connect/app/routing/app_router.dart';
 import 'package:citk_connect/app/routing/settings_provider.dart';
 import 'package:citk_connect/app/config/env_config.dart';
+import 'package:citk_connect/auth/services/onboarding_service.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 🔧 GLOBAL PROVIDERS
@@ -58,7 +59,6 @@ void main() async {
         final prefs = await _initializeSharedPreferences();
 
         // 5️⃣ Load onboarding state
-        final seenOnboarding = _getOnboardingState(prefs);
 
         // ─────────────────────────────────────────────────────────────────────────
         // 🐛 FLUTTER FRAMEWORK ERROR HANDLER
@@ -91,7 +91,6 @@ void main() async {
         runApp(
           ProviderScope(
             overrides: [
-              onboardingStateProvider.overrideWith((ref) => seenOnboarding),
               appInitializationProvider.overrideWith((ref) => true),
               sharedPreferencesProvider.overrideWithValue(prefs),
             ],
@@ -109,146 +108,22 @@ void main() async {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// 🔧 INITIALIZATION FUNCTIONS
-// ═══════════════════════════════════════════════════════════════════════════
-
-Future<void> _configureSystemUI() async {
-  try {
-    // Lock to portrait mode (comment out if landscape needed)
-    await SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-
-    // System UI styling
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: Color(0xFF0F1115),
-        systemNavigationBarIconBrightness: Brightness.light,
-      ),
-    );
-
-    _logInfo('System UI configured');
-  } catch (e, stack) {
-    _logError('System UI config failed', e, stack);
-    // Non-critical, continue
-  }
-}
-
-/// Initialize Firebase with retry logic and circuit breaker
-Future<void> _initializeFirebaseWithRetry() async {
-  const maxRetries = 3;
-  const retryDelay = Duration(seconds: 2);
-  int retryCount = 0;
-
-  while (retryCount < maxRetries) {
-    try {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          throw TimeoutException('Firebase initialization timeout');
-        },
-      );
-
-      _logInfo('Firebase initialized successfully');
-      return;
-    } catch (e, stack) {
-      retryCount++;
-      _logError(
-        'Firebase init failed (attempt $retryCount/$maxRetries)',
-        e,
-        stack,
-      );
-
-      if (retryCount >= maxRetries) {
-        // CRITICAL: Firebase failed after retries
-        _logError('Firebase initialization failed permanently', e, stack);
-
-        // Rethrow to trigger degraded mode in main()
-        rethrow;
-      }
-
-      await Future.delayed(retryDelay);
-    }
-  }
-}
-
-Future<SharedPreferences> _initializeSharedPreferences() async {
-  try {
-    final prefs = await SharedPreferences.getInstance();
-    _logInfo('SharedPreferences initialized');
-    return prefs;
-  } catch (e, stack) {
-    _logError('SharedPreferences failed', e, stack);
-
-    _logInfo('Using in-memory SharedPreferences fallback');
-    // ignore: invalid_use_of_visible_for_testing_member
-    SharedPreferences.setMockInitialValues({});
-    return await SharedPreferences.getInstance();
-  }
-}
-
-bool _getOnboardingState(SharedPreferences? prefs) {
-  try {
-    if (prefs == null) return false;
-    final seen = prefs.getBool('seenOnboarding') ?? false;
-    _logInfo('Onboarding state: $seen');
-    return seen;
-  } catch (e, stack) {
-    _logError('Failed to read onboarding state', e, stack);
-    return false; // Safe default
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// 🐛 ERROR HANDLING & LOGGING
-// ═══════════════════════════════════════════════════════════════════════════
-
-void _handleFatalError(Object error, StackTrace stackTrace) {
-  _logError('FATAL ERROR', error, stackTrace);
-
-  // Show graceful error screen
-  runApp(
-    MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: _FatalErrorScreen(error: error.toString()),
-    ),
-  );
-}
-
-void _logError(String message, Object error, StackTrace? stack) {
-  if (kDebugMode) {
-    developer.log(
-      '❌ $message',
-      error: error,
-      stackTrace: stack,
-      name: 'CITK_ERROR',
-    );
-  } else if (EnvConfig.enableCrashlytics && _firebaseInitialized) {
-    FirebaseCrashlytics.instance.recordError(error, stack, reason: message);
-  }
-}
-
-void _logInfo(String message) {
-  if (kDebugMode) {
-    developer.log('✅ $message', name: 'CITK_INFO');
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// 🎨 MAIN APP WIDGET
-// ═══════════════════════════════════════════════════════════════════════════
-
-class MyApp extends ConsumerWidget {
+class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
+  @override
+  ConsumerState<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends ConsumerState<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Initialize Onboarding Service
+    ref.read(onboardingServiceProvider.notifier).init();
+  }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     // 🛡️ OFFLINE MODE / ERROR SCREEN
     if (!_firebaseInitialized) {
       return const MaterialApp(
@@ -448,6 +323,125 @@ class MyApp extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 🔧 INITIALIZATION FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════════════
+
+Future<void> _configureSystemUI() async {
+  try {
+    // Lock to portrait mode (comment out if landscape needed)
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+
+    // System UI styling
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: Color(0xFF0F1115),
+        systemNavigationBarIconBrightness: Brightness.light,
+      ),
+    );
+
+    _logInfo('System UI configured');
+  } catch (e, stack) {
+    _logError('System UI config failed', e, stack);
+    // Non-critical, continue
+  }
+}
+
+/// Initialize Firebase with retry logic and circuit breaker
+Future<void> _initializeFirebaseWithRetry() async {
+  const maxRetries = 3;
+  const retryDelay = Duration(seconds: 2);
+  int retryCount = 0;
+
+  while (retryCount < maxRetries) {
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw TimeoutException('Firebase initialization timeout');
+        },
+      );
+
+      _logInfo('Firebase initialized successfully');
+      return;
+    } catch (e, stack) {
+      retryCount++;
+      _logError(
+        'Firebase init failed (attempt $retryCount/$maxRetries)',
+        e,
+        stack,
+      );
+
+      if (retryCount >= maxRetries) {
+        // CRITICAL: Firebase failed after retries
+        _logError('Firebase initialization failed permanently', e, stack);
+
+        // Rethrow to trigger degraded mode in main()
+        rethrow;
+      }
+
+      await Future.delayed(retryDelay);
+    }
+  }
+}
+
+Future<SharedPreferences> _initializeSharedPreferences() async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    _logInfo('SharedPreferences initialized');
+    return prefs;
+  } catch (e, stack) {
+    _logError('SharedPreferences failed', e, stack);
+
+    _logInfo('Using in-memory SharedPreferences fallback');
+    // ignore: invalid_use_of_visible_for_testing_member
+    SharedPreferences.setMockInitialValues({});
+    return await SharedPreferences.getInstance();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 🐛 ERROR HANDLING & LOGGING
+// ═══════════════════════════════════════════════════════════════════════════
+
+void _handleFatalError(Object error, StackTrace stackTrace) {
+  _logError('FATAL ERROR', error, stackTrace);
+
+  // Show graceful error screen
+  runApp(
+    MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: _FatalErrorScreen(error: error.toString()),
+    ),
+  );
+}
+
+void _logError(String message, Object error, StackTrace? stack) {
+  if (kDebugMode) {
+    developer.log(
+      '❌ $message',
+      error: error,
+      stackTrace: stack,
+      name: 'CITK_ERROR',
+    );
+  } else if (EnvConfig.enableCrashlytics && _firebaseInitialized) {
+    FirebaseCrashlytics.instance.recordError(error, stack, reason: message);
+  }
+}
+
+void _logInfo(String message) {
+  if (kDebugMode) {
+    developer.log('✅ $message', name: 'CITK_INFO');
   }
 }
 

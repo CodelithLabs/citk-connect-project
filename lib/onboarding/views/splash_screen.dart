@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final String? targetTheme;
+  const SplashScreen({super.key, this.targetTheme});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -12,10 +14,17 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   String _displayText = 'CITK CONNECT';
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
   void initState() {
     super.initState();
+
+    // 🔊 Play sound effect if switching themes
+    if (widget.targetTheme != null) {
+      _audioPlayer.play(AssetSource('sounds/theme_switch.mp3'), volume: 0.5)
+          .catchError((_) {}); // Fail silently if file missing
+    }
 
     // 🔀 Morph Text Logic (1.5s delay)
     Future.delayed(1500.ms, () {
@@ -31,9 +40,24 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Determine colors based on target theme
+    // If targetTheme is 'light', use light background, else dark
+    final isLightTarget = widget.targetTheme == 'light';
+    final backgroundColor =
+        isLightTarget ? const Color(0xFFF8F9FA) : const Color(0xFF0F1115);
+    final iconColor =
+        isLightTarget ? const Color(0xFF4285F4) : const Color(0xFF6C63FF);
+    final textColor = isLightTarget ? Colors.black87 : Colors.white;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0F1115), // Deep Dark Background
+      backgroundColor: backgroundColor, // Dynamic Background
       body: Stack(
         children: [
           Center(
@@ -44,15 +68,15 @@ class _SplashScreenState extends State<SplashScreen> {
                 Container(
                   padding: const EdgeInsets.all(32),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF6C63FF).withValues(alpha: 0.1),
+                    color: iconColor.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xFF6C63FF).withValues(alpha: 0.3),
+                      color: iconColor.withValues(alpha: 0.3),
                       width: 2,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF6C63FF).withValues(alpha: 0.2),
+                        color: iconColor.withValues(alpha: 0.2),
                         blurRadius: 20,
                         spreadRadius: 5,
                       ),
@@ -61,7 +85,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   child: const Icon(
                     Icons.school_rounded,
                     size: 80,
-                    color: Color(0xFF6C63FF),
+                    color: Color(0xFF6C63FF), // Keep logo consistent or dynamic
                   ),
                 )
                     .animate()
@@ -70,7 +94,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     .shimmer(
                         delay: 1000.ms,
                         duration: 1500.ms,
-                        color: Colors.white.withValues(alpha: 0.5))
+                        color: textColor.withValues(alpha: 0.5))
                     .then() // Chain animation
                     .animate(onPlay: (c) => c.repeat(reverse: true))
                     .scaleXY(
@@ -103,7 +127,7 @@ class _SplashScreenState extends State<SplashScreen> {
                         fontSize: 28,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 4,
-                        color: Colors.white,
+                        color: textColor,
                       ),
                     ),
                   ),
@@ -134,7 +158,7 @@ class _SplashScreenState extends State<SplashScreen> {
             child: TextButton(
               onPressed: () => context.go('/'),
               style: TextButton.styleFrom(
-                foregroundColor: Colors.white,
+                foregroundColor: textColor,
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -145,14 +169,14 @@ class _SplashScreenState extends State<SplashScreen> {
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 2,
-                      color: Colors.white.withValues(alpha: 0.5),
+                      color: textColor.withValues(alpha: 0.5),
                     ),
                   ),
                   const SizedBox(width: 4),
                   Icon(
                     Icons.arrow_forward,
                     size: 14,
-                    color: Colors.white.withValues(alpha: 0.5),
+                    color: textColor.withValues(alpha: 0.5),
                   ),
                 ],
               ),

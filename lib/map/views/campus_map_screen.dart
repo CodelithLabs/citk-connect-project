@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -10,82 +9,70 @@ class CampusMapScreen extends StatefulWidget {
 }
 
 class _CampusMapScreenState extends State<CampusMapScreen> {
-  final Completer<GoogleMapController> _controller = Completer();
+  bool _showBoundary = true; // Toggle state for polygon visibility
 
-  // 1. CITK Coordinates (Approximate Center)
-  static const CameraPosition _citkCampus = CameraPosition(
-    target: LatLng(26.4795, 90.2640), // Check these coords for your specific campus spot
-    zoom: 17.0, // Zoomed in to see buildings
-    tilt: 45.0, // 45 degree tilt for 3D effect!
-  );
+  // CITK Campus coordinates
+  static const LatLng _citkCenter = LatLng(26.4700, 90.2700);
 
-  // 2. Markers for Important Spots
   final Set<Marker> _markers = {
     const Marker(
-      markerId: MarkerId('main_gate'),
-      position: LatLng(26.4795, 90.2640),
-      infoWindow: InfoWindow(title: 'Main Gate', snippet: 'Welcome to CITK'),
-    ),
-    const Marker(
       markerId: MarkerId('library'),
-      position: LatLng(26.4800, 90.2645), // Adjust these slightly
-      infoWindow: InfoWindow(title: 'Central Library', snippet: 'Open 9AM - 8PM'),
+      position: LatLng(26.4710, 90.2710),
+      infoWindow: InfoWindow(title: 'Central Library'),
     ),
     const Marker(
-      markerId: MarkerId('rnb_hostel'),
-      position: LatLng(26.4785, 90.2635),
-      infoWindow: InfoWindow(title: 'RNB Hostel', snippet: 'Boys Hostel'),
+      markerId: MarkerId('admin'),
+      position: LatLng(26.4705, 90.2705),
+      infoWindow: InfoWindow(title: 'Administrative Block'),
     ),
   };
+
+  // 🏟️ CAMPUS BOUNDARY (Polygon marking the whole area) - Getter based on state
+  Set<Polygon> get _polygons {
+    if (!_showBoundary) return {};
+    return {
+      Polygon(
+        polygonId: const PolygonId('citk_campus_area'),
+        points: const [
+          LatLng(26.4745, 90.2660), // NW Corner (Near Hostels)
+          LatLng(26.4750, 90.2710), // North Boundary
+          LatLng(26.4735, 90.2745), // NE Corner (Near Faculty Quarters)
+          LatLng(26.4690, 90.2750), // East Boundary
+          LatLng(26.4660, 90.2720), // SE Corner (Main Gate Area)
+          LatLng(26.4655, 90.2680), // South Boundary
+          LatLng(26.4670, 90.2650), // SW Corner
+          LatLng(26.4710, 90.2645), // West Boundary
+        ],
+        strokeWidth: 2,
+        strokeColor: const Color(0xFF4285F4),
+        fillColor: const Color(0xFF4285F4).withValues(alpha: 0.15),
+      ),
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // THE GOOGLE MAP
-          GoogleMap(
-            mapType: MapType.hybrid, // Satellite + Roads looks best for Hackathons
-            initialCameraPosition: _citkCampus,
-            markers: _markers,
-            onMapCreated: (GoogleMapController controller) {
-              _controller.complete(controller);
-            },
-            myLocationEnabled: true, // Show blue dot
-            myLocationButtonEnabled: false, // We build our own button
-            buildingsEnabled: true, // 3D Buildings!
-          ),
-
-          // Custom Back Button
-          Positioned(
-            top: 50,
-            left: 20,
-            child: CircleAvatar(
-              backgroundColor: Colors.black54,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ),
-          ),
-
-          // "Recenter" Button
-          Positioned(
-            bottom: 30,
-            right: 20,
-            child: FloatingActionButton(
-              onPressed: _goToCampus,
-              backgroundColor: Colors.blueAccent,
-              child: const Icon(Icons.school, color: Colors.white),
-            ),
-          ),
-        ],
+      appBar: AppBar(title: const Text('Campus Map')),
+      body: GoogleMap(
+        // 🛰️ SATELLITE VIEW (Hybrid shows labels too)
+        mapType: MapType.hybrid,
+        initialCameraPosition: const CameraPosition(
+          target: _citkCenter,
+          zoom: 16,
+        ),
+        markers: _markers,
+        polygons: _polygons,
+        myLocationEnabled: true,
+        onMapCreated: (controller) {},
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => setState(() => _showBoundary = !_showBoundary),
+        label: Text(_showBoundary ? 'Hide Boundary' : 'Show Boundary'),
+        icon: Icon(_showBoundary ? Icons.layers_clear : Icons.layers),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
       ),
     );
-  }
-
-  Future<void> _goToCampus() async {
-    final GoogleMapController controller = await _controller.future;
-    controller.animateCamera(CameraUpdate.newCameraPosition(_citkCampus));
   }
 }

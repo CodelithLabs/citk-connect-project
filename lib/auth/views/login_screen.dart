@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../auth/services/auth_service.dart';
+import '../../auth/backend/driver_auth_backend.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -16,13 +17,14 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   // Toggle for Driver Mode
   bool _isDriverMode = false;
-  
+
   // Driver Form Controllers
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController(); // For registration
+  final _pinController = TextEditingController(); // 🔒 Driver PIN
   bool _isRegisteringDriver = false; // Toggle login/register for driver
-  
+
   @override
   Widget build(BuildContext context) {
     // Watch Auth State for loading/error
@@ -32,19 +34,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF0F1115),
       // 🎨 RESIZE HANDLING: Prevents keyboard overlap errors
-      resizeToAvoidBottomInset: true, 
+      resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
           // 1. AMBIENT BACKGROUND (Optimized for performance)
           Positioned(
             top: -100,
             right: -50,
-            child: _buildBlurBlob(const Color(0xFF4285F4).withValues(alpha: 0.15)),
+            child:
+                _buildBlurBlob(const Color(0xFF4285F4).withValues(alpha: 0.15)),
           ),
           Positioned(
             bottom: -50,
             left: -50,
-            child: _buildBlurBlob(const Color(0xFFAB47BC).withValues(alpha: 0.1)),
+            child:
+                _buildBlurBlob(const Color(0xFFAB47BC).withValues(alpha: 0.1)),
           ),
 
           // 2. MAIN CONTENT
@@ -54,16 +58,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 padding: const EdgeInsets.all(24.0),
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 500),
-                  transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: SlideTransition(position: Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(anim), child: child)),
+                  transitionBuilder: (child, anim) => FadeTransition(
+                      opacity: anim,
+                      child: SlideTransition(
+                          position: Tween<Offset>(
+                                  begin: const Offset(0, 0.1), end: Offset.zero)
+                              .animate(anim),
+                          child: child)),
                   // 🔀 LOGIC SWITCHER: Show Google Login OR Driver Form
-                  child: _isDriverMode 
-                    ? _buildDriverForm(isLoading) 
-                    : _buildMainLogin(isLoading),
+                  child: _isDriverMode
+                      ? _buildDriverForm(isLoading)
+                      : _buildMainLogin(isLoading),
                 ),
               ),
             ),
           ),
-          
+
           // 3. LOADING OVERLAY (If needed globally)
           if (isLoading)
             const Positioned.fill(
@@ -87,7 +97,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       children: [
         // LOGO ANIMATION
         const Icon(Icons.hub, size: 80, color: Colors.white)
-            .animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
+            .animate()
+            .scale(duration: 600.ms, curve: Curves.easeOutBack),
         const SizedBox(height: 24),
         Text(
           "CITK CONNECT",
@@ -98,7 +109,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             color: Colors.white,
           ),
         ).animate().fadeIn().moveY(begin: 10, end: 0),
-        
+
         const SizedBox(height: 8),
         Text(
           "Central Institute of Technology, Kokrajhar",
@@ -113,11 +124,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           label: "Continue with College Email",
           icon: FontAwesomeIcons.google,
           color: const Color(0xFF4285F4),
-          onTap: () => ref.read(authServiceProvider.notifier).signInWithGoogle(),
+          onTap: () =>
+              ref.read(authServiceProvider.notifier).signInWithGoogle(),
         ).animate().fadeIn(delay: 400.ms),
 
         const SizedBox(height: 16),
-        
+
         // ASPIRANT HINT
         Text(
           "Aspirant? Sign in with any Gmail account.",
@@ -129,8 +141,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         // 🚗 TOGGLE TO DRIVER MODE
         TextButton.icon(
           onPressed: () => setState(() => _isDriverMode = true),
-          icon: const Icon(Icons.directions_bus, size: 16, color: Colors.white54),
-          label: const Text("Driver / Staff Login", style: TextStyle(color: Colors.white54)),
+          icon:
+              const Icon(Icons.directions_bus, size: 16, color: Colors.white54),
+          label: const Text("Driver / Staff Login",
+              style: TextStyle(color: Colors.white54)),
         ).animate().fadeIn(delay: 800.ms),
       ],
     );
@@ -153,10 +167,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         ),
         const SizedBox(height: 20),
-        
+
         Text(
           _isRegisteringDriver ? "Register Driver" : "Driver Login",
-          style: GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
+          style: GoogleFonts.inter(
+              fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
         ),
         const SizedBox(height: 10),
         Text(
@@ -168,11 +183,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         // FORM FIELDS
         if (_isRegisteringDriver)
           _buildTextField("Full Name", Icons.person, _nameController),
-        
+
+        if (_isRegisteringDriver)
+          _buildTextField(
+              "Service PIN (Required)", Icons.security, _pinController,
+              isPassword: true),
+
         const SizedBox(height: 16),
         _buildTextField("Email Address", Icons.email, _emailController),
         const SizedBox(height: 16),
-        _buildTextField("Password", Icons.lock, _passwordController, isPassword: true),
+        _buildTextField("Password", Icons.lock, _passwordController,
+            isPassword: true),
 
         const SizedBox(height: 32),
 
@@ -188,9 +209,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
         // TOGGLE LOGIN / REGISTER
         TextButton(
-          onPressed: () => setState(() => _isRegisteringDriver = !_isRegisteringDriver),
+          onPressed: () =>
+              setState(() => _isRegisteringDriver = !_isRegisteringDriver),
           child: Text(
-            _isRegisteringDriver ? "Already have an account? Login" : "Need an account? Register",
+            _isRegisteringDriver
+                ? "Already have an account? Login"
+                : "Need an account? Register",
             style: const TextStyle(color: Colors.white70),
           ),
         ),
@@ -204,28 +228,44 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final email = _emailController.text.trim();
     final pass = _passwordController.text.trim();
     final name = _nameController.text.trim();
+    final pin = _pinController.text.trim();
 
     if (email.isEmpty || pass.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Fill all fields")));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("Fill all fields")));
       return;
     }
 
     try {
       if (_isRegisteringDriver) {
         if (name.isEmpty) return;
+
+        // 1. Create Account First (as Aspirant)
         await auth.registerDriver(email: email, password: pass, name: name);
-        if(mounted) setState(() => _isRegisteringDriver = false); // Go to login after reg
-        if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Account Created! Login now.")));
+
+        // 2. 🔒 SECURITY: Call Backend to Verify PIN & Upgrade Role
+        // If this fails, they remain an 'aspirant' and cannot access driver tools.
+        await ref.read(driverAuthBackendProvider).verifyAndLoginDriver(pin);
+
+        if (mounted)
+          setState(() => _isRegisteringDriver = false); // Go to login after reg
+        if (mounted)
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Account Created! Login now.")));
       } else {
         await auth.signInWithEmail(email: email, password: pass);
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("Error: $e")));
     }
   }
 
   // 🎨 WIDGET BUILDERS
-  Widget _buildTextField(String label, IconData icon, TextEditingController controller, {bool isPassword = false}) {
+  Widget _buildTextField(
+      String label, IconData icon, TextEditingController controller,
+      {bool isPassword = false}) {
     return TextField(
       controller: controller,
       obscureText: isPassword,
@@ -235,13 +275,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         prefixIcon: Icon(icon, size: 18, color: Colors.white54),
         filled: true,
         fillColor: const Color(0xFF1E1E1E),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none),
         labelStyle: const TextStyle(color: Colors.white54),
       ),
     );
   }
 
-  Widget _buildButton({required String label, required IconData icon, required Color color, required VoidCallback onTap}) {
+  Widget _buildButton(
+      {required String label,
+      required IconData icon,
+      required Color color,
+      required VoidCallback onTap}) {
     return SizedBox(
       height: 56,
       width: double.infinity,
@@ -250,7 +296,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 4,
         ),
         child: Row(
@@ -258,7 +305,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           children: [
             Icon(icon, size: 20),
             const SizedBox(width: 12),
-            Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(label,
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ],
         ),
       ),
@@ -270,7 +319,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       width: 250,
       height: 250,
       decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-      child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80), child: Container(color: Colors.transparent)),
+      child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
+          child: Container(color: Colors.transparent)),
     );
   }
 }

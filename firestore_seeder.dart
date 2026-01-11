@@ -52,4 +52,77 @@ class FirestoreSeeder {
       developer.log('❌ Error seeding fleet: $e', name: 'SEEDER');
     }
   }
+
+  /// Seeds the 'campus_locations' collection for AR Navigation.
+  static Future<void> seedCampusLocations() async {
+    final firestore = FirebaseFirestore.instance;
+    const String collection = 'campus_locations';
+
+    final List<Map<String, dynamic>> locations = [
+      {
+        "name": "Main Building",
+        "lat": 26.4705,
+        "lng": 90.2705,
+        "type": "academic",
+        "floor": "Ground Floor",
+        "description": "Administrative offices and classrooms"
+      },
+      {
+        "name": "Central Library",
+        "lat": 26.4710,
+        "lng": 90.2710,
+        "type": "academic",
+        "floor": "1st Floor",
+        "description": "Main library with digital resources"
+      },
+      {
+        "name": "Boys Hostel",
+        "lat": 26.4745,
+        "lng": 90.2660,
+        "type": "hostel",
+        "floor": "Multiple",
+        "description": "Student accommodation"
+      },
+      {
+        "name": "Canteen",
+        "lat": 26.4690,
+        "lng": 90.2750,
+        "type": "food",
+        "floor": "Ground Floor",
+        "description": "Food and beverages"
+      },
+      {
+        "name": "Computer Lab",
+        "lat": 26.4715,
+        "lng": 90.2695,
+        "type": "academic",
+        "floor": "2nd Floor",
+        "description": "Computer facilities and labs"
+      },
+      {
+        "name": "Sports Complex",
+        "lat": 26.4680,
+        "lng": 90.2720,
+        "type": "other",
+        "floor": "Ground Floor",
+        "description": "Indoor and outdoor sports facilities"
+      },
+    ];
+
+    try {
+      for (final loc in locations) {
+        // Create a readable ID from the name (e.g., "main_building")
+        final id = loc['name'].toString().toLowerCase().replaceAll(' ', '_');
+
+        await firestore
+            .collection(collection)
+            .doc(id)
+            .set(loc, SetOptions(merge: true));
+        developer.log('✅ Seeded location: ${loc['name']}', name: 'SEEDER');
+      }
+      developer.log('🎉 Campus locations seeded successfully!', name: 'SEEDER');
+    } catch (e) {
+      developer.log('❌ Error seeding locations: $e', name: 'SEEDER');
+    }
+  }
 }

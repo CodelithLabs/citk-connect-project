@@ -154,12 +154,9 @@ class _RoleDispatcherState extends ConsumerState<RoleDispatcher> {
   }
 
   void _enterOfflineMode() {
-    if (_cachedRole != null) {
-      setState(() {
-        _isOfflineMode = true;
-      });
-      _logInfo('Entered offline mode with role: $_cachedRole');
-    }
+    setState(() {
+      _isOfflineMode = true;
+    });
   }
 
   Future<void> _handleLogout() async {
