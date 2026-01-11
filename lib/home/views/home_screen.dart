@@ -22,7 +22,8 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStateMixin {
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with TickerProviderStateMixin {
   bool _isLoading = true;
   late final bool _isNight;
   late AnimationController _pulseController;
@@ -62,10 +63,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     final user = authState.value;
     final theme = Theme.of(context);
 
-    final accentColor = _isNight 
-        ? const Color(0xFF6C63FF) 
-        : const Color(0xFFFF6B9D);
-    
+    final accentColor =
+        _isNight ? const Color(0xFF6C63FF) : const Color(0xFFFF6B9D);
+
     final accentGradient = _isNight
         ? [const Color(0xFF6C63FF), const Color(0xFF3F3D56)]
         : [const Color(0xFFFF6B9D), const Color(0xFFFFA726)];
@@ -73,10 +73,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
     final String safeName = (user?.displayName?.isNotEmpty == true)
         ? user!.displayName!
         : "Student";
-    final String firstLetter = safeName.isNotEmpty ? safeName[0].toUpperCase() : "S";
+    final String firstLetter =
+        safeName.isNotEmpty ? safeName[0].toUpperCase() : "S";
 
     return Scaffold(
-      backgroundColor: _isNight ? const Color(0xFF0A0E27) : const Color(0xFFF5F7FA),
+      backgroundColor:
+          _isNight ? const Color(0xFF0A0E27) : const Color(0xFFF5F7FA),
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: ShaderMask(
@@ -137,17 +139,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                   },
                 ),
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text("No new notifications", 
-                        style: GoogleFonts.inter()),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      backgroundColor: accentColor,
-                    ),
-                  );
+                  context.push('/notices');
                 },
               ),
               Positioned(
@@ -172,7 +164,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
             ],
           ),
           PopupMenuButton<String>(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             color: _isNight ? const Color(0xFF1A1F3A) : Colors.white,
             onSelected: (value) async {
               if (value == 'profile') {
@@ -186,7 +179,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                 value: 'profile',
                 child: ListTile(
                   leading: Icon(Icons.person_rounded, color: accentColor),
-                  title: Text('My Profile', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                  title: Text('My Profile',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
@@ -198,19 +192,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                     final isDark = settings.themeMode == ThemeMode.dark;
                     return ListTile(
                       leading: Icon(
-                        isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                        isDark
+                            ? Icons.dark_mode_rounded
+                            : Icons.light_mode_rounded,
                         color: accentColor,
                       ),
-                      title: Text('Dark Mode', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                      title: Text('Dark Mode',
+                          style:
+                              GoogleFonts.inter(fontWeight: FontWeight.w600)),
                       trailing: Switch(
                         value: isDark,
                         onChanged: (val) {
                           HapticFeedback.selectionClick();
                           final target = val ? 'dark' : 'light';
                           context.go('/splash?targetTheme=$target');
-                          ref.read(settingsControllerProvider.notifier).updateThemeMode(
-                            val ? ThemeMode.dark : ThemeMode.light
-                          );
+                          ref
+                              .read(settingsControllerProvider.notifier)
+                              .updateThemeMode(
+                                  val ? ThemeMode.dark : ThemeMode.light);
                         },
                         activeThumbColor: accentColor,
                       ),
@@ -222,12 +221,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
               PopupMenuItem<String>(
                 value: 'logout',
                 child: ListTile(
-                  leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
-                  title: Text('Log Out', 
-                    style: GoogleFonts.inter(
-                      color: Colors.redAccent,
-                      fontWeight: FontWeight.w600,
-                    )),
+                  leading:
+                      const Icon(Icons.logout_rounded, color: Colors.redAccent),
+                  title: Text('Log Out',
+                      style: GoogleFonts.inter(
+                        color: Colors.redAccent,
+                        fontWeight: FontWeight.w600,
+                      )),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
@@ -235,7 +235,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
           ),
         ],
       ),
-      drawer: _buildModernDrawer(context, user, safeName, firstLetter, theme, accentColor),
+      drawer: _buildModernDrawer(
+          context, user, safeName, firstLetter, theme, accentColor),
       body: Stack(
         children: [
           // Dynamic Background
@@ -282,7 +283,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                           ),
                         ),
                         const SizedBox(height: 8),
-                        
+
                         // Name with animation
                         Row(
                           children: [
@@ -296,19 +297,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                                   foreground: Paint()
                                     ..shader = LinearGradient(
                                       colors: accentGradient,
-                                    ).createShader(const Rect.fromLTWH(0, 0, 200, 70)),
+                                    ).createShader(
+                                        const Rect.fromLTWH(0, 0, 200, 70)),
                                 ),
-                              )
-                                  .animate()
-                                  .fadeIn(duration: 600.ms)
-                                  .moveX(begin: -50, end: 0, curve: Curves.easeOutBack),
+                              ).animate().fadeIn(duration: 600.ms).moveX(
+                                  begin: -50,
+                                  end: 0,
+                                  curve: Curves.easeOutBack),
                             ),
                             const SizedBox(width: 12),
                             AnimatedBuilder(
                               animation: _floatController,
                               builder: (context, child) {
                                 return Transform.translate(
-                                  offset: Offset(0, sin(_floatController.value * 2 * pi) * 5),
+                                  offset: Offset(0,
+                                      sin(_floatController.value * 2 * pi) * 5),
                                   child: Text(
                                     "👋",
                                     style: const TextStyle(fontSize: 32),
@@ -336,27 +339,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                 // Quick Stats Row
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
                     child: Row(
                       children: [
-                        _buildStatCard("85%", "Attendance", Icons.check_circle_outline_rounded, accentColor),
+                        _buildStatCard("85%", "Attendance",
+                            Icons.check_circle_outline_rounded, accentColor),
                         const SizedBox(width: 12),
-                        _buildStatCard("8.2", "CGPA", Icons.school_rounded, accentGradient[1]),
+                        _buildStatCard("8.2", "CGPA", Icons.school_rounded,
+                            accentGradient[1]),
                         const SizedBox(width: 12),
-                        _buildStatCard("12", "Days Left", Icons.calendar_today_rounded, Colors.orangeAccent),
+                        _buildStatCard("12", "Days Left",
+                            Icons.calendar_today_rounded, Colors.orangeAccent),
                       ],
                     ),
-                  )
-                      .animate()
-                      .fadeIn(delay: 200.ms)
-                      .slideY(begin: 0.3, end: 0),
+                  ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.3, end: 0),
                 ),
 
                 // Feature Grid
                 SliverPadding(
                   padding: const EdgeInsets.all(24),
                   sliver: SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
@@ -364,13 +369,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                     ),
                     delegate: SliverChildListDelegate(
                       _isLoading
-                          ? List.generate(6, (index) => _buildEnhancedSkeleton())
+                          ? List.generate(
+                              6, (index) => _buildEnhancedSkeleton())
                           : [
                               _buildPremiumFeatureCard(
                                 context,
                                 title: "Campus Map",
                                 icon: Icons.map_rounded,
-                                gradient: [const Color(0xFF667eea), const Color(0xFF764ba2)],
+                                gradient: [
+                                  const Color(0xFF667eea),
+                                  const Color(0xFF764ba2)
+                                ],
                                 desc: "Navigate in 3D",
                                 index: 0,
                                 onTap: () => context.push('/map'),
@@ -379,7 +388,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                                 context,
                                 title: "Academics",
                                 icon: Icons.school_rounded,
-                                gradient: [const Color(0xFFf093fb), const Color(0xFFF5576c)],
+                                gradient: [
+                                  const Color(0xFFf093fb),
+                                  const Color(0xFFF5576c)
+                                ],
                                 desc: "Routine & PYQ",
                                 index: 1,
                                 onTap: () => context.push('/routine'),
@@ -388,7 +400,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                                 context,
                                 title: "Bus Tracker",
                                 icon: Icons.directions_bus_rounded,
-                                gradient: [const Color(0xFF4facfe), const Color(0xFF00f2fe)],
+                                gradient: [
+                                  const Color(0xFF4facfe),
+                                  const Color(0xFF00f2fe)
+                                ],
                                 desc: "Live Status",
                                 index: 2,
                                 onTap: () => context.push('/bus-tracker'),
@@ -397,7 +412,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                                 context,
                                 title: "AI Assistant",
                                 icon: Icons.auto_awesome_rounded,
-                                gradient: [const Color(0xFFfa709a), const Color(0xFFfee140)],
+                                gradient: [
+                                  const Color(0xFFfa709a),
+                                  const Color(0xFFfee140)
+                                ],
                                 desc: "Ask anything",
                                 index: 3,
                                 onTap: () => context.push('/chat'),
@@ -406,7 +424,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                                 context,
                                 title: "AR Finder",
                                 icon: Icons.view_in_ar_rounded,
-                                gradient: [const Color(0xFF30cfd0), const Color(0xFF330867)],
+                                gradient: [
+                                  const Color(0xFF30cfd0),
+                                  const Color(0xFF330867)
+                                ],
                                 desc: "Find Labs",
                                 index: 4,
                                 onTap: () => context.push('/ar'),
@@ -415,7 +436,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                                 context,
                                 title: "Emergency",
                                 icon: Icons.local_hospital_rounded,
-                                gradient: [const Color(0xFFff6b6b), const Color(0xFFc92a2a)],
+                                gradient: [
+                                  const Color(0xFFff6b6b),
+                                  const Color(0xFFc92a2a)
+                                ],
                                 desc: "SOS & Medical",
                                 index: 5,
                                 onTap: () => context.push('/emergency'),
@@ -452,7 +476,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
         ),
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: _isNight 
+          color: _isNight
               ? Colors.white.withValues(alpha: 0.1)
               : accentColor.withValues(alpha: 0.2),
           width: 1.5,
@@ -477,14 +501,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                   shaderCallback: (bounds) => LinearGradient(
                     colors: gradient,
                   ).createShader(bounds),
-                  child: const Icon(Icons.search_rounded, size: 24, color: Colors.white),
+                  child: const Icon(Icons.search_rounded,
+                      size: 24, color: Colors.white),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Text(
                     "Find hostels, labs, or seniors...",
                     style: GoogleFonts.inter(
-                      color: _isNight 
+                      color: _isNight
                           ? Colors.white.withValues(alpha: 0.5)
                           : Colors.black.withValues(alpha: 0.4),
                       fontSize: 15,
@@ -497,13 +522,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
           ),
         ),
       ),
-    )
-        .animate()
-        .fadeIn(delay: 300.ms)
-        .slideY(begin: 0.2, end: 0);
+    ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0);
   }
 
-  Widget _buildStatCard(String value, String label, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String value, String label, IconData icon, Color color) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -521,7 +544,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
           ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: _isNight 
+            color: _isNight
                 ? Colors.white.withValues(alpha: 0.08)
                 : color.withValues(alpha: 0.2),
           ),
@@ -543,7 +566,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
               label,
               style: GoogleFonts.inter(
                 fontSize: 11,
-                color: _isNight 
+                color: _isNight
                     ? Colors.white.withValues(alpha: 0.5)
                     : Colors.black.withValues(alpha: 0.5),
                 fontWeight: FontWeight.w500,
@@ -565,11 +588,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
         ),
         borderRadius: BorderRadius.circular(24),
       ),
-    )
-        .animate(onPlay: (c) => c.repeat())
-        .shimmer(
+    ).animate(onPlay: (c) => c.repeat()).shimmer(
           duration: 1500.ms,
-          color: _isNight 
+          color: _isNight
               ? Colors.white.withValues(alpha: 0.1)
               : Colors.white.withValues(alpha: 0.8),
         );
@@ -603,7 +624,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
           ),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: _isNight 
+            color: _isNight
                 ? Colors.white.withValues(alpha: 0.1)
                 : gradient[0].withValues(alpha: 0.3),
             width: 1.5,
@@ -640,7 +661,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                     ),
                   ),
                 ),
-                
+
                 Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -679,7 +700,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                             desc,
                             style: GoogleFonts.inter(
                               fontSize: 13,
-                              color: _isNight 
+                              color: _isNight
                                   ? Colors.white.withValues(alpha: 0.6)
                                   : Colors.black.withValues(alpha: 0.5),
                               fontWeight: FontWeight.w500,
@@ -701,10 +722,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
         .slideY(begin: 0.3, end: 0, curve: Curves.easeOutBack);
   }
 
-  Widget _buildModernDrawer(BuildContext context, User? user, String safeName, 
+  Widget _buildModernDrawer(BuildContext context, User? user, String safeName,
       String firstLetter, ThemeData theme, Color accentColor) {
     return Drawer(
-      backgroundColor: _isNight ? const Color(0xFF0A0E27) : const Color(0xFFF5F7FA),
+      backgroundColor:
+          _isNight ? const Color(0xFF0A0E27) : const Color(0xFFF5F7FA),
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
@@ -741,19 +763,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
                       ),
                       child: CircleAvatar(
                         backgroundColor: Colors.white,
-                        backgroundImage: (user?.photoURL != null && user!.photoURL!.isNotEmpty)
+                        backgroundImage: (user?.photoURL != null &&
+                                user!.photoURL!.isNotEmpty)
                             ? CachedNetworkImageProvider(user.photoURL!)
                             : null,
-                        child: (user?.photoURL == null || user!.photoURL!.isEmpty)
-                            ? Text(
-                                firstLetter,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.w700,
-                                  color: accentColor,
-                                ),
-                              )
-                            : null,
+                        child:
+                            (user?.photoURL == null || user!.photoURL!.isEmpty)
+                                ? Text(
+                                    firstLetter,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.w700,
+                                      color: accentColor,
+                                    ),
+                                  )
+                                : null,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -812,7 +836,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with TickerProviderStat
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: _isNight 
+        color: _isNight
             ? const Color(0xFF1A1F3A).withValues(alpha: 0.5)
             : Colors.white.withValues(alpha: 0.7),
       ),
@@ -954,12 +978,13 @@ class _EnhancedPainter extends CustomPainter {
                 const Color(0xFFD6DCE8),
               ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-    
+
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bgPaint);
 
     // Ambient Glows
-    final glowPaint = Paint()..maskFilter = const MaskFilter.blur(BlurStyle.normal, 80);
-    
+    final glowPaint = Paint()
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 80);
+
     canvas.drawCircle(
       Offset(size.width * 0.2, size.height * 0.15),
       150,

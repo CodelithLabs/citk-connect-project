@@ -125,4 +125,55 @@ class FirestoreSeeder {
       developer.log('❌ Error seeding locations: $e', name: 'SEEDER');
     }
   }
+
+  /// Seeds the 'notices' collection with sample data.
+  static Future<void> seedNotices() async {
+    final firestore = FirebaseFirestore.instance;
+    const String collection = 'notices';
+
+    final List<Map<String, dynamic>> notices = [
+      {
+        'title': 'End Semester Exams Schedule',
+        'body': 'The end semester examinations for B.Tech and Diploma students will commence from 15th May 2025. Detailed routine is attached.',
+        'category': 'Exams',
+        'timestamp': DateTime.now().subtract(const Duration(hours: 2)),
+        'isPinned': true,
+        'postedBy': 'Controller of Examinations',
+      },
+      {
+        'title': 'Holi Holiday Notice',
+        'body': 'The institute will remain closed on 25th March 2025 on account of Holi.',
+        'category': 'Holidays',
+        'timestamp': DateTime.now().subtract(const Duration(days: 1)),
+        'isPinned': false,
+        'postedBy': 'Registrar',
+      },
+      {
+        'title': 'Tech Fest 2025 Registration',
+        'body': 'Registration for the annual Tech Fest "TechXetra" is now open. Visit the student affairs block for more details.',
+        'category': 'Events',
+        'timestamp': DateTime.now().subtract(const Duration(days: 2)),
+        'isPinned': true,
+        'postedBy': 'Student Affairs',
+      },
+      {
+        'title': 'Library Books Return',
+        'body': 'All students are requested to return borrowed books before the semester break.',
+        'category': 'Urgent',
+        'timestamp': DateTime.now().subtract(const Duration(days: 3)),
+        'isPinned': false,
+        'postedBy': 'Librarian',
+      },
+    ];
+
+    try {
+      for (final notice in notices) {
+        await firestore.collection(collection).add(notice);
+        developer.log('✅ Seeded notice: ${notice['title']}', name: 'SEEDER');
+      }
+      developer.log('🎉 Notices seeded successfully!', name: 'SEEDER');
+    } catch (e) {
+      developer.log('❌ Error seeding notices: $e', name: 'SEEDER');
+    }
+  }
 }

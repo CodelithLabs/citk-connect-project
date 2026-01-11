@@ -58,6 +58,11 @@ void main() async {
         // 4️⃣ Initialize SharedPreferences
         final prefs = await _initializeSharedPreferences();
 
+        // 5️⃣ Seed Data (Debug Only)
+        if (kDebugMode) {
+          // await FirestoreSeeder.seedNotices(); // Uncomment to seed notices
+        }
+
         // 5️⃣ Load onboarding state
 
         // ─────────────────────────────────────────────────────────────────────────

@@ -2,9 +2,10 @@ import 'dart:async';
 import 'package:citk_connect/admin/views/post_update_screen.dart';
 import 'package:citk_connect/ai/views/chat_screen.dart';
 import 'package:citk_connect/app/view/scaffold_with_nav_bar.dart';
-import 'package:citk_connect/auth/providers/auth_provider.dart';
+import 'package:citk_connect/auth/services/auth_service.dart';
 import 'package:citk_connect/auth/services/onboarding_service.dart';
 import 'package:citk_connect/auth/views/login_screen.dart';
+import 'package:citk_connect/home/views/notice_board_screen.dart';
 import 'package:citk_connect/map/views/bus_tracker_screen.dart';
 import 'package:citk_connect/map/views/campus_map_screen.dart';
 import 'package:citk_connect/map/views/ar_navigation_screen.dart';
@@ -75,6 +76,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/login',
         pageBuilder: (context, state) =>
             _buildSlideFadeTransition(context, state, const LoginScreen()),
+      ),
+      GoRoute(
+        path: '/notices',
+        pageBuilder: (context, state) =>
+            _buildPageWithTransition(context, state, const NoticeBoardScreen()),
       ),
       GoRoute(
         path: '/emergency',

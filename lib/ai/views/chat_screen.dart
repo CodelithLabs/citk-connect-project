@@ -517,7 +517,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                               Container(
                                 padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
-                                  color: Color(0xFF6C63FF).withValues(alpha: 0.2),
+                                  color:
+                                      Color(0xFF6C63FF).withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: FaIcon(
@@ -629,9 +630,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               FontAwesomeIcons.wandMagicSparkles,
               size: 14,
               color: const Color(0xFF6C63FF),
-            )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .scale(begin: const Offset(1, 1), end: const Offset(1.2, 1.2), duration: 1000.ms),
+            ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(
+                begin: const Offset(1, 1),
+                end: const Offset(1.2, 1.2),
+                duration: 1000.ms),
             const SizedBox(width: 12),
             SizedBox(
               width: 40,
@@ -650,9 +652,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                         onPlay: (c) => c.repeat(),
                         delay: (index * 200).ms,
                       )
-                      .moveY(begin: 0, end: -5, duration: 400.ms, curve: Curves.easeOut)
+                      .moveY(
+                          begin: 0,
+                          end: -5,
+                          duration: 400.ms,
+                          curve: Curves.easeOut)
                       .then()
-                      .moveY(begin: -5, end: 0, duration: 400.ms, curve: Curves.easeIn);
+                      .moveY(
+                          begin: -5,
+                          end: 0,
+                          duration: 400.ms,
+                          curve: Curves.easeIn);
                 }),
               ),
             ),
