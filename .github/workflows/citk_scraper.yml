@@ -1,28 +1,30 @@
-name: CITK Live Data Scraper
+name: CITK Live Sync
 
 on:
   schedule:
-    - cron: '*/15 * * * *'  # Runs every 15 minutes
-  workflow_dispatch:        # Allows you to click "Run Now" manually for testing
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
 
 jobs:
-  scrape-and-notify:
+  run-scraper:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      # 1. Update Python to 3.11 (Fixes the "No matching distribution" error)
+      - uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.11' 
 
-      - name: Install Dependencies
-        run: |
-          pip install requests beautifulsoup4 firebase-admin google-generative-ai
+      # 2. Upgrade pip first (Crucial for AI libraries)
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install Libs
+        run: pip install requests beautifulsoup4 firebase-admin google-generative-ai
 
       - name: Run Scraper
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          FIREBASE_CREDENTIALS: ${{ secrets.FIREBASE_JSON_BASE64 }}
-        run: python backend_automation/scraper.py
+          FIREBASE_JSON_BASE64: ${{ secrets.FIREBASE_JSON_BASE64 }}
+        run: python backend_automation/citk_scraper.py
