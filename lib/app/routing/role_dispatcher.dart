@@ -13,6 +13,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:citk_connect/app/config/env_config.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -44,7 +45,7 @@ class RoleDispatcher extends ConsumerStatefulWidget {
 
   // ✅ Timeout protection (15 seconds)
   static const Duration _timeoutDuration = Duration(seconds: 15);
-  
+
   // ✅ Retry mechanism with exponential backoff
   static const int _maxRetryAttempts = 3;
 
@@ -123,12 +124,13 @@ class _RoleDispatcherState extends ConsumerState<RoleDispatcher> {
 
   void _scheduleRetry() {
     if (_isRetrying) return;
-    
+
     _isRetrying = true;
     final delaySeconds = math.pow(2, _retryCount).toInt(); // 1, 2, 4
     final delay = Duration(seconds: delaySeconds);
-    
-    _logInfo('Scheduling retry ${_retryCount + 1}/${RoleDispatcher._maxRetryAttempts} in ${delay.inSeconds}s');
+
+    _logInfo(
+        'Scheduling retry ${_retryCount + 1}/${RoleDispatcher._maxRetryAttempts} in ${delay.inSeconds}s');
 
     _retryTimer = Timer(delay, () {
       if (mounted) {
@@ -179,7 +181,7 @@ class _RoleDispatcherState extends ConsumerState<RoleDispatcher> {
           context.go('/login');
         }
       });
-      
+
       return const _LoadingScreen(message: 'Session expired...');
     }
 
@@ -206,8 +208,8 @@ class _RoleDispatcherState extends ConsumerState<RoleDispatcher> {
           // ─────────────────────────────────────────────────────────────────
           if (snapshot.connectionState == ConnectionState.waiting) {
             return _LoadingScreen(
-              message: _retryCount > 0 
-                  ? 'Retrying connection (${_retryCount}/${RoleDispatcher._maxRetryAttempts})...' 
+              message: _retryCount > 0
+                  ? 'Retrying connection (${_retryCount}/${RoleDispatcher._maxRetryAttempts})...'
                   : 'Loading your profile...',
             );
           }
@@ -221,10 +223,11 @@ class _RoleDispatcherState extends ConsumerState<RoleDispatcher> {
               // Schedule retry if not already scheduled
               _scheduleRetry();
               return _LoadingScreen(
-                message: 'Connection unstable. Retrying in ${math.pow(2, _retryCount)}s...',
+                message:
+                    'Connection unstable. Retrying in ${math.pow(2, _retryCount)}s...',
               );
             }
-            
+
             return _handleStreamError(snapshot.error!, user.uid);
           }
 
@@ -243,16 +246,17 @@ class _RoleDispatcherState extends ConsumerState<RoleDispatcher> {
           // 4️⃣ SUCCESS: Extract role and route
           // ─────────────────────────────────────────────────────────────────
           final data = snapshot.data!.data() as Map<String, dynamic>?;
-          final role = (data?['role'] ?? 'aspirant').toString().toLowerCase().trim();
-          
+          final role =
+              (data?['role'] ?? 'aspirant').toString().toLowerCase().trim();
+
           // Update cache
           _updateCache(role);
-          
+
           // Reset retry count on success
           if (_retryCount > 0) {
             _retryCount = 0;
           }
-          
+
           return _routeToRoleBasedDashboard(role);
         },
       ),
@@ -275,7 +279,8 @@ class _RoleDispatcherState extends ConsumerState<RoleDispatcher> {
         // Max retries reached: Show Retry Dialog with Offline Option
         return _ErrorStateWidget(
           title: 'Connection Failed',
-          message: 'We couldn\'t connect to the server after multiple attempts.',
+          message:
+              'We couldn\'t connect to the server after multiple attempts.',
           icon: Icons.cloud_off,
           onRetry: _manualRetry,
           onOfflineMode: _cachedRole != null ? _enterOfflineMode : null,
@@ -288,9 +293,17 @@ class _RoleDispatcherState extends ConsumerState<RoleDispatcher> {
           title: 'Access Denied',
           message: 'Your account doesn\'t have permission to access this data.',
           icon: Icons.lock,
-          onContactSupport: () {
+          onContactSupport: () async {
             _logInfo('User requested support for permission error');
-            // TODO: Open support form
+            final Uri emailLaunchUri = Uri(
+              scheme: 'mailto',
+              path: 'helpdesk@cit.ac.in',
+              query:
+                  'subject=Access Denied Error&body=I am facing a permission error in the app.',
+            );
+            if (await canLaunchUrl(emailLaunchUri)) {
+              await launchUrl(emailLaunchUri);
+            }
           },
           onLogout: _handleLogout,
         );
@@ -300,14 +313,16 @@ class _RoleDispatcherState extends ConsumerState<RoleDispatcher> {
         return _NoUserDocumentWidget(
           userId: userId,
           email: FirebaseAuth.instance.currentUser?.email ?? 'Unknown',
-          onCreateProfile: () => _createUserProfile(FirebaseAuth.instance.currentUser!),
+          onCreateProfile: () =>
+              _createUserProfile(FirebaseAuth.instance.currentUser!),
         );
 
       case ErrorType.unknown:
         // Generic error
         return _ErrorStateWidget(
           title: 'Something went wrong',
-          message: kDebugMode ? error.toString() : 'An unexpected error occurred.',
+          message:
+              kDebugMode ? error.toString() : 'An unexpected error occurred.',
           icon: Icons.error_outline,
           onRetry: _manualRetry,
           onLogout: _handleLogout,
@@ -325,15 +340,15 @@ class _RoleDispatcherState extends ConsumerState<RoleDispatcher> {
     if (error is TimeoutException || errorString.contains('timeout')) {
       return ErrorType.timeout;
     }
-    if (errorString.contains('permission-denied') || 
+    if (errorString.contains('permission-denied') ||
         errorString.contains('security')) {
       return ErrorType.permissionDenied;
     }
-    if (errorString.contains('not-found') || 
+    if (errorString.contains('not-found') ||
         errorString.contains('no document')) {
       return ErrorType.documentNotFound;
     }
-    if (errorString.contains('network') || 
+    if (errorString.contains('network') ||
         errorString.contains('unavailable')) {
       return ErrorType.networkFailure;
     }
@@ -376,11 +391,8 @@ class _RoleDispatcherState extends ConsumerState<RoleDispatcher> {
   Future<void> _createUserProfile(User user) async {
     try {
       _logInfo('Creating user profile for ${user.uid}');
-      
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .set({
+
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         'uid': user.uid,
         'email': user.email,
         'displayName': user.displayName ?? 'New User',
@@ -390,16 +402,17 @@ class _RoleDispatcherState extends ConsumerState<RoleDispatcher> {
       });
 
       _logInfo('User profile created successfully');
-      
+
       // Update cache
       await _updateCache('aspirant');
-      
+
       if (mounted) {
         setState(() {});
       }
     } catch (e, stackTrace) {
       _logError('Failed to create user profile', e, stackTrace);
-      _showErrorSnackbar(context, 'Failed to create profile. Please try again.');
+      _showErrorSnackbar(
+          context, 'Failed to create profile. Please try again.');
     }
   }
 
@@ -416,9 +429,11 @@ class _RoleDispatcherState extends ConsumerState<RoleDispatcher> {
   // ✅ FIXED: Proper method signature with optional StackTrace parameter
   void _logError(String title, Object error, [StackTrace? stackTrace]) {
     if (kDebugMode) {
-      developer.log('❌ $title: $error', name: 'ROLE_DISPATCHER_ERROR', stackTrace: stackTrace);
+      developer.log('❌ $title: $error',
+          name: 'ROLE_DISPATCHER_ERROR', stackTrace: stackTrace);
     } else if (EnvConfig.enableCrashlytics) {
-      FirebaseCrashlytics.instance.recordError(error, stackTrace, reason: title);
+      FirebaseCrashlytics.instance
+          .recordError(error, stackTrace, reason: title);
     }
   }
 
@@ -523,7 +538,7 @@ class _ErrorStateWidget extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
-            
+
             // Action Buttons
             if (onRetry != null)
               ElevatedButton.icon(
@@ -533,10 +548,11 @@ class _ErrorStateWidget extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF8AB4F8),
                   foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                 ),
               ),
-            
+
             if (onOfflineMode != null) ...[
               const SizedBox(height: 12),
               OutlinedButton.icon(
@@ -546,11 +562,12 @@ class _ErrorStateWidget extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF8AB4F8),
                   side: const BorderSide(color: Color(0xFF8AB4F8)),
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                 ),
               ),
             ],
-            
+
             if (onContactSupport != null) ...[
               const SizedBox(height: 12),
               TextButton.icon(
@@ -638,7 +655,8 @@ class _NoUserDocumentWidget extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF8AB4F8),
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               ),
             ),
           ],
@@ -672,14 +690,16 @@ class _OfflineWrapper extends StatelessWidget {
               const Expanded(
                 child: Text(
                   'Offline Mode - Using cached data',
-                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                      color: Colors.black, fontWeight: FontWeight.w500),
                 ),
               ),
               TextButton(
                 onPressed: onRetry,
                 child: const Text(
                   'RETRY',
-                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      color: Colors.black, fontWeight: FontWeight.bold),
                 ),
               ),
             ],

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart'; // To read the JSON file
-import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:firebase_ai/firebase_ai.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -23,9 +23,6 @@ class GeminiService {
   ChatSession? _chat;
   bool _isInitialized = false;
   Map<String, dynamic> _localKnowledge = {}; // 🧠 Local Brain (Parsed JSON)
-
-  // USE YOUR NEW KEY HERE
-  final String _apiKey = "AIzaSyCWKKqwxg20qZ1ygN50Gpeh4wKoz4ZZvw4";
 
   // Initialize and load the "Brain" (JSON Data)
   Future<void> init() async {
@@ -53,9 +50,8 @@ class GeminiService {
         }
 
         // 2. Configure the Model (Using 1.5-flash for speed & free tier)
-        _model = GenerativeModel(
-          model: 'gemini-2.5-flash',
-          apiKey: _apiKey,
+        _model = FirebaseAI.googleAI().generativeModel(
+          model: 'gemini-1.5-flash',
           generationConfig: GenerationConfig(maxOutputTokens: 200),
         );
 

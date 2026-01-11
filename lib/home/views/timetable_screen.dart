@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:citk_connect/attendance/services/attendance_service.dart';
 import 'package:citk_connect/attendance/models/class_session.dart';
 import 'package:flutter/material.dart';
@@ -14,7 +16,7 @@ class TimetableScreen extends ConsumerStatefulWidget {
 class _TimetableScreenState extends ConsumerState<TimetableScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final String _batchId = "CSE_BTECH_4"; // TODO: Get from User Profile
+  String _batchId = "CSE_BTECH_4"; // Default fallback
 
   @override
   void initState() {
@@ -29,6 +31,27 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen>
       vsync: this,
       initialIndex: initialIndex,
     );
+    _loadUserBatchId();
+  }
+
+  Future<void> _loadUserBatchId() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      if (doc.exists && mounted) {
+        final data = doc.data();
+        final batch = data?['batch'] ?? '2025';
+        final branch = data?['branch'] ?? 'CSE';
+        setState(() => _batchId = "${batch}_${branch}");
+      }
+    } catch (e) {
+      debugPrint('Error loading batch ID: $e');
+    }
   }
 
   @override

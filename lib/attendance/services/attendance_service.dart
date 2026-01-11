@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,21 +11,99 @@ import '../../attendance/models/class_session.dart';
 // -----------------------------------------------------------------------------
 // 🛠️ ATTENDANCE SERVICE
 // -----------------------------------------------------------------------------
-final attendanceServiceProvider = Provider<AttendanceService>((ref) => AttendanceService());
+final attendanceServiceProvider =
+    Provider<AttendanceService>((ref) => AttendanceService());
+
+// Provider to stream the current user's profile data from Firestore
+final userProfileProvider = StreamProvider<DocumentSnapshot?>((ref) {
+  final authState = ref.watch(authServiceProvider);
+  final user = authState.valueOrNull;
+  if (user != null) {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .snapshots();
+  }
+  return Stream.value(null);
+});
 
 class AttendanceService {
+  final _firestore = FirebaseFirestore.instance;
+
+  AttendanceService();
+
   Stream<Map<int, List<ClassSession>>> streamTimetable(String batchId) {
-    // TODO: Replace with actual Firestore stream
-    return Stream.value({});
+    final docRef = _firestore.collection('timetables').doc(batchId);
+
+    return docRef.snapshots().map((snapshot) {
+      if (!snapshot.exists || snapshot.data() == null) {
+        return {}; // Return empty map if no timetable is found for the batch
+      }
+
+      final data = snapshot.data() as Map<String, dynamic>;
+      final Map<int, List<ClassSession>> weeklyTimetable = {};
+
+      // Firestore stores map keys as strings, so we iterate and parse them to integers
+      for (var dayString in data.keys) {
+        try {
+          final dayInt = int.parse(dayString);
+          final sessionsData = data[dayString] as List<dynamic>;
+
+          final classSessions = sessionsData
+              .map((sessionData) => ClassSession.fromMap(
+                  sessionData as Map<String, dynamic>, dayInt.toString()))
+              .toList();
+
+          weeklyTimetable[dayInt] = classSessions;
+        } catch (e) {
+          // Gracefully handle cases where a key in the document is not a valid day number
+          debugPrint("Error parsing timetable for day '$dayString': $e");
+        }
+      }
+      return weeklyTimetable;
+    });
   }
 
   Future<void> uploadMockTimetable(String batchId) async {
     debugPrint("Uploading mock timetable for $batchId");
   }
 
-  Future<void> updateClassSession(String batchId, int day, ClassSession session) async {
-    // TODO: Implement actual Firestore update logic
-    debugPrint("Updating session: ${session.subject} in room ${session.room}");
+  Future<void> updateClassSession(
+      String batchId, int day, ClassSession session) async {
+    final docRef = _firestore.collection('timetables').doc(batchId);
+
+    // A transaction is used to ensure the read-modify-write operation is atomic.
+    // This prevents race conditions if multiple users try to update the schedule at once.
+    return _firestore.runTransaction((transaction) async {
+      final snapshot = await transaction.get(docRef);
+
+      if (!snapshot.exists) {
+        throw Exception("Timetable document for $batchId does not exist!");
+      }
+
+      final data = snapshot.data()!;
+      final dayString = day.toString();
+
+      final sessionsList = (data[dayString] as List<dynamic>?)
+              ?.map((s) => s as Map<String, dynamic>)
+              .toList() ??
+          [];
+
+      // Find the session to update. This assumes startTime is a unique identifier for a given day.
+      final indexToUpdate = sessionsList.indexWhere((s) {
+        final existingSession = ClassSession.fromMap(s, day.toString());
+        return existingSession.startTime == session.startTime;
+      });
+
+      if (indexToUpdate != -1) {
+        // Assumes ClassSession has a `toMap()` method to convert it back to a map for Firestore.
+        sessionsList[indexToUpdate] = session.toMap();
+        transaction.update(docRef, {dayString: sessionsList});
+      } else {
+        debugPrint(
+            "Session to update not found for day $day at ${session.startTime}");
+      }
+    });
   }
 }
 
@@ -44,28 +123,37 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard> {
   @override
   void initState() {
     super.initState();
-    // 🛠️ HACK: Run this ONCE to seed your database, then delete this line.
-    // Future.delayed(Duration.zero, () {
-    //   ref.read(attendanceServiceProvider).uploadMockTimetable("2025_CSE"); 
-    // });
   }
 
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(authServiceProvider);
     final user = userAsync.valueOrNull;
-    
+    final userProfileAsync = ref.watch(userProfileProvider);
+
     // 🛡️ Fail-safe: If user is null (rare), show loading
-    if (user == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (user == null || userProfileAsync.isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (userProfileAsync.hasError ||
+        !userProfileAsync.hasValue ||
+        userProfileAsync.value == null) {
+      return const Scaffold(
+          body: Center(child: Text("Error loading user profile.")));
+    }
+
+    final profileData = userProfileAsync.value!.data() as Map<String, dynamic>?;
 
     // 🕵️ INTER-CONNECTIVITY: Construct Batch ID (e.g., "2025_CSE")
     // In a real app, you get this from the CITParsedData stored in Firestore.
-    // For the Hackathon, we can infer it or hardcode a fallback.
-    final batchId = "2025_CSE"; // TODO: Fetch from Firestore User Profile
+    final batch = profileData?['batch']?.toString() ?? "2025";
+    final branch = profileData?['branch']?.toString() ?? "CSE";
+    final batchId = "${batch}_$branch";
 
     return Scaffold(
       backgroundColor: const Color(0xFF0F1115),
-      
+
       // 📱 APP BAR
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -75,7 +163,9 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard> {
             CircleAvatar(
               backgroundImage: NetworkImage(user.photoURL ?? ""),
               backgroundColor: const Color(0xFF4285F4),
-              child: user.photoURL == null ? Text(user.displayName?[0] ?? "U") : null,
+              child: user.photoURL == null
+                  ? Text(user.displayName?[0] ?? "U")
+                  : null,
             ),
             const SizedBox(width: 12),
             Column(
@@ -83,7 +173,8 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard> {
               children: [
                 Text(
                   "Hello, ${user.displayName?.split(' ')[0]} 👋",
-                  style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.inter(
+                      fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Text(
                   "CSE • 2025 Batch", // Dynamic data here later
@@ -109,9 +200,12 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard> {
         indicatorColor: const Color(0xFF4285F4).withValues(alpha: 0.3),
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.calendar_month_outlined), label: 'Schedule'),
-          NavigationDestination(icon: Icon(Icons.chat_bubble_outline), label: 'AI Chat'),
-          NavigationDestination(icon: Icon(Icons.person_outline), label: 'Profile'),
+          NavigationDestination(
+              icon: Icon(Icons.calendar_month_outlined), label: 'Schedule'),
+          NavigationDestination(
+              icon: Icon(Icons.chat_bubble_outline), label: 'AI Chat'),
+          NavigationDestination(
+              icon: Icon(Icons.person_outline), label: 'Profile'),
         ],
       ),
 
@@ -120,9 +214,11 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard> {
         index: _selectedIndex,
         children: [
           _buildHomeTab(batchId),
-          const Center(child: Text("Full Calendar UI Coming Soon")), // Placeholder
-          const Center(child: Text("Gemini Chat UI Coming Soon")),   // Placeholder
-          const Center(child: Text("Profile UI Coming Soon")),       // Placeholder
+          const Center(
+              child: Text("Full Calendar UI Coming Soon")), // Placeholder
+          const Center(
+              child: Text("Gemini Chat UI Coming Soon")), // Placeholder
+          const Center(child: Text("Profile UI Coming Soon")), // Placeholder
         ],
       ),
     );
@@ -143,14 +239,16 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard> {
           _buildAttendanceCard(),
 
           const SizedBox(height: 24),
-          
+
           // 2. LIVE BUS TRACKER TEASER
           _buildLiveBusCard(),
 
           const SizedBox(height: 24),
 
           // 3. TODAY'S CLASSES (Streamed from Firestore)
-          Text("Today's Schedule", style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text("Today's Schedule",
+              style:
+                  GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
 
           StreamBuilder<Map<int, List<ClassSession>>>(
@@ -199,7 +297,10 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard> {
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: const Color(0xFF4285F4).withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 6)),
+          BoxShadow(
+              color: const Color(0xFF4285F4).withValues(alpha: 0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 6)),
         ],
       ),
       child: Row(
@@ -216,7 +317,9 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard> {
                   backgroundColor: Colors.white24,
                   color: Colors.white,
                 ),
-                Text("78%", style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold)),
+                Text("78%",
+                    style: GoogleFonts.inter(
+                        color: Colors.white, fontWeight: FontWeight.bold)),
               ],
             ),
           ),
@@ -225,10 +328,18 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Attendance Status", style: GoogleFonts.inter(color: Colors.white70, fontSize: 12)),
-                Text("You are Safe! 🛡️", style: GoogleFonts.inter(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                Text("Attendance Status",
+                    style:
+                        GoogleFonts.inter(color: Colors.white70, fontSize: 12)),
+                Text("You are Safe! 🛡️",
+                    style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
-                Text("2 more classes to reach 80%", style: GoogleFonts.inter(color: Colors.white70, fontSize: 12)),
+                Text("2 more classes to reach 80%",
+                    style:
+                        GoogleFonts.inter(color: Colors.white70, fontSize: 12)),
               ],
             ),
           ),
@@ -251,7 +362,9 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard> {
       decoration: BoxDecoration(
         color: const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(16),
-        border: isActive ? Border.all(color: const Color(0xFF4285F4), width: 2) : null,
+        border: isActive
+            ? Border.all(color: const Color(0xFF4285F4), width: 2)
+            : null,
       ),
       child: Row(
         children: [
@@ -259,7 +372,8 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard> {
             children: [
               Text(
                 "${session.startTime.hour}:${session.startTime.minute.toString().padLeft(2, '0')}",
-                style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold),
+                style: GoogleFonts.inter(
+                    color: Colors.white, fontWeight: FontWeight.bold),
               ),
               Text(
                 "${session.endTime.hour}:${session.endTime.minute.toString().padLeft(2, '0')}",
@@ -268,22 +382,34 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard> {
             ],
           ),
           const SizedBox(width: 16),
-          Container(width: 4, height: 40, color: session.isCancelled ? Colors.red : const Color(0xFF4285F4)),
+          Container(
+              width: 4,
+              height: 40,
+              color:
+                  session.isCancelled ? Colors.red : const Color(0xFF4285F4)),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(session.subject, style: GoogleFonts.inter(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                Text(session.subject,
+                    style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600)),
                 Row(
                   children: [
                     Icon(Icons.location_on, size: 12, color: Colors.grey[400]),
                     const SizedBox(width: 4),
-                    Text(session.room, style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 12)),
+                    Text(session.room,
+                        style: GoogleFonts.inter(
+                            color: Colors.grey[400], fontSize: 12)),
                     const SizedBox(width: 12),
                     Icon(Icons.person, size: 12, color: Colors.grey[400]),
                     const SizedBox(width: 4),
-                    Text(session.professor, style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 12)),
+                    Text(session.professor,
+                        style: GoogleFonts.inter(
+                            color: Colors.grey[400], fontSize: 12)),
                   ],
                 ),
               ],
@@ -292,8 +418,14 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard> {
           if (session.isCancelled)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
-              child: Text("CANCELLED", style: GoogleFonts.inter(color: Colors.red, fontSize: 10, fontWeight: FontWeight.bold)),
+              decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8)),
+              child: Text("CANCELLED",
+                  style: GoogleFonts.inter(
+                      color: Colors.red,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold)),
             ),
         ],
       ),
@@ -305,7 +437,7 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard> {
     return InkWell(
       onTap: () {
         // Navigate to /map or /bus
-        // context.pushNamed('bus'); 
+        // context.pushNamed('bus');
       },
       child: Container(
         height: 100,
@@ -315,7 +447,8 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard> {
           color: const Color(0xFF2A2D3E),
           borderRadius: BorderRadius.circular(16),
           image: const DecorationImage(
-            image: NetworkImage("https://www.transparenttextures.com/patterns/cubes.png"), // Subtle pattern
+            image: NetworkImage(
+                "https://www.transparenttextures.com/patterns/cubes.png"), // Subtle pattern
             opacity: 0.1,
             fit: BoxFit.cover,
           ),
@@ -324,7 +457,8 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard> {
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: const BoxDecoration(color: Color(0xFFFB8C00), shape: BoxShape.circle),
+              decoration: const BoxDecoration(
+                  color: Color(0xFFFB8C00), shape: BoxShape.circle),
               child: const Icon(Icons.directions_bus, color: Colors.white),
             ),
             const SizedBox(width: 16),
@@ -332,8 +466,14 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("Live Bus Tracker", style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                Text("Bus 4 is arriving at Campus Gate", style: GoogleFonts.inter(color: Colors.white70, fontSize: 12)),
+                Text("Live Bus Tracker",
+                    style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16)),
+                Text("Bus 4 is arriving at Campus Gate",
+                    style:
+                        GoogleFonts.inter(color: Colors.white70, fontSize: 12)),
               ],
             ),
           ],
@@ -355,8 +495,11 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard> {
           children: [
             const Icon(Icons.weekend, size: 40, color: Colors.grey),
             const SizedBox(height: 12),
-            Text("No Classes Today!", style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold)),
-            Text("Enjoy your free time.", style: GoogleFonts.inter(color: Colors.grey)),
+            Text("No Classes Today!",
+                style: GoogleFonts.inter(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
+            Text("Enjoy your free time.",
+                style: GoogleFonts.inter(color: Colors.grey)),
           ],
         ),
       ),
@@ -366,10 +509,12 @@ class _StudentDashboardState extends ConsumerState<StudentDashboard> {
   Widget _buildErrorCard(String msg) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+          color: Colors.red.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12)),
       child: Row(children: [
-        const Icon(Icons.error_outline, color: Colors.red), 
-        const SizedBox(width: 12), 
+        const Icon(Icons.error_outline, color: Colors.red),
+        const SizedBox(width: 12),
         Text(msg, style: const TextStyle(color: Colors.red))
       ]),
     );

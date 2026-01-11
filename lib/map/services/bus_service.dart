@@ -1,4 +1,6 @@
+import 'dart:developer' as developer;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:citk_connect/map/models/bus_data.dart';
 
@@ -27,9 +29,6 @@ class BusService {
   ///
   /// This method updates the document for the given `busId` in the `bus_locations`
   /// collection. If the document does not exist, it will be created.
-  ///
-  /// TODO: Implement more robust error handling, such as using a logger service
-  /// or reporting errors to a crash reporting tool instead of just printing to the console.
   Future<void> broadcastLocation(
     String busId,
     double lat,
@@ -56,10 +55,15 @@ class BusService {
         'timestamp':
             FieldValue.serverTimestamp(), // Use server time for consistency
       });
-    } catch (e) {
-      // Basic error handling. Prints the error to the console.
-      // This should be replaced with a more sophisticated logging solution.
-      print('Error broadcasting location for bus $busId: $e');
+    } catch (e, stackTrace) {
+      developer.log(
+        'Error broadcasting location for bus $busId',
+        error: e,
+        stackTrace: stackTrace,
+        name: 'BusService',
+      );
+      FirebaseCrashlytics.instance.recordError(e, stackTrace,
+          reason: 'Broadcast Location Failed for $busId');
     }
   }
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:developer' as developer;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -8,6 +10,11 @@ final notificationServiceProvider = Provider<NotificationService>((ref) {
 
 class NotificationService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  final _foregroundMessageController =
+      StreamController<RemoteMessage>.broadcast();
+
+  Stream<RemoteMessage> get onForegroundMessage =>
+      _foregroundMessageController.stream;
 
   /// Initialize notification service
   Future<void> initialize() async {
@@ -32,8 +39,9 @@ class NotificationService {
 
   /// Handle incoming messages
   void _handleMessage(RemoteMessage message) {
-    print('Received message: ${message.notification?.title}');
-    // TODO: Show local notification or handle the message
+    developer.log('Received foreground message: ${message.notification?.title}',
+        name: 'NotificationService');
+    _foregroundMessageController.add(message);
   }
 
   /// Get FCM token

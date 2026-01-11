@@ -375,8 +375,12 @@ class BusInfoCard extends ConsumerWidget {
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    Share.share(
-                        'Hey! Bus No. 1 is arriving at CIT Kokrajhar in ~5 mins. Track it on CITK Connect! 🚌💨');
+                    SharePlus.instance.share(
+                      ShareParams(
+                        text:
+                            'Hey! Bus No. 1 is arriving at CIT Kokrajhar in ~5 mins. Track it on CITK Connect! 🚌💨',
+                      ),
+                    );
                   },
                   icon: const Icon(Icons.share, size: 16),
                   label: const Text('Share'),

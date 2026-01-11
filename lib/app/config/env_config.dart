@@ -1,25 +1,40 @@
 import 'package:flutter/foundation.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 /// Environment configuration for the app
-/// TODO: Move sensitive keys to Firebase Remote Config or .env file
 class EnvConfig {
   // ✅ Environment Detection
   static bool get isProduction => kReleaseMode;
   static bool get isDevelopment => kDebugMode;
   static bool get isProfile => kProfileMode;
 
-  // ✅ API Keys (TEMPORARY - Move to secure storage)
-  // TODO: Replace with Firebase Remote Config or flutter_dotenv
-  static const String geminiApiKey = "AIzaSyCWKKqwxg20qZ1ygN50Gpeh4wKoz4ZZvw4";
-  static const String googleMapsKey = "AIzaSyCCGy6iOdFSvq_Agq6QQP_FbwWmM4Q2pOc";
-  static const String weatherApiKey = "YOUR_API_KEY"; // TODO: Get from OpenWeatherMap
+  // ✅ API Keys
+  // PRO TIP: These are injected at build time using --dart-define
+  // They can be overridden by Firebase Remote Config at runtime.
+  static String _geminiApiKey = const String.fromEnvironment('GEMINI_API_KEY');
+  static String get geminiApiKey => _geminiApiKey;
+
+  static String _googleMapsKey =
+      const String.fromEnvironment('GOOGLE_MAPS_API_KEY');
+  static String get googleMapsKey => _googleMapsKey;
+
+  static String _weatherApiKey =
+      const String.fromEnvironment('WEATHER_API_KEY');
+  static String get weatherApiKey => _weatherApiKey;
 
   // ✅ Feature Flags (Can be overridden by Firebase Remote Config)
-  static const bool enableBusTracking = true;
-  static const bool enableAIAssistant = true;
-  static const bool enableWeatherWidget = false; // No API key yet
-  static const bool enableAnalytics = false; // TODO: Implement
-  static const bool enableCrashReporting = false; // TODO: Implement
+  static bool get enableBusTracking =>
+      _remoteConfig?.getBool('enable_bus_tracking') ?? true;
+  static bool get enableAIAssistant =>
+      _remoteConfig?.getBool('enable_ai_assistant') ?? true;
+  static bool get enableWeatherWidget =>
+      _remoteConfig?.getBool('enable_weather_widget') ?? false;
+  static bool get enableAnalytics =>
+      _remoteConfig?.getBool('enable_analytics') ?? false;
+  static bool get enableCrashReporting =>
+      _remoteConfig?.getBool('enable_crash_reporting') ?? false;
 
   // ✅ Rate Limits
   static const int maxAiQueriesPerDay = 50;
@@ -47,6 +62,8 @@ class EnvConfig {
 
   static bool get enableCrashlytics => isProduction;
 
+  static FirebaseRemoteConfig? _remoteConfig;
+
   /// Initialize environment-specific settings
   static Future<void> initialize() async {
     if (isDevelopment) {
@@ -57,9 +74,46 @@ class EnvConfig {
       print("[EnvConfig] Logging: DISABLED");
     }
 
-    // TODO: Load Firebase Remote Config here
-    // TODO: Initialize analytics if enabled
-    // TODO: Initialize crash reporting if enabled
+    try {
+      _remoteConfig = FirebaseRemoteConfig.instance;
+      await _remoteConfig!.setConfigSettings(RemoteConfigSettings(
+        fetchTimeout: const Duration(minutes: 1),
+        minimumFetchInterval: isDevelopment
+            ? const Duration(minutes: 5)
+            : const Duration(hours: 12),
+      ));
+
+      await _remoteConfig!.setDefaults({
+        'enable_bus_tracking': true,
+        'enable_ai_assistant': true,
+        'enable_weather_widget': false,
+        'enable_analytics': false,
+        'enable_crash_reporting': false,
+      });
+
+      await _remoteConfig!.fetchAndActivate();
+
+      // Load keys from Remote Config if available
+      if (_remoteConfig!.getString('GEMINI_API_KEY').isNotEmpty) {
+        _geminiApiKey = _remoteConfig!.getString('GEMINI_API_KEY');
+      }
+      if (_remoteConfig!.getString('GOOGLE_MAPS_API_KEY').isNotEmpty) {
+        _googleMapsKey = _remoteConfig!.getString('GOOGLE_MAPS_API_KEY');
+      }
+      if (_remoteConfig!.getString('WEATHER_API_KEY').isNotEmpty) {
+        _weatherApiKey = _remoteConfig!.getString('WEATHER_API_KEY');
+      }
+    } catch (e) {
+      print("[EnvConfig] Failed to fetch Remote Config: $e");
+    }
+
+    if (enableAnalytics) {
+      await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
+    }
+
+    if (enableCrashReporting && !kIsWeb) {
+      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+    }
   }
 
   /// Get API key for a specific service (with fallback)

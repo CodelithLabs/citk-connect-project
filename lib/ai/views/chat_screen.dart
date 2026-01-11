@@ -434,7 +434,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                                                   color: Colors.white)),
                                           onTap: () {
                                             Navigator.pop(context);
-                                            Share.share(msg['text']!);
+                                            SharePlus.instance.share(
+                                              ShareParams(text: msg['text']!),
+                                            );
                                           },
                                         ),
                                         if (!isUser)

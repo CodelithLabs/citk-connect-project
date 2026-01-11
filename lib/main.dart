@@ -50,7 +50,8 @@ void main() async {
           _firebaseInitialized = true;
         } catch (e) {
           // ⚠️ Firebase Fallback: App continues in degraded mode
-          developer.log('Firebase init failed. Running in degraded mode.', error: e);
+          developer.log('Firebase init failed. Running in degraded mode.',
+              error: e);
         }
 
         // 4️⃣ Initialize SharedPreferences
@@ -66,7 +67,9 @@ void main() async {
           FlutterError.presentError(details);
           _logError('Flutter Error', details.exception, details.stack);
 
-          if (!kDebugMode && EnvConfig.enableCrashlytics && _firebaseInitialized) {
+          if (!kDebugMode &&
+              EnvConfig.enableCrashlytics &&
+              _firebaseInitialized) {
             FirebaseCrashlytics.instance.recordFlutterError(details);
           }
         };
@@ -76,7 +79,9 @@ void main() async {
         // ─────────────────────────────────────────────────────────────────────────
         PlatformDispatcher.instance.onError = (error, stack) {
           _logError('Platform Error', error, stack);
-          if (!kDebugMode && EnvConfig.enableCrashlytics && _firebaseInitialized) {
+          if (!kDebugMode &&
+              EnvConfig.enableCrashlytics &&
+              _firebaseInitialized) {
             FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
           }
           return true; // Mark as handled
@@ -164,8 +169,7 @@ Future<void> _initializeFirebaseWithRetry() async {
         // CRITICAL: Firebase failed after retries
         _logError('Firebase initialization failed permanently', e, stack);
 
-        // Show error screen but allow app to continue in limited mode
-        // TODO: Implement offline mode or show error screen
+        // Rethrow to trigger degraded mode in main()
         rethrow;
       }
 
@@ -181,8 +185,11 @@ Future<SharedPreferences> _initializeSharedPreferences() async {
     return prefs;
   } catch (e, stack) {
     _logError('SharedPreferences failed', e, stack);
-    // TODO: Implement fallback storage (Hive, in-memory)
-    rethrow;
+
+    _logInfo('Using in-memory SharedPreferences fallback');
+    // ignore: invalid_use_of_visible_for_testing_member
+    SharedPreferences.setMockInitialValues({});
+    return await SharedPreferences.getInstance();
   }
 }
 
@@ -222,8 +229,7 @@ void _logError(String message, Object error, StackTrace? stack) {
       stackTrace: stack,
       name: 'CITK_ERROR',
     );
-  }
-  else if (EnvConfig.enableCrashlytics && _firebaseInitialized) {
+  } else if (EnvConfig.enableCrashlytics && _firebaseInitialized) {
     FirebaseCrashlytics.instance.recordError(error, stack, reason: message);
   }
 }
@@ -243,6 +249,15 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // 🛡️ OFFLINE MODE / ERROR SCREEN
+    if (!_firebaseInitialized) {
+      return const MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: _FatalErrorScreen(
+            error: 'Connection Failed.\nUnable to connect to servers.'),
+      );
+    }
+
     final router = ref.watch(appRouterProvider);
     final settings = ref.watch(settingsControllerProvider);
     final themeMode = settings.themeMode;
