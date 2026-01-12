@@ -20,13 +20,14 @@ jobs:
       # 2. Install Dependencies
       - run: flutter pub get
 
-      # 3. Build Web Version (Release Mode)
+      # 3. Build Web Version
       - run: flutter build web --release
 
       # 4. Deploy to Firebase
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          # Make sure this matches the secret name in your GitHub Settings!
+          # We keep the secret you already have set up
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_CITK_CONNECT_CORE }}'
-          projectId: citk-connect-project
+          # 👇 THIS IS THE CRITICAL FIX 👇
+          projectId: citk-connect
