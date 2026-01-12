@@ -1,0 +1,1863 @@
+[
+    {
+        "id": "2b693f3e03dd6c561c30009d3f684a27",
+        "file_hash": "9d3f3953c4851c54831f621b83b530a5",
+        "meta": {
+            "title": "Applications for the post of 5 Project Internship sponsored by Meity, in the department of Computer Science and Engineering Dept",
+            "date": "09-01-2026",
+            "url": "https://cit.ac.in/uploads/notices/files/1767938202.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "Scholarship",
+            "target_audience": [
+                "M. Tech",
+                "B. Tech"
+            ],
+            "summary": "Internship opportunity in CSE, CIT Kokrajhar for M. Tech and B. Tech students in IoT Security and ML.",
+            "entities": {
+                "event_date": "2026-01-07",
+                "semester": "4th Semester, 8th Semester"
+            }
+        }
+    },
+    {
+        "id": "a6a711c335f7dfd7fcce83ee51ee18cc",
+        "file_hash": "d5d507664b84f1a790ca3ee8e4397b2f",
+        "meta": {
+            "title": "Rolling Advt for One (01) Junior Research Fellow (position open until filled) for SERB-EEQ funded project",
+            "date": "06-01-2026",
+            "url": "https://cit.ac.in/uploads/notices/files/1767678187.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "Exam/Academic/Scholarship",
+            "target_audience": [
+                "Instrumentation Engineering",
+                "Electronics & Instrumentation",
+                "Electrical and Electronics Engineering",
+                "Mechanical Engineering",
+                "Food Engineering & Technology",
+                "Chemical Engineering",
+                "Agriculture Engineering",
+                "Renewable Energy engineering",
+                "Energy Technology"
+            ],
+            "summary": "JRF position at CIT Kokrajhar for SERB project on solar tunnel dryer; apply by email.",
+            "entities": {
+                "event_date": null,
+                "semester": null
+            }
+        }
+    },
+    {
+        "id": "60deac23db277c29d75395087196e1bf",
+        "file_hash": "3f8ac738c99c01cf6bee11fb230ae87c",
+        "meta": {
+            "title": "Academic Calender for year 2026",
+            "date": "04-01-2026",
+            "url": "https://cit.ac.in/uploads/notices/files/1767541102.pdf"
+        },
+        "ai_analysis": [
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Renewal of admission for all students from January 1st to 3rd, 2026.",
+                "entities": {
+                    "event_date": "2026-01-01",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Even Semester Session starts on January 5th, 2026.",
+                "entities": {
+                    "event_date": "2026-01-05",
+                    "semester": "Even"
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Republic Day celebration on January 26th, 2026.",
+                "entities": {
+                    "event_date": "2026-01-26",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Mid Term Exams start from February 22nd, 2026.",
+                "entities": {
+                    "event_date": "2026-02-22",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Mid Term Exams conclude on February 28th, 2026.",
+                "entities": {
+                    "event_date": "2026-02-28",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Last Day of Class / Instructions on March 30th, 2026.",
+                "entities": {
+                    "event_date": "2026-03-30",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "End Term Exams Start from May 4th, 2026.",
+                "entities": {
+                    "event_date": "2026-05-04",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "End Term Exams Ends on May 18th, 2026.",
+                "entities": {
+                    "event_date": "2026-05-18",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Last Day of Gradebook Submission on May 25th, 2026.",
+                "entities": {
+                    "event_date": "2026-05-25",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Result Declaration (for Final Semesters) on June 1st, 2026.",
+                "entities": {
+                    "event_date": "2026-06-01",
+                    "semester": "Final"
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Result Declaration (for Remaining Semesters) on June 8th, 2026.",
+                "entities": {
+                    "event_date": "2026-06-08",
+                    "semester": "Remaining"
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Odd Semester Session Starts (excluding 1st Semesters) on July 6th, 2026.",
+                "entities": {
+                    "event_date": "2026-07-06",
+                    "semester": "Odd"
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Induction Programme for 1st Semesters Starts on July 20th, 2026.",
+                "entities": {
+                    "event_date": "2026-07-20",
+                    "semester": "1st"
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "UG 1st Semester Classes Start on July 27th, 2026.",
+                "entities": {
+                    "event_date": "2026-07-27",
+                    "semester": "1st"
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "1st Semester Diploma & PG Classes Start on August 26th, 2026.",
+                "entities": {
+                    "event_date": "2026-08-26",
+                    "semester": "1st"
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Mid Term Exams Start on September 5th, 2026.",
+                "entities": {
+                    "event_date": "2026-09-05",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Mid Term Exams End on September 11th, 2026.",
+                "entities": {
+                    "event_date": "2026-09-11",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "End Term Exams Start on November 18th, 2026.",
+                "entities": {
+                    "event_date": "2026-11-18",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Last Day of Class Instructions on November 13th, 2026.",
+                "entities": {
+                    "event_date": "2026-11-13",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "End Term Exams on November 23rd, 2026.",
+                "entities": {
+                    "event_date": "2026-11-23",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "End Term Exams on November 30th, 2026.",
+                "entities": {
+                    "event_date": "2026-11-30",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "End Term Exams on December 1st, 2026.",
+                "entities": {
+                    "event_date": "2026-12-01",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "End Term Exams on December 2nd, 2026.",
+                "entities": {
+                    "event_date": "2026-12-02",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "End Term Exams End on December 3rd, 2026.",
+                "entities": {
+                    "event_date": "2026-12-03",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Last Day of Gradebook Submission on December 9th, 2026.",
+                "entities": {
+                    "event_date": "2026-12-09",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Declaration of Results on December 22nd, 2026.",
+                "entities": {
+                    "event_date": "2026-12-22",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": false,
+                "category": "Cultural",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Harvest Festival on January 15th, 2026.",
+                "entities": {
+                    "event_date": "2026-01-15",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": false,
+                "category": "Cultural",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Bathou Puja on January 27th, 2026.",
+                "entities": {
+                    "event_date": "2026-01-27",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": false,
+                "category": "Cultural",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Saraswati Puja on January 23rd, 2026.",
+                "entities": {
+                    "event_date": "2026-01-23",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": false,
+                "category": "Cultural",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "ECSTACY – 2026 from January 31st to February 1st, 2026.",
+                "entities": {
+                    "event_date": "2026-01-31",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": false,
+                "category": "Cultural",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "International Mother Language Day on February 21st, 2026.",
+                "entities": {
+                    "event_date": "2026-02-21",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": false,
+                "category": "Cultural",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Students' Day on March 31st, 2026.",
+                "entities": {
+                    "event_date": "2026-03-31",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": false,
+                "category": "Cultural",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Bohag / Bwisagu Bihu on April 15th, 2026.",
+                "entities": {
+                    "event_date": "2026-04-15",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": false,
+                "category": "Cultural",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Freshers' Social on August 22nd, 2026.",
+                "entities": {
+                    "event_date": "2026-08-22",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": false,
+                "category": "Cultural",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Bodo Literary Day on November 16th, 2026.",
+                "entities": {
+                    "event_date": "2026-11-16",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": false,
+                "category": "Cultural",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Pre-Christmas Celebration on December 15th, 2026.",
+                "entities": {
+                    "event_date": "2026-12-15",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": false,
+                "category": "Technical",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Aeromodel and Drone building on February 20th, 2026.",
+                "entities": {
+                    "event_date": "2026-02-20",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": false,
+                "category": "Technical",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Anuva - Design Circle Club on September 26th & 27th, 2026.",
+                "entities": {
+                    "event_date": "2026-09-26",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": false,
+                "category": "Technical",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Model United Nations Club from January 23rd to 25th, 2026.",
+                "entities": {
+                    "event_date": "2026-01-23",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": false,
+                "category": "Technical",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Udbhav 2026- Annual E-Summit on January 31st & February 1st, 2026.",
+                "entities": {
+                    "event_date": "2026-01-31",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": false,
+                "category": "Technical",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Victus – The FET Club activity on October 16th, 2026.",
+                "entities": {
+                    "event_date": "2026-10-16",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": false,
+                "category": "Technical",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "TECHCRACY - 2026 from October 31st to November 1st, 2026.",
+                "entities": {
+                    "event_date": "2026-10-31",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": false,
+                "category": "Welfare",
+                "target_audience": [
+                    "Students",
+                    "Faculty",
+                    "Staffs"
+                ],
+                "summary": "Health Camp on February 7th (students) and 14th (faculty/staffs), 2026.",
+                "entities": {
+                    "event_date": "2026-02-07",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": false,
+                "category": "Welfare",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Anti-ragging day / Anti-ragging week on August 12th, 2026.",
+                "entities": {
+                    "event_date": "2026-08-12",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": false,
+                "category": "Welfare",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Antidrug Awareness Campaign on September 16th, 2026.",
+                "entities": {
+                    "event_date": "2026-09-16",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": false,
+                "category": "Sports",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Sports Week 2026 from the first week to the last week of February 2026.",
+                "entities": {
+                    "event_date": "2026-02-01",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": false,
+                "category": "Sports",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Athletics from Mid-March to Mid-April 2026.",
+                "entities": {
+                    "event_date": "2026-03-15",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": false,
+                "category": "Sports",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Football tournament in August 2026.",
+                "entities": {
+                    "event_date": "2026-08-01",
+                    "semester": null
+                }
+            },
+            {
+                "is_important": false,
+                "category": "Sports",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Cricket Tournament from Mid-September to Mid-October 2026.",
+                "entities": {
+                    "event_date": "2026-09-15",
+                    "semester": null
+                }
+            }
+        ]
+    },
+    {
+        "id": "ea50f634998fd77b00f24cbbfa3e7263",
+        "file_hash": "8901f1d11102e14c504e43e30cf98efe",
+        "meta": {
+            "title": "Notice for extension of PhD programme for Renewal Admission Session Jan-July-2026",
+            "date": "30-12-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1767098896application-form-for-extension-of-phd-programmepdf.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "Academic",
+            "target_audience": [
+                "All"
+            ],
+            "summary": "PhD student requests extension for thesis submission and semester registration.",
+            "entities": {
+                "event_date": null,
+                "semester": "Even/Odd Semester (January-June/July-December, 20.....)"
+            }
+        }
+    },
+    {
+        "id": "40a76aa6d27d0f1a4dba1aa6d8cba770",
+        "file_hash": "517fe5f72778b35d99f5c81d33bec7a4",
+        "meta": {
+            "title": "Notice on renewal registration for the (January-July) 2026",
+            "date": "27-12-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1766816753.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "Exam/Academic",
+            "target_audience": [
+                "All"
+            ],
+            "summary": "Renewal registration for continuing students for January-June 2026 session opens.",
+            "entities": {
+                "event_date": "2026-01-01",
+                "semester": "January-June 2026"
+            }
+        }
+    },
+    {
+        "id": "029e751971d94dbe991d055a81fccce2",
+        "file_hash": "00912914b2be8f4bbeb96b5c959355e3",
+        "meta": {
+            "title": "PhD Admission Notification (NET/GATE only) – January 2026",
+            "date": "11-12-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1765773373.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "Academic",
+            "target_audience": [
+                "Civil Engineering",
+                "Computer Science & Engineering",
+                "Electronics and Communication Engineering",
+                "Instrumentation Engineering",
+                "Food Engineering & Technology",
+                "Mechanical Engineering",
+                "Physics",
+                "Chemistry",
+                "Mathematics",
+                "Humanities and Social Sciences"
+            ],
+            "summary": "CITK invites applications for Ph.D. January 2026 session for NET/GATE qualified candidates.",
+            "entities": {
+                "event_date": "2026-01-10",
+                "semester": "January 2026"
+            }
+        }
+    },
+    {
+        "id": "78435f9c013606f25fd55084d5ae7ddf",
+        "file_hash": "afaa798c1bb86b5cc90080cdf2fe54ba",
+        "meta": {
+            "title": "Walk-in Advertisement for the post of Junior Research Fellow (JRF) in a  SERB sponsored project with the sanction number EEQ/2023/000421, dated 03-01-2024",
+            "date": "19-11-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1763549279.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "Exam/Academic",
+            "target_audience": [
+                "Instrumentation Engineering",
+                "Electronics Engineering",
+                "Mechanical Engineering",
+                "Food Engineering",
+                "Chemical Engineering",
+                "Agriculture Engineering",
+                "Renewable Energy Engineering",
+                "Energy Technology"
+            ],
+            "summary": "Walk-in interview for Junior Research Fellow (JRF) at CIT Kokrajhar on 27th November 2025.",
+            "entities": {
+                "event_date": "2025-11-27",
+                "semester": null
+            }
+        }
+    },
+    {
+        "id": "f2bda415f04fbf4dcbe98d3db0fb27ee",
+        "file_hash": "ef025cb6499c616f4eb2fb1fbd713211",
+        "meta": {
+            "title": "TIMETABLE DIPLOMA/UG/PG FINAL EXAMINATION (ODD SEMESTER)-2025",
+            "date": "15-11-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1763195687.pdf"
+        },
+        "ai_analysis": [
+            {
+                "is_important": true,
+                "category": "Exam",
+                "target_audience": [
+                    "Diploma",
+                    "UG",
+                    "PG"
+                ],
+                "summary": "Diploma, UG, and PG Final Examination (Odd Semester) - 2025 Timetable released by CIT Kokrajhar.",
+                "entities": {
+                    "event_date": "2025-11-17",
+                    "semester": "Odd Semester"
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Exam",
+                "target_audience": [
+                    "Diploma",
+                    "UG",
+                    "PG"
+                ],
+                "summary": "Diploma, UG, and PG Final Examination (Odd Semester) - 2025 Timetable released by CIT Kokrajhar.",
+                "entities": {
+                    "event_date": "2025-11-18",
+                    "semester": "Odd Semester"
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Exam",
+                "target_audience": [
+                    "Diploma",
+                    "UG",
+                    "PG"
+                ],
+                "summary": "Diploma, UG, and PG Final Examination (Odd Semester) - 2025 Timetable released by CIT Kokrajhar.",
+                "entities": {
+                    "event_date": "2025-11-19",
+                    "semester": "Odd Semester"
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Exam",
+                "target_audience": [
+                    "Diploma",
+                    "UG",
+                    "PG"
+                ],
+                "summary": "Diploma, UG, and PG Final Examination (Odd Semester) - 2025 Timetable released by CIT Kokrajhar.",
+                "entities": {
+                    "event_date": "2025-11-20",
+                    "semester": "Odd Semester"
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Exam",
+                "target_audience": [
+                    "Diploma",
+                    "UG",
+                    "PG"
+                ],
+                "summary": "Diploma, UG, and PG Final Examination (Odd Semester) - 2025 Timetable released by CIT Kokrajhar.",
+                "entities": {
+                    "event_date": "2025-11-21",
+                    "semester": "Odd Semester"
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Exam",
+                "target_audience": [
+                    "Diploma",
+                    "UG",
+                    "PG"
+                ],
+                "summary": "Diploma, UG, and PG Final Examination (Odd Semester) - 2025 Timetable released by CIT Kokrajhar.",
+                "entities": {
+                    "event_date": "2025-11-22",
+                    "semester": "Odd Semester"
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Exam",
+                "target_audience": [
+                    "Diploma",
+                    "UG",
+                    "PG"
+                ],
+                "summary": "Diploma, UG, and PG Final Examination (Odd Semester) - 2025 Timetable released by CIT Kokrajhar.",
+                "entities": {
+                    "event_date": "2025-11-24",
+                    "semester": "Odd Semester"
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Exam",
+                "target_audience": [
+                    "Diploma",
+                    "UG",
+                    "PG"
+                ],
+                "summary": "Diploma, UG, and PG Final Examination (Odd Semester) - 2025 Timetable released by CIT Kokrajhar.",
+                "entities": {
+                    "event_date": "2025-11-25",
+                    "semester": "Odd Semester"
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Exam",
+                "target_audience": [
+                    "Diploma",
+                    "UG",
+                    "PG"
+                ],
+                "summary": "Diploma, UG, and PG Final Examination (Odd Semester) - 2025 Timetable released by CIT Kokrajhar.",
+                "entities": {
+                    "event_date": "2025-11-26",
+                    "semester": "Odd Semester"
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Exam",
+                "target_audience": [
+                    "Diploma",
+                    "UG",
+                    "PG"
+                ],
+                "summary": "Diploma, UG, and PG Final Examination (Odd Semester) - 2025 Timetable released by CIT Kokrajhar.",
+                "entities": {
+                    "event_date": "2025-11-27",
+                    "semester": "Odd Semester"
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Exam",
+                "target_audience": [
+                    "Diploma",
+                    "UG",
+                    "PG"
+                ],
+                "summary": "Diploma, UG, and PG Final Examination (Odd Semester) - 2025 Timetable released by CIT Kokrajhar.",
+                "entities": {
+                    "event_date": "2025-11-28",
+                    "semester": "Odd Semester"
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Exam",
+                "target_audience": [
+                    "Diploma",
+                    "UG",
+                    "PG"
+                ],
+                "summary": "Diploma, UG, and PG Final Examination (Odd Semester) - 2025 Timetable released by CIT Kokrajhar.",
+                "entities": {
+                    "event_date": "2025-11-29",
+                    "semester": "Odd Semester"
+                }
+            }
+        ]
+    },
+    {
+        "id": "d61ef211f41ebd090a457897f1151187",
+        "file_hash": "c69244b1f54edbbf2c779d960a3aea9d",
+        "meta": {
+            "title": "Notice: Revised change of Bus Service Timing",
+            "date": "17-10-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1760695927.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "General",
+            "target_audience": [
+                "All"
+            ],
+            "summary": "Revised bus service timings effective October 21, 2025. Details for Monday-Friday and Saturday-Sunday provided.",
+            "entities": {
+                "event_date": "2025-10-21",
+                "semester": null
+            }
+        }
+    },
+    {
+        "id": "57f93dbab6b49a0f8392adb108108fe5",
+        "file_hash": "ffada4d6e8461f7bbd94090d6ad97830",
+        "meta": {
+            "title": "Notice regarding refund of the caution money for 2025 passed out students",
+            "date": "17-10-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1760686025.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "General",
+            "target_audience": [
+                "Diploma",
+                "UG",
+                "PG",
+                "PhD"
+            ],
+            "summary": "Notice regarding refund of caution money for 2025 graduating students, apply via portal by 10-11-2025.",
+            "entities": {
+                "event_date": "2025-11-10",
+                "semester": null
+            }
+        }
+    },
+    {
+        "id": "059e942730ef296f6f579c71539aaa0d",
+        "file_hash": "40d9db2cd27247f69faeadffcde3805c",
+        "meta": {
+            "title": "Notice: Winter Vacation for Faculty member",
+            "date": "26-09-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1758878379.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "Academic",
+            "target_audience": [
+                "All Faculty"
+            ],
+            "summary": "11-day Winter Vacation declared from 08/12/2025 to 31/12/2025 for faculty.",
+            "entities": {
+                "event_date": "2025-12-08",
+                "semester": "Winter"
+            }
+        }
+    },
+    {
+        "id": "7404e380d14ca88bf851bdd838943b46",
+        "file_hash": "16e07da6f19e9d0e7d49ad48499181b8",
+        "meta": {
+            "title": "AICTE-Ltr-of-Extension-of-Approval-Diploma 2008-2011",
+            "date": "25-09-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1758800477.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "Exam/Academic",
+            "target_audience": [
+                "Central Institute of Technology",
+                "Students"
+            ],
+            "summary": "AICTE extends approval for Diploma Engineering & Technology courses at Central Institute of Technology.",
+            "entities": {
+                "event_date": "2008-07-07",
+                "semester": null
+            }
+        }
+    },
+    {
+        "id": "13bf20ad0c11dbdf440ada59f1e0f753",
+        "file_hash": "7384a107e9f8db85ea49757f0989ff9a",
+        "meta": {
+            "title": "AICTE-Ltr-of-Approval-B.Tech 2009-2011",
+            "date": "25-09-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1758800453.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "Exam/Academic",
+            "target_audience": [
+                "All"
+            ],
+            "summary": "AICTE approval for Central Institute of Technology, Bodoland for engineering courses for two years.",
+            "entities": {
+                "event_date": "2009-05-27",
+                "semester": null
+            }
+        }
+    },
+    {
+        "id": "e492adf0029d5fe5f500ad6f1943fecd",
+        "file_hash": "ef51d56d3ec626c7cac20f8b090125ff",
+        "meta": {
+            "title": "AICTE-APPROVAL-Diploma 2009-2011",
+            "date": "25-09-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1758800422.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "Academic",
+            "target_audience": [
+                "CSE",
+                "Electronics & Comm. Engineering",
+                "Food Processing Technology",
+                "Control & Instrumentation",
+                "Animation & Multimedia Technology",
+                "Construction Technology",
+                "Faculty",
+                "Students"
+            ],
+            "summary": "AICTE revises approval for Central Institute of Technology for 2009-2010 with increased intake.",
+            "entities": {
+                "event_date": "2010-03-05",
+                "semester": null
+            }
+        }
+    },
+    {
+        "id": "aad3cb5bd0c7937c6d8f5dab33e54399",
+        "file_hash": "150502eb763d8afe7cf6a572125aa2f9",
+        "meta": {
+            "title": "AICTE approval letters 2012-2018",
+            "date": "25-09-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1758799966eoa-report-2017-18-2-1pdf.PDF"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "Academic",
+            "target_audience": [
+                "All"
+            ],
+            "summary": "Extension of approval for the academic year 2017-18 for the Central Institute of Technology.",
+            "entities": {
+                "event_date": "2017-03-30",
+                "semester": "2017-18"
+            }
+        }
+    },
+    {
+        "id": "3e817cd0c8bba30bdff494fc7a7ea5e5",
+        "file_hash": "ed88e6c8eeb68aa9a1872ab5a658e663",
+        "meta": {
+            "title": "AICTE approval letters 2017-2020",
+            "date": "24-09-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1758703008letter-of-approval-of-aicte-for-2019-20pdf.PDF"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "Academic",
+            "target_audience": [
+                "All"
+            ],
+            "summary": "AICTE grants approval for technical courses at Central Institute of Technology Kokrajhar for the academic year 2019-20.",
+            "entities": {
+                "event_date": "2019-03-18",
+                "semester": "2019-20"
+            }
+        }
+    },
+    {
+        "id": "4377fedbe5ba4c0943456e43ae4a5db7",
+        "file_hash": "019330f61d8a7ca5faa1e6a0b694763e",
+        "meta": {
+            "title": "A notification regarding the closure of the institute on 23.09.2025",
+            "date": "22-09-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1758553290.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "General",
+            "target_audience": [
+                "All"
+            ],
+            "summary": "Institute closed on 23.09.2025 to honor Late Zubeen Garg; classes rescheduled.",
+            "entities": {
+                "event_date": "2025-09-23",
+                "semester": null
+            }
+        }
+    },
+    {
+        "id": "37c21376d642ae65fd8307937bb018b1",
+        "file_hash": "6878e3827801555358dec3a28188dd3d",
+        "meta": {
+            "title": "AICTE approval letters 2020-2026",
+            "date": "19-09-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1758356350eoa-report-25-26pdf.PDF"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "Exam",
+            "target_audience": [
+                "All"
+            ],
+            "summary": "AICTE extension of approval for Central Institute of Technology Kokrajhar for academic year 2025-26.",
+            "entities": {
+                "event_date": "2025-03-20",
+                "semester": "2025-26"
+            }
+        }
+    },
+    {
+        "id": "2cb7db8a37461dde7942f3545e6d3d73",
+        "file_hash": "7fb4542e77162db02337e106420b723c",
+        "meta": {
+            "title": "Appointment of Nodel Officer for Swachhata Hi seva compain 2025",
+            "date": "19-09-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1758267913.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "General",
+            "target_audience": [
+                "Faculty"
+            ],
+            "summary": "Dr. Rajib Chetia appointed as Nodal Officer for Swachhata Hi Seva Compain 2025 at CIT Kokrajhar.",
+            "entities": {
+                "event_date": "2025-09-19",
+                "semester": null
+            }
+        }
+    },
+    {
+        "id": "e2745e42ff20de8c403acd84743a8bd4",
+        "file_hash": "b3bcf420bd210097a97a37015da331ce",
+        "meta": {
+            "title": "Revised updated Bus Service Timing",
+            "date": "19-09-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1758267769.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "General",
+            "target_audience": [
+                "All"
+            ],
+            "summary": "Central Institute of Technology Kokrajhar updates bus service timings effective from September 23, 2025.",
+            "entities": {
+                "event_date": "2025-09-23",
+                "semester": null
+            }
+        }
+    },
+    {
+        "id": "a6f178615686c54d792b5becfbe3dfdf",
+        "file_hash": "df9c6b161b67e80ec86d12ae2ee29c41",
+        "meta": {
+            "title": "Notification regarding submission of application for promotion",
+            "date": "19-09-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1758259810aicte-degree-pay-qualifications-and-promotionspdf-2019pdf.pdf"
+        },
+        "ai_analysis": [
+            {
+                "is_important": true,
+                "category": "Academic",
+                "target_audience": [
+                    "Faculty",
+                    "All"
+                ],
+                "summary": "AICTE regulations on pay scales, service conditions, and minimum qualifications for technical education staff.",
+                "entities": {
+                    "event_date": null,
+                    "semester": null
+                }
+            }
+        ]
+    },
+    {
+        "id": "1995d12cff0450c8c1aee5c46ce5c2b3",
+        "file_hash": "61253155962f79b4e97daec9aa923f1d",
+        "meta": {
+            "title": "Removal of Debrisand Construction Materials from the CIT KOKRAJHAR Campus.",
+            "date": "13-09-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1757737347.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "General",
+            "target_audience": [
+                "All",
+                "contractors",
+                "agencies"
+            ],
+            "summary": "Notice instructs removal of construction debris from CIT Kokrajhar campus within 7 days.",
+            "entities": {
+                "event_date": null,
+                "semester": null
+            }
+        }
+    },
+    {
+        "id": "49a5fe6548158f6b902689b47a735ffa",
+        "file_hash": "f95713e372747eb3a016c1d7a9f22669",
+        "meta": {
+            "title": "Timetable for the Mid-Term Examination for the session July-Dec,2025",
+            "date": "03-09-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1756903984.pdf"
+        },
+        "ai_analysis": [
+            {
+                "is_important": true,
+                "category": "Exam",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Mid-term examination timetable for July-December 2025, covering various departments and courses.",
+                "entities": {
+                    "event_date": "2025-09-02",
+                    "semester": "July-December 2025"
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Exam",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Mid-term examination timetable for July-December 2025, covering various departments and courses.",
+                "entities": {
+                    "event_date": "2025-09-08",
+                    "semester": "July-December 2025"
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Exam",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Mid-term examination timetable for July-December 2025, covering various departments and courses.",
+                "entities": {
+                    "event_date": "2025-09-09",
+                    "semester": "July-December 2025"
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Exam",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Mid-term examination timetable for July-December 2025, covering various departments and courses.",
+                "entities": {
+                    "event_date": "2025-09-10",
+                    "semester": "July-December 2025"
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Exam",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Mid-term examination timetable for July-December 2025, covering various departments and courses.",
+                "entities": {
+                    "event_date": "2025-09-11",
+                    "semester": "July-December 2025"
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Exam",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Mid-term examination timetable for July-December 2025, covering various departments and courses.",
+                "entities": {
+                    "event_date": "2025-09-12",
+                    "semester": "July-December 2025"
+                }
+            },
+            {
+                "is_important": true,
+                "category": "Exam",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Mid-term examination timetable for July-December 2025, covering various departments and courses.",
+                "entities": {
+                    "event_date": "2025-09-13",
+                    "semester": "July-December 2025"
+                }
+            }
+        ]
+    },
+    {
+        "id": "615b040e496b708b65d71ebc7a5decc9",
+        "file_hash": "e7cf51c32695e381a36ee08121925b4c",
+        "meta": {
+            "title": "Office Order regarding nomination of Nodal Co-Ordinator, GAIN",
+            "date": "01-09-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1756729061.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "Academic",
+            "target_audience": [
+                "Faculty",
+                "All"
+            ],
+            "summary": "Dr. Ganesh Roy nominated as Nodal Co-ordinator for GAIN Programme Phase V.",
+            "entities": {
+                "event_date": "2025-09-01",
+                "semester": "Phase V"
+            }
+        }
+    },
+    {
+        "id": "06562cd21abf7aad282cadefaf29273f",
+        "file_hash": "a00e32eab841f969d21ca6cc867795d7",
+        "meta": {
+            "title": "Office Order regarding appointment of Dean, Students Affairs, CIT Kokrajhar",
+            "date": "01-09-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1756718323.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "General",
+            "target_audience": [
+                "Faculty"
+            ],
+            "summary": "Dr. Avik Mukharjee appointed Dean, Student Affairs at CIT Kokrajhar for three years.",
+            "entities": {
+                "event_date": "2025-09-01",
+                "semester": null
+            }
+        }
+    },
+    {
+        "id": "6a8e983f04534f6a0234b14f1ba7a8c2",
+        "file_hash": "c8f6bc728cb55fbeaeb7fe6fb8dd09e0",
+        "meta": {
+            "title": "Appointment of Director of Central Institute of Technology, Kokrajhar, a Deemed to be University under distinct category under MoE",
+            "date": "23-08-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1755953581.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "Academic",
+            "target_audience": [
+                "Faculty"
+            ],
+            "summary": "Appointment of Director for Central Institute of Technology, Kokrajhar with PhD, teaching and administrative experience.",
+            "entities": {
+                "event_date": "2025-08-21",
+                "semester": null
+            }
+        }
+    },
+    {
+        "id": "5ad12cffd7dd5b9edc36e19056feb7d7",
+        "file_hash": "4f16ac5f4d8d0d13da33c1100d7d524f",
+        "meta": {
+            "title": "Applications are invited for the post of Project Assistant at STIHUB CIT Kokrajhar",
+            "date": "11-08-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1754889211.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "Exam/Academic",
+            "target_audience": [
+                "All"
+            ],
+            "summary": "Central Institute of Technology Kokrajhar is hiring a Project Assistant for a DST-funded project.",
+            "entities": {
+                "event_date": "2025-08-14",
+                "semester": null
+            }
+        }
+    },
+    {
+        "id": "9d1b1474e7ca9fb7752ae41481bcff34",
+        "file_hash": "00bbb14dad373ee6c011c5e875ed8399",
+        "meta": {
+            "title": "Advertisement for Junior Project Fellow for project LogIT sponsored by Ministry of Electronics and Information Technology (MeitY)",
+            "date": "11-08-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1754888997.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "Exam/Academic",
+            "target_audience": [
+                "CSE",
+                "IT",
+                "ECE"
+            ],
+            "summary": "Advertisement for Junior Project Fellow position at CIT Kokrajhar, focusing on Federated Learning and Fog-Computing.",
+            "entities": {
+                "event_date": "2025-08-13",
+                "semester": null
+            }
+        }
+    },
+    {
+        "id": "237460e594c71686fc359213efd57891",
+        "file_hash": "fb39e4111a5f195e7dc8af7d21a4c36a",
+        "meta": {
+            "title": "Applications are invited for Internship in the department of CSE",
+            "date": "11-08-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1754888829.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "Scholarship",
+            "target_audience": [
+                "CSE"
+            ],
+            "summary": "Internship opportunity in IoT security, federated learning, and fog computing at CIT Kokrajhar.",
+            "entities": {
+                "event_date": "2025-08-13",
+                "semester": null
+            }
+        }
+    },
+    {
+        "id": "a37d9edaaff001982a7eb0f9d356ddf6",
+        "file_hash": "0cd7a4162b837c6aafbac45e5dfd34f8",
+        "meta": {
+            "title": "Notice (Result) for the Selected Candidates for recruitment of Non-Teaching Staff on Contract in CITK",
+            "date": "08-08-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1754654652.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "General",
+            "target_audience": [
+                "All"
+            ],
+            "summary": "Central Institute of Technology Kokrajhar announces selected and wait-listed candidates for various non-teaching posts.",
+            "entities": {
+                "event_date": "2025-07-08",
+                "semester": null
+            }
+        }
+    },
+    {
+        "id": "dab25eaa5f55644e8a598e1882d69efc",
+        "file_hash": "72aef3b9e2172e16750832136f2920f4",
+        "meta": {
+            "title": "LIST OF PROVISIONALLY SELECTED CANDIDATES FOR PHD ADMISSION-2025",
+            "date": "31-07-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1754333555.pdf"
+        },
+        "ai_analysis": [
+            {
+                "is_important": true,
+                "category": "Exam/Academic",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "List of provisionally selected candidates for PhD admission 2025-26 by department.",
+                "entities": {
+                    "event_date": "2025-07-31",
+                    "semester": "2025-26"
+                }
+            }
+        ]
+    },
+    {
+        "id": "0c464b084b7ecbbc6a1cc33e9a18d49e",
+        "file_hash": "300f439590107b50224615dcbd140dde",
+        "meta": {
+            "title": "Advertisement for Recruitment of Junior Research Fellow (JRF) Position in the Anusandhan National Research Foundation (ANRF)",
+            "date": "28-07-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1754333533.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "Exam/Academic",
+            "target_audience": [
+                "Instrumentation Engineering",
+                "Electrical and Electronics Engineering",
+                "Electrical Engineering",
+                "Electronics and Communication Engineering",
+                "Computer Science and Engineering",
+                "Mechanical Engineering",
+                "Mechatronics",
+                "All"
+            ],
+            "summary": "Recruitment for Junior Research Fellow (JRF) in ANRF-funded project at CIT Kokrajhar.",
+            "entities": {
+                "event_date": null,
+                "semester": null
+            }
+        }
+    },
+    {
+        "id": "957bdd8a77b28d4591298eaa9bd90cbd",
+        "file_hash": "f6ab054abed15f178f18184da330c764",
+        "meta": {
+            "title": "Schedule and details of Induction Program: UG batches (B. Tech and B. Des 1st Semester) admitted in the 2025-26 academic session",
+            "date": "18-07-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1754333436.pdf"
+        },
+        "ai_analysis": [
+            {
+                "is_important": true,
+                "category": "General",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "Induction program for B. Tech and B. Des 1st Semester, July 21st - August 2nd, 2025.",
+                "entities": {
+                    "event_date": "2025-07-21",
+                    "semester": "1st Semester"
+                }
+            },
+            {
+                "is_important": false,
+                "category": "General",
+                "target_audience": [
+                    "CSE",
+                    "MCD",
+                    "CE",
+                    "FET",
+                    "ECE",
+                    "IE"
+                ],
+                "summary": "Batch-wise sessions including introductory speeches, HOD interactions, and departmental visits.",
+                "entities": {
+                    "event_date": "2025-07-21",
+                    "semester": "1st Semester"
+                }
+            },
+            {
+                "is_important": false,
+                "category": "General",
+                "target_audience": [
+                    "CSE",
+                    "MCD",
+                    "CE",
+                    "FET",
+                    "ECE",
+                    "IE"
+                ],
+                "summary": "Batch-wise sessions with mental health, literary activities, library visits, and workshop.",
+                "entities": {
+                    "event_date": "2025-07-22",
+                    "semester": "1st Semester"
+                }
+            },
+            {
+                "is_important": false,
+                "category": "General",
+                "target_audience": [
+                    "CSE",
+                    "MCD",
+                    "CE",
+                    "FET",
+                    "ECE",
+                    "IE"
+                ],
+                "summary": "Batch-wise sessions featuring NSS, faculty coordinator introductions, and interactions with Dean.",
+                "entities": {
+                    "event_date": "2025-07-23",
+                    "semester": "1st Semester"
+                }
+            },
+            {
+                "is_important": false,
+                "category": "General",
+                "target_audience": [
+                    "CSE",
+                    "MCD",
+                    "CE",
+                    "FET",
+                    "ECE",
+                    "IE"
+                ],
+                "summary": "Batch-wise sessions including physical activities, faculty coordinator introductions, and director's interaction.",
+                "entities": {
+                    "event_date": "2025-07-24",
+                    "semester": "1st Semester"
+                }
+            },
+            {
+                "is_important": false,
+                "category": "General",
+                "target_audience": [
+                    "CSE",
+                    "MCD",
+                    "CE",
+                    "FET",
+                    "ECE",
+                    "IE"
+                ],
+                "summary": "Batch-wise sessions with eminent person speeches, UHV-I, and SC/ST cell awareness.",
+                "entities": {
+                    "event_date": "2025-07-25",
+                    "semester": "1st Semester"
+                }
+            },
+            {
+                "is_important": false,
+                "category": "General",
+                "target_audience": [
+                    "CSE",
+                    "MCD",
+                    "CE",
+                    "FET",
+                    "ECE",
+                    "IE"
+                ],
+                "summary": "Batch-wise sessions on plantation, creative arts, and sports/games.",
+                "entities": {
+                    "event_date": "2025-07-26",
+                    "semester": "1st Semester"
+                }
+            },
+            {
+                "is_important": false,
+                "category": "General",
+                "target_audience": [
+                    "CSE",
+                    "MCD",
+                    "CE",
+                    "FET",
+                    "ECE",
+                    "IE"
+                ],
+                "summary": "Batch-wise sessions of yoga, regular classes, and sports/games.",
+                "entities": {
+                    "event_date": "2025-07-28",
+                    "semester": "1st Semester"
+                }
+            },
+            {
+                "is_important": false,
+                "category": "General",
+                "target_audience": [
+                    "CSE",
+                    "MCD",
+                    "CE",
+                    "FET",
+                    "ECE",
+                    "IE"
+                ],
+                "summary": "Batch-wise sessions of yoga, regular classes, and sports/games.",
+                "entities": {
+                    "event_date": "2025-07-29",
+                    "semester": "1st Semester"
+                }
+            },
+            {
+                "is_important": false,
+                "category": "General",
+                "target_audience": [
+                    "CSE",
+                    "MCD",
+                    "CE",
+                    "FET",
+                    "ECE",
+                    "IE"
+                ],
+                "summary": "Batch-wise sessions of yoga, regular classes, and sports/games.",
+                "entities": {
+                    "event_date": "2025-07-30",
+                    "semester": "1st Semester"
+                }
+            },
+            {
+                "is_important": false,
+                "category": "General",
+                "target_audience": [
+                    "CSE",
+                    "MCD",
+                    "CE",
+                    "FET",
+                    "ECE",
+                    "IE"
+                ],
+                "summary": "Batch-wise sessions of yoga, regular classes, and sports/games.",
+                "entities": {
+                    "event_date": "2025-07-31",
+                    "semester": "1st Semester"
+                }
+            },
+            {
+                "is_important": false,
+                "category": "General",
+                "target_audience": [
+                    "CSE",
+                    "MCD",
+                    "CE",
+                    "FET",
+                    "ECE",
+                    "IE"
+                ],
+                "summary": "Batch-wise sessions of yoga, regular classes, and sports/games.",
+                "entities": {
+                    "event_date": "2025-08-01",
+                    "semester": "1st Semester"
+                }
+            },
+            {
+                "is_important": false,
+                "category": "General",
+                "target_audience": [
+                    "CSE",
+                    "MCD",
+                    "CE",
+                    "FET",
+                    "ECE",
+                    "IE"
+                ],
+                "summary": "Batch-wise sessions of yoga, regular classes, and sports/games.",
+                "entities": {
+                    "event_date": "2025-08-02",
+                    "semester": "1st Semester"
+                }
+            },
+            {
+                "is_important": false,
+                "category": "General",
+                "target_audience": [
+                    "All"
+                ],
+                "summary": "List of induction programs, activities, and their respective coordinators.",
+                "entities": {
+                    "event_date": null,
+                    "semester": "1st Semester"
+                }
+            }
+        ]
+    },
+    {
+        "id": "cbaf208f404e10eb187c8d2063eba976",
+        "file_hash": "dee3ca7ab9b9005f648c192448077d8e",
+        "meta": {
+            "title": "Notice on formation of Anti-Ragging Squad 2025-26 CITK",
+            "date": "18-07-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1754333416.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "Hostel",
+            "target_audience": [
+                "All"
+            ],
+            "summary": "Formation of Anti-Ragging Squad for Academic Session 2025-26 at CIT Kokrajhar.",
+            "entities": {
+                "event_date": "2025-07-17",
+                "semester": "2025-26"
+            }
+        }
+    },
+    {
+        "id": "5e8a4ca576f07296f8cbde39ce676821",
+        "file_hash": "e1dbb6028e4a06473bc7489877409e97",
+        "meta": {
+            "title": "Notice on formation of Anti-Ragging Committee 2025-26 CITK",
+            "date": "18-07-2025",
+            "url": "https://cit.ac.in/uploads/notices/files/1754333404.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "Hostel",
+            "target_audience": [
+                "All"
+            ],
+            "summary": "Anti-Ragging Committee formed for Academic Session 2025-26 as per AICTE guidelines.",
+            "entities": {
+                "event_date": "2025-07-17",
+                "semester": "2025-26"
+            }
+        }
+    },
+    {
+        "id": "c3b07844ab0dd71bca4862c8f1b05d44",
+        "file_hash": "214ec2966f609e454fbb734b190a3e8f",
+        "meta": {
+            "title": "CGPA to Percentage Conversion",
+            "date": "21-05-2024",
+            "url": "https://cit.ac.in/uploads/notices/files/1755492602.pdf"
+        },
+        "ai_analysis": {
+            "is_important": true,
+            "category": "Exam/Academic",
+            "target_audience": [
+                "All"
+            ],
+            "summary": "Central Institute of Technology Kokrajhar's CGPA to percentage conversion formula for batches admitted from 2019-20.",
+            "entities": {
+                "event_date": null,
+                "semester": null
+            }
+        }
+    },
+    {
+        "id": "7d86e4e163c4df51125b9066e1696803",
+        "file_hash": "e762fcabb2e3fbe3d7353bfebcbad1a7",
+        "meta": {
+            "title": "Google form for the students passed out in 2022 and 2023",
+            "date": "12-04-2024",
+            "url": "https://cit.ac.in/rnd/handbook.pdf"
+        },
+        "ai_analysis": [
+            {
+                "is_important": true,
+                "category": "General",
+                "target_audience": [
+                    "Faculty",
+                    "Students",
+                    "Staff"
+                ],
+                "summary": "Guidelines for sponsored research projects, consultancy jobs, and project staff appointments at CIT Kokrajhar.",
+                "entities": {}
+            }
+        ]
+    }
+]

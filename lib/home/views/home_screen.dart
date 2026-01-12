@@ -24,7 +24,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen>
     with TickerProviderStateMixin {
-  bool _isLoading = true;
+  bool _isLoading = false;
   late final bool _isNight;
   late AnimationController _pulseController;
   late AnimationController _floatController;
@@ -45,9 +45,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       duration: const Duration(seconds: 4),
     )..repeat(reverse: true);
 
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) setState(() => _isLoading = false);
-    });
   }
 
   @override
@@ -886,14 +883,17 @@ class _EnhancedBackgroundState extends State<_EnhancedBackground>
       _particles.add(_generateParticle());
     }
 
-    _sensorSubscription = accelerometerEventStream().listen((event) {
-      if (mounted) {
-        setState(() {
-          _parallaxX = -event.x * 1.5;
-          _parallaxY = event.y * 1.5;
-        });
-      }
-    });
+    _sensorSubscription = accelerometerEventStream().listen(
+      (event) {
+        if (mounted) {
+          setState(() {
+            _parallaxX = -event.x * 1.5;
+            _parallaxY = event.y * 1.5;
+          });
+        }
+      },
+      onError: (e) {},
+    );
   }
 
   _Particle _generateParticle() {

@@ -14,7 +14,7 @@
     This is a placeholder for base href that will be replaced by the value of
     the `--base-href` argument provided to `flutter build`.
   -->
-  <base href="$FLUTTER_BASE_HREF">
+  <base href="/">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
@@ -84,13 +84,24 @@
         },
         onEntrypointLoaded: function(engineInitializer) {
           engineInitializer.initializeEngine().then(function(appRunner) {
-            if (loading) {
-              loading.remove();
-            }
             appRunner.runApp();
+            // Remove loader after a short delay to ensure Flutter has painted
+            setTimeout(function() {
+              if (loading) {
+                loading.remove();
+              }
+            }, 200);
           });
         }
       });
+
+      // 🛡️ Safety Timeout: If app doesn't load in 10s, show error
+      setTimeout(function() {
+        var loading = document.querySelector('#loading_indicator');
+        if (loading && document.body.contains(loading)) {
+          loading.innerHTML = '<div style="color:red; text-align:center; padding:20px;"><h3>⚠️ App taking too long</h3><p>Please check your connection or console for errors.</p></div>';
+        }
+      }, 10000);
     });
   </script>
 </body>

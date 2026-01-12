@@ -1,0 +1,4 @@
+requests
+beautifulsoup4
+firebase-admin
+google-generativeai

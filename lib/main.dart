@@ -25,8 +25,10 @@ final appInitializationProvider = StateProvider<bool>((ref) => false);
 
 // Future: Add feature flags, analytics, crashlytics providers
 
-// Track Firebase initialization status for error logging
-bool _firebaseInitialized = false;
+// Track initialization status
+enum AppStatus { loading, success, error }
+
+final ValueNotifier<AppStatus> _appStatus = ValueNotifier(AppStatus.loading);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 🚀 MAIN ENTRY POINT (Production-Grade Error Handling)
@@ -45,15 +47,13 @@ void main() async {
         // 2️⃣ Configure System UI
         await _configureSystemUI();
 
-        // 3️⃣ Initialize Firebase with circuit breaker
-        try {
-          await _initializeFirebaseWithRetry();
-          _firebaseInitialized = true;
-        } catch (e) {
-          // ⚠️ Firebase Fallback: App continues in degraded mode
-          developer.log('Firebase init failed. Running in degraded mode.',
-              error: e);
-        }
+        // 3️⃣ Start Firebase Init (Background - DO NOT AWAIT)
+        _initializeFirebaseWithRetry().then((_) {
+          _appStatus.value = AppStatus.success;
+        }).catchError((e) {
+          developer.log('Firebase init failed', error: e);
+          _appStatus.value = AppStatus.error;
+        });
 
         // 4️⃣ Initialize SharedPreferences
         final prefs = await _initializeSharedPreferences();
@@ -74,7 +74,7 @@ void main() async {
 
           if (!kDebugMode &&
               EnvConfig.enableCrashlytics &&
-              _firebaseInitialized) {
+              _appStatus.value == AppStatus.success) {
             FirebaseCrashlytics.instance.recordFlutterError(details);
           }
         };
@@ -86,7 +86,7 @@ void main() async {
           _logError('Platform Error', error, stack);
           if (!kDebugMode &&
               EnvConfig.enableCrashlytics &&
-              _firebaseInitialized) {
+              _appStatus.value == AppStatus.success) {
             FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
           }
           return true; // Mark as handled
@@ -99,7 +99,29 @@ void main() async {
               appInitializationProvider.overrideWith((ref) => true),
               sharedPreferencesProvider.overrideWithValue(prefs),
             ],
-            child: const MyApp(),
+            // 🛡️ Bootstrap: Show loading or error before mounting MyApp
+            child: ValueListenableBuilder<AppStatus>(
+              valueListenable: _appStatus,
+              builder: (context, status, _) {
+                if (status == AppStatus.loading) {
+                  return const MaterialApp(
+                    debugShowCheckedModeBanner: false,
+                    home: Scaffold(
+                      body: Center(child: CircularProgressIndicator()),
+                    ),
+                  );
+                }
+                if (status == AppStatus.error) {
+                  return const MaterialApp(
+                    debugShowCheckedModeBanner: false,
+                    home: _FatalErrorScreen(
+                        error:
+                            'Connection Failed.\nUnable to connect to servers.'),
+                  );
+                }
+                return const MyApp();
+              },
+            ),
           ),
         );
       } catch (error, stackTrace) {
@@ -129,15 +151,6 @@ class _MyAppState extends ConsumerState<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    // 🛡️ OFFLINE MODE / ERROR SCREEN
-    if (!_firebaseInitialized) {
-      return const MaterialApp(
-        debugShowCheckedModeBanner: false,
-        home: _FatalErrorScreen(
-            error: 'Connection Failed.\nUnable to connect to servers.'),
-      );
-    }
-
     final router = ref.watch(appRouterProvider);
     final settings = ref.watch(settingsControllerProvider);
     final themeMode = settings.themeMode;
@@ -402,7 +415,13 @@ Future<void> _initializeFirebaseWithRetry() async {
 
 Future<SharedPreferences> _initializeSharedPreferences() async {
   try {
-    final prefs = await SharedPreferences.getInstance();
+    // 🛡️ Prevent app from hanging if storage is slow
+    final prefs = await SharedPreferences.getInstance().timeout(
+      const Duration(seconds: 5),
+      onTimeout: () {
+        throw TimeoutException('SharedPreferences init timeout');
+      },
+    );
     _logInfo('SharedPreferences initialized');
     return prefs;
   } catch (e, stack) {
@@ -439,7 +458,8 @@ void _logError(String message, Object error, StackTrace? stack) {
       stackTrace: stack,
       name: 'CITK_ERROR',
     );
-  } else if (EnvConfig.enableCrashlytics && _firebaseInitialized) {
+  } else if (EnvConfig.enableCrashlytics &&
+      _appStatus.value == AppStatus.success) {
     FirebaseCrashlytics.instance.recordError(error, stack, reason: message);
   }
 }

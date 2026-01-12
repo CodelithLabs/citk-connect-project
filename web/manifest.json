@@ -1,6 +1,6 @@
 {
-    "name": "myapp",
-    "short_name": "myapp",
+    "name": "CITK-Connect",
+    "short_name": "CITK-Connect",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

@@ -18,24 +18,24 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pub-
 
-      # 1. ROOT FIX: Install Flutter on the server
+      # 2. Install Flutter on the server
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
 
-      # 2. ROOT FIX: Build the actual app
+      # 3. Install Dependencies
       - run: flutter pub get
 
-      # 3. Build Verification
+      # 4. Build Verification
       - run: flutter analyze
       - run: flutter test
 
-      # 4. Inject Secrets & Build
+      # 5. Inject Secrets & Build
       - run: sed -i 's/YOUR_GOOGLE_MAPS_API_KEY/${{ secrets.GOOGLE_MAPS_API_KEY }}/g' web/index.html
       - run: flutter build web --release
 
-      # 3. Deploy the built files
+      # 6. Deploy to Firebase
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
