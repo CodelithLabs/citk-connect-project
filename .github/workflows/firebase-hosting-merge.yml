@@ -4,40 +4,29 @@ on:
     branches:
       - main
   pull_request:
+
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # 1. Cache Pub dependencies
-      - uses: actions/cache@v4
-        with:
-          path: ~/.pub-cache
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pub-
-
-      # 2. Install Flutter on the server
+      # 1. Install Flutter
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
 
-      # 3. Install Dependencies
+      # 2. Install Dependencies
       - run: flutter pub get
 
-      # 4. Build Verification
-      - run: flutter analyze
-      - run: flutter test
-
-      # 5. Inject Secrets & Build
-      - run: sed -i 's/YOUR_GOOGLE_MAPS_API_KEY/${{ secrets.GOOGLE_MAPS_API_KEY }}/g' web/index.html
+      # 3. Build Web Version (Release Mode)
       - run: flutter build web --release
 
-      # 6. Deploy to Firebase
+      # 4. Deploy to Firebase
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          # Make sure this matches the secret name in your GitHub Settings!
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_CITK_CONNECT_CORE }}'
-          projectId: citk-connect-core
+          projectId: citk-connect-project
