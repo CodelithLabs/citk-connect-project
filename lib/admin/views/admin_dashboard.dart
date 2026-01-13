@@ -242,7 +242,7 @@ class _TestAiDialogState extends ConsumerState<_TestAiDialog> {
     if (mounted) {
       setState(() {
         _isLoading = false;
-        _result = response;
+        _result = response.text;
       });
     }
   }

@@ -14,6 +14,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:citk_connect/home/views/smart_attendance_card.dart';
 import 'package:citk_connect/fees/views/fees_card.dart';
+import 'package:home_widget/home_widget.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -45,6 +46,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       duration: const Duration(seconds: 4),
     )..repeat(reverse: true);
 
+    _updateHomeWidget();
   }
 
   @override
@@ -52,6 +54,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _pulseController.dispose();
     _floatController.dispose();
     super.dispose();
+  }
+
+  Future<void> _updateHomeWidget() async {
+    try {
+      await HomeWidget.saveWidgetData('user', 'Student');
+      await HomeWidget.updateWidget(
+        name: 'AttendanceWidgetProvider',
+        iOSName: 'AttendanceWidget',
+      );
+    } catch (e) {
+      debugPrint("Widget update failed: $e");
+    }
   }
 
   @override

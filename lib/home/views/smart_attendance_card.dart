@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../attendance/providers/attendance_provider.dart';
 
-class SmartAttendanceCard extends StatelessWidget {
+class SmartAttendanceCard extends ConsumerWidget {
   const SmartAttendanceCard({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final attendanceAsync = ref.watch(attendanceProvider);
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -32,14 +36,22 @@ class SmartAttendanceCard extends StatelessWidget {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                const CircularProgressIndicator(
-                  value: 0.78, // 78% Attendance
+                CircularProgressIndicator(
+                  value: attendanceAsync.when(
+                    data: (data) => data.percentage / 100,
+                    loading: () => 0,
+                    error: (_, __) => 0,
+                  ),
                   strokeWidth: 8,
                   backgroundColor: Colors.white24,
                   color: Colors.white,
                 ),
                 Text(
-                  "78%",
+                  attendanceAsync.when(
+                    data: (data) => "${data.percentage.toStringAsFixed(0)}%",
+                    loading: () => "--",
+                    error: (_, __) => "ERR",
+                  ),
                   style: GoogleFonts.inter(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -58,7 +70,11 @@ class SmartAttendanceCard extends StatelessWidget {
                   style: GoogleFonts.inter(color: Colors.white70, fontSize: 12),
                 ),
                 Text(
-                  "You are Safe! 🛡️",
+                  attendanceAsync.when(
+                    data: (data) => "You are ${data.status}! 🛡️",
+                    loading: () => "Loading...",
+                    error: (_, __) => "Unavailable",
+                  ),
                   style: GoogleFonts.inter(
                     color: Colors.white,
                     fontSize: 18,
@@ -67,7 +83,7 @@ class SmartAttendanceCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  "2 more classes to reach 80%",
+                  "Keep it up!",
                   style: GoogleFonts.inter(color: Colors.white70, fontSize: 12),
                 ),
               ],

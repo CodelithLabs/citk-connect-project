@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:citk_connect/admin/views/post_update_screen.dart';
 import 'package:citk_connect/ai/views/chat_screen.dart';
+import 'package:citk_connect/app/routing/navigator_key.dart';
 import 'package:citk_connect/app/view/scaffold_with_nav_bar.dart';
 import 'package:citk_connect/auth/services/auth_service.dart';
 import 'package:citk_connect/auth/services/onboarding_service.dart';
@@ -22,13 +23,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'role_dispatcher.dart';
+import '../../home/views/home_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateChangesProvider);
   final onboardingSeen = ref.watch(onboardingServiceProvider);
 
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/splash',
     refreshListenable: GoRouterRefreshStream(
       FirebaseAuth.instance.authStateChanges(),
@@ -121,9 +123,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/',
                 name: 'home',
-                // 🛡️ RoleDispatcher decides which Dashboard to show
                 pageBuilder: (context, state) => _buildPageWithTransition(
-                    context, state, const RoleDispatcher()),
+                    context, state, const HomeScreen()),
               ),
             ],
           ),

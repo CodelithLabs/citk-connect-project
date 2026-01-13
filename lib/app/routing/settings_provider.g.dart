@@ -6,7 +6,7 @@ part of 'settings_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$sharedPreferencesHash() => r'75e745127707e465d3f55ce89ddcc932bd72bc2d';
+String _$sharedPreferencesHash() => r'6bbc55d4dc38d5979ff916112845bcc4a4a3a1ea';
 
 /// See also [sharedPreferences].
 @ProviderFor(sharedPreferences)
@@ -24,7 +24,7 @@ final sharedPreferencesProvider = Provider<SharedPreferences>.internal(
 // ignore: unused_element
 typedef SharedPreferencesRef = ProviderRef<SharedPreferences>;
 String _$settingsRepositoryHash() =>
-    r'79601b5d4fbb8adadc6f46eb3043afc7145a11fd';
+    r'ec64bf387a4733e75eb4170caae88fadc2f45aee';
 
 /// See also [settingsRepository].
 @ProviderFor(settingsRepository)

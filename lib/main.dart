@@ -7,14 +7,23 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:home_widget/home_widget.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:workmanager/workmanager.dart';
+import 'package:app_settings/app_settings.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import 'package:citk_connect/firebase_options.dart';
 import 'package:citk_connect/app/routing/app_router.dart';
+import 'package:citk_connect/app/routing/navigator_key.dart';
 import 'package:citk_connect/app/routing/settings_provider.dart';
 import 'package:citk_connect/app/config/env_config.dart';
 import 'package:citk_connect/auth/services/onboarding_service.dart';
+import 'package:citk_connect/app/config/feature_flags.dart';
+import 'package:citk_connect/app/utils/firestore_seeder.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 🔧 GLOBAL PROVIDERS
@@ -31,6 +40,69 @@ enum AppStatus { loading, success, error }
 final ValueNotifier<AppStatus> _appStatus = ValueNotifier(AppStatus.loading);
 
 // ═══════════════════════════════════════════════════════════════════════════
+// 🕒 WORKMANAGER CONFIG
+// ═══════════════════════════════════════════════════════════════════════════
+const String updateWidgetTask = "updateWidgetTask";
+
+@pragma('vm:entry-point')
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    if (task == updateWidgetTask) {
+      // TODO: Fetch actual data from API/Firebase here
+      await updateAttendanceWidget("95%");
+    }
+    return Future.value(true);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ☁️ FIREBASE MESSAGING BACKGROUND HANDLER
+// ═══════════════════════════════════════════════════════════════════════════
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  if (message.data.containsKey('attendance')) {
+    await updateAttendanceWidget(message.data['attendance']);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 📱 HOME WIDGET BACKGROUND CALLBACK
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Helper to update the widget from anywhere (Foreground or Background Service)
+@pragma('vm:entry-point')
+Future<void> updateAttendanceWidget(String value) async {
+  try {
+    // 1. Save data to SharedPreferences (accessible by Native Android code)
+    await HomeWidget.saveWidgetData('attendance', value);
+
+    // 2. Trigger the native update
+    await HomeWidget.updateWidget(
+      name: 'AttendanceWidgetProvider',
+      iOSName: 'AttendanceWidget',
+    );
+    developer.log('Widget updated to: $value');
+  } catch (e) {
+    developer.log('Failed to update widget', error: e);
+  }
+}
+
+@pragma('vm:entry-point')
+Future<void> backgroundCallback(Uri? uri) async {
+  // Check if triggered by the refresh button
+  if (uri?.host == 'refresh') {
+    await updateAttendanceWidget('Loading...');
+
+    // Simulate network fetch (Replace with actual API call)
+    await Future.delayed(const Duration(seconds: 1));
+
+    await updateAttendanceWidget('92%');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // 🚀 MAIN ENTRY POINT (Production-Grade Error Handling)
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -38,101 +110,124 @@ void main() async {
   // ─────────────────────────────────────────────────────────────────────────
   // 🛡️ CRITICAL: Global Error Handling
   // ─────────────────────────────────────────────────────────────────────────
-  await runZonedGuarded(
-    () async {
-      try {
-        // 1️⃣ Initialize Flutter bindings
-        WidgetsFlutterBinding.ensureInitialized();
+  // 1️⃣ Initialize Flutter bindings (Root Zone)
+  WidgetsFlutterBinding.ensureInitialized();
 
-        // 2️⃣ Configure System UI
-        await _configureSystemUI();
+  // 2️⃣ Configure System UI
+  await _configureSystemUI();
 
-        // 3️⃣ Start Firebase Init (Background - DO NOT AWAIT)
-        _initializeFirebaseWithRetry().then((_) {
-          _appStatus.value = AppStatus.success;
-        }).catchError((e) {
-          developer.log('Firebase init failed', error: e);
-          _appStatus.value = AppStatus.error;
-        });
+  // 3️⃣ Initialize Hive (Fix for HiveError)
+  await Hive.initFlutter();
 
-        // 4️⃣ Initialize SharedPreferences
-        final prefs = await _initializeSharedPreferences();
-
-        // 5️⃣ Seed Data (Debug Only)
-        if (kDebugMode) {
-          // await FirestoreSeeder.seedNotices(); // Uncomment to seed notices
-        }
-
-        // 5️⃣ Load onboarding state
-
-        // ─────────────────────────────────────────────────────────────────────────
-        // 🐛 FLUTTER FRAMEWORK ERROR HANDLER
-        // ─────────────────────────────────────────────────────────────────────────
-        FlutterError.onError = (FlutterErrorDetails details) {
-          FlutterError.presentError(details);
-          _logError('Flutter Error', details.exception, details.stack);
-
-          if (!kDebugMode &&
-              EnvConfig.enableCrashlytics &&
-              _appStatus.value == AppStatus.success) {
-            FirebaseCrashlytics.instance.recordFlutterError(details);
-          }
-        };
-
-        // ─────────────────────────────────────────────────────────────────────────
-        // 🕸️ PLATFORM DISPATCHER ERROR HANDLER
-        // ─────────────────────────────────────────────────────────────────────────
-        PlatformDispatcher.instance.onError = (error, stack) {
-          _logError('Platform Error', error, stack);
-          if (!kDebugMode &&
-              EnvConfig.enableCrashlytics &&
-              _appStatus.value == AppStatus.success) {
-            FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-          }
-          return true; // Mark as handled
-        };
-
-        // 6️⃣ Run app with dependency injection
-        runApp(
-          ProviderScope(
-            overrides: [
-              appInitializationProvider.overrideWith((ref) => true),
-              sharedPreferencesProvider.overrideWithValue(prefs),
-            ],
-            // 🛡️ Bootstrap: Show loading or error before mounting MyApp
-            child: ValueListenableBuilder<AppStatus>(
-              valueListenable: _appStatus,
-              builder: (context, status, _) {
-                if (status == AppStatus.loading) {
-                  return const MaterialApp(
-                    debugShowCheckedModeBanner: false,
-                    home: Scaffold(
-                      body: Center(child: CircularProgressIndicator()),
-                    ),
-                  );
-                }
-                if (status == AppStatus.error) {
-                  return const MaterialApp(
-                    debugShowCheckedModeBanner: false,
-                    home: _FatalErrorScreen(
-                        error:
-                            'Connection Failed.\nUnable to connect to servers.'),
-                  );
-                }
-                return const MyApp();
-              },
-            ),
-          ),
-        );
-      } catch (error, stackTrace) {
-        _handleFatalError(error, stackTrace);
-      }
-    },
-    (error, stackTrace) {
-      // Catches async errors that escape try-catch
-      _handleFatalError(error, stackTrace);
-    },
+  // 4️⃣ Initialize WorkManager
+  Workmanager().initialize(
+    callbackDispatcher,
+    isInDebugMode: kDebugMode,
   );
+
+  // Register Periodic Task (Every 15 minutes)
+  Workmanager().registerPeriodicTask(
+    "com.citk.connect.widget.update",
+    updateWidgetTask,
+    frequency: const Duration(minutes: 15),
+    constraints: Constraints(networkType: NetworkType.connected),
+  );
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 🐛 FLUTTER FRAMEWORK ERROR HANDLER
+  // ─────────────────────────────────────────────────────────────────────────
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    _logError('Flutter Error', details.exception, details.stack);
+
+    if (!kDebugMode &&
+        EnvConfig.enableCrashlytics &&
+        _appStatus.value == AppStatus.success) {
+      FirebaseCrashlytics.instance.recordFlutterError(details);
+    }
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 🕸️ PLATFORM DISPATCHER ERROR HANDLER
+  // ─────────────────────────────────────────────────────────────────────────
+  PlatformDispatcher.instance.onError = (error, stack) {
+    _logError('Platform Error', error, stack);
+    if (!kDebugMode &&
+        EnvConfig.enableCrashlytics &&
+        _appStatus.value == AppStatus.success) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    }
+    return true; // Mark as handled
+  };
+
+  try {
+    // 4️⃣ Start Firebase Init (Background - DO NOT AWAIT)
+    _initializeFirebaseWithRetry().then((_) async {
+      _appStatus.value = AppStatus.success;
+
+      // ☁️ Setup Firebase Messaging
+      FirebaseMessaging.onBackgroundMessage(
+          _firebaseMessagingBackgroundHandler);
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        if (message.data.containsKey('attendance')) {
+          updateAttendanceWidget(message.data['attendance']);
+        }
+      });
+
+      // Initialize Home Widget
+      try {
+        HomeWidget.setAppGroupId('group.citk.connect.widget');
+        HomeWidget.registerInteractivityCallback(backgroundCallback);
+      } catch (e) {
+        developer.log('HomeWidget init failed', error: e);
+      }
+
+      // 6️⃣ Seed Data (Debug Only) - Moved here to ensure Firebase is initialized
+      if (kDebugMode) {
+        await FirestoreSeeder.seedNotices();
+      }
+    }).catchError((e) {
+      developer.log('Firebase init failed', error: e);
+      _appStatus.value = AppStatus.error;
+    });
+
+    // 5️⃣ Initialize SharedPreferences
+    final prefs = await _initializeSharedPreferences();
+
+    // 7️⃣ Run app with dependency injection
+    runApp(
+      ProviderScope(
+        overrides: [
+          appInitializationProvider.overrideWith((ref) => true),
+          sharedPreferencesProvider.overrideWithValue(prefs),
+        ],
+        // 🛡️ Bootstrap: Show loading or error before mounting MyApp
+        child: ValueListenableBuilder<AppStatus>(
+          valueListenable: _appStatus,
+          builder: (context, status, _) {
+            if (status == AppStatus.loading) {
+              return const MaterialApp(
+                debugShowCheckedModeBanner: false,
+                home: Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                ),
+              );
+            }
+            if (status == AppStatus.error) {
+              return const MaterialApp(
+                debugShowCheckedModeBanner: false,
+                home: _FatalErrorScreen(
+                    error: 'Connection Failed.\nUnable to connect to servers.'),
+              );
+            }
+            return const MyApp();
+          },
+        ),
+      ),
+    );
+  } catch (error, stackTrace) {
+    _handleFatalError(error, stackTrace);
+  }
 }
 
 class MyApp extends ConsumerStatefulWidget {
@@ -141,12 +236,54 @@ class MyApp extends ConsumerStatefulWidget {
   ConsumerState<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends ConsumerState<MyApp> {
+class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    // 1. Register lifecycle observer to detect when user returns
+    WidgetsBinding.instance.addObserver(this);
     // Initialize Onboarding Service
     ref.read(onboardingServiceProvider.notifier).init();
+
+    // Check permissions on app startup
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkNotificationPermission());
+  }
+
+  @override
+  void dispose() {
+    // 2. Remove observer to prevent memory leaks
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // 3. Detect when app resumes (user returns from Settings)
+    if (state == AppLifecycleState.resumed) {
+      _checkNotificationPermission();
+    }
+  }
+
+  /// Re-checks permission status when user returns to the app
+  Future<void> _checkNotificationPermission() async {
+    final settings = await FirebaseMessaging.instance.getNotificationSettings();
+    final prefs = ref.read(sharedPreferencesProvider);
+    
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      _logInfo('User granted notification permissions manually.');
+      // Optional: Trigger a widget update now that we have permission
+      updateAttendanceWidget("Syncing..."); 
+    } else if (settings.authorizationStatus == AuthorizationStatus.denied) {
+      // Check "Don't show again" preference
+      if (prefs.getBool(kPrefHidePermissionDialog) ?? false) return;
+
+      // 🛑 Automatically show dialog if permanently denied
+      if (rootNavigatorKey.currentContext != null) {
+        PermissionDeniedDialog.show(rootNavigatorKey.currentContext!, prefs);
+      }
+    } else {
+      _logInfo('Notification permission is still ${settings.authorizationStatus}.');
+    }
   }
 
   @override
@@ -345,6 +482,129 @@ class _MyAppState extends ConsumerState<MyApp> {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// 🛑 CUSTOM PERMISSION DIALOG (Gen Z Style)
+// ═══════════════════════════════════════════════════════════════════════════
+
+class PermissionDeniedDialog extends ConsumerWidget {
+  static bool _isShown = false;
+  final SharedPreferences prefs;
+
+  const PermissionDeniedDialog({super.key, required this.prefs});
+
+  /// Helper method to show this dialog easily
+  static Future<void> show(BuildContext context, SharedPreferences prefs) async {
+    if (_isShown) return;
+    _isShown = true;
+    await showDialog(
+      context: context,
+      builder: (context) => PermissionDeniedDialog(prefs: prefs),
+    ).then((_) => _isShown = false);
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // 🚩 Check Feature Flag
+    final isGenZ = ref.watch(featureFlagsProvider).isGenZDialogEnabled;
+
+    // 🔽 Fallback: Standard Material Dialog
+    if (!isGenZ) {
+      return AlertDialog(
+        title: const Text("Permission Required"),
+        content: const Text(
+            "To see your attendance on the home screen widget, we need notification permissions."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Maybe Later"),
+          ),
+          TextButton(
+            onPressed: () async {
+              await prefs.setBool(kPrefHidePermissionDialog, true);
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: const Text("Don't ask again"),
+          ),
+          TextButton(
+            onPressed: () => AppSettings.openAppSettings(type: AppSettingsType.notification),
+            child: const Text("Open Settings"),
+          ),
+        ],
+      );
+    }
+
+    // ✨ Gen Z Style (Glassmorphism)
+    return Dialog(
+      backgroundColor: Colors.transparent, // Glassmorphism base
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: const Color(0xFF181B21).withValues(alpha: 0.95),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFF4285F4).withValues(alpha: 0.3)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.5),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.notifications_off_outlined, color: Color(0xFFCF6679), size: 48),
+            const SizedBox(height: 16),
+            const Text(
+              "Don't Miss Out",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Inter',
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              "To see your attendance on the home screen widget, we need notification permissions.",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white70, fontSize: 14),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                // 🚀 Direct link to Notification Settings
+                AppSettings.openAppSettings(type: AppSettingsType.notification);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4285F4),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text("Open Settings"),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Maybe Later", style: TextStyle(color: Colors.white38)),
+            ),
+            TextButton(
+              onPressed: () async {
+                await prefs.setBool(kPrefHidePermissionDialog, true);
+                if (context.mounted) Navigator.pop(context);
+              },
+              child: const Text("Don't ask again", style: TextStyle(color: Colors.white24, fontSize: 12)),
+            ),
+          ],
+        ),
+      ),
+    )
+    .animate()
+    .fade(duration: 400.ms)
+    .scale(duration: 400.ms, curve: Curves.easeOutBack);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // 🔧 INITIALIZATION FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -389,6 +649,25 @@ Future<void> _initializeFirebaseWithRetry() async {
           throw TimeoutException('Firebase initialization timeout');
         },
       );
+
+      // Request Notification Permissions (Required for Android 13+)
+      final settings = await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      if (settings.authorizationStatus == AuthorizationStatus.denied) {
+        _logInfo(
+            '❌ Notification permission denied. Falling back to periodic WorkManager updates.');
+        // Note: Real-time updates via FCM will not work, but WorkManager will still update every 15m.
+      } else {
+        _logInfo(
+            'Notification permission granted: ${settings.authorizationStatus}');
+      }
+
+      // Initialize Feature Flags (Remote Config)
+      await FeatureFlags().initialize();
 
       _logInfo('Firebase initialized successfully');
       return;

@@ -23,9 +23,9 @@ class _AiFeedbackButtonState extends ConsumerState<AiFeedbackButton> {
   void _submit(bool value) {
     setState(() => _isHelpful = value);
     ref.read(geminiServiceProvider).submitFeedback(
-          widget.query,
-          widget.response,
-          value,
+          query: widget.query,
+          response: widget.response,
+          isHelpful: value,
         );
 
     ScaffoldMessenger.of(context).showSnackBar(

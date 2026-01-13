@@ -44,6 +44,14 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Google Cloud Service Account Keys
+*service-account.json
+!google-services.json
+!firebase_app_id_file.json
+backend_automation_service_account.json
+**/*service-account.json
+
+
 # Secret config files
 /lib/auth/services/google_signin_config.dart
 

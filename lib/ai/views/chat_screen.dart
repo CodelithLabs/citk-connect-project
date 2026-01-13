@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'dart:ui' as ui;
 import 'dart:convert';
 import 'package:flutter/services.dart';
@@ -7,6 +8,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:citk_connect/ai/services/gemini_service.dart';
+import 'package:citk_connect/ai/services/prompt_builder.dart';
+import 'package:citk_connect/ai/providers/context_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -27,6 +31,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
   late AnimationController _fabController;
   late AnimationController _welcomeController;
+  StreamSubscription? _streamSubscription;
 
   final List<Map<String, String>> _messages = [
     {
@@ -133,6 +138,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
   @override
   void dispose() {
+    _streamSubscription?.cancel();
     _flutterTts.stop();
     _controller.dispose();
     _scrollController.dispose();
@@ -142,7 +148,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     super.dispose();
   }
 
-  void _sendMessage([String? customText]) async {
+  Future<void> _sendMessage([String? customText]) async {
     final text = customText ?? _controller.text.trim();
     if (text.isEmpty) return;
 
@@ -156,35 +162,96 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     if (customText == null) _controller.clear();
     _scrollToBottom();
 
+    // 1. Build Academic Context
+    String? systemInstruction;
     try {
-      final response = await ref.read(geminiServiceProvider).sendMessage(text);
-      if (mounted) {
-        if (!_isTyping) return;
-        setState(() {
-          _isTyping = false;
-          _messages.add({'role': 'ai', 'text': response});
-        });
-        _saveHistory();
-        _scrollToBottom();
-        HapticFeedback.mediumImpact();
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final repo = ref.read(academicContextRepositoryProvider);
+        final context = await repo.buildAcademicContext(user.uid);
+        systemInstruction = PromptBuilder.buildSystemPrompt(context);
       }
     } catch (e) {
-      if (mounted) {
-        if (!_isTyping) return;
-        setState(() {
-          _isTyping = false;
-          _messages.add({
-            'role': 'ai',
-            'text': "Oops! My brain is offline. Check your internet connection."
+      debugPrint("⚠️ Context build failed: $e");
+      // Continue without context
+    }
+
+    final service = ref.read(geminiServiceProvider);
+    final stream = await service.streamMessage(text, systemInstruction: systemInstruction);
+
+    if (stream != null) {
+      // STREAMING MODE
+      setState(() {
+        _messages.add({'role': 'ai', 'text': ''});
+      });
+
+      _streamSubscription?.cancel();
+      _streamSubscription = stream.listen(
+        (chunk) {
+          if (mounted) {
+            setState(() {
+              final lastMsg = _messages.last;
+              if (lastMsg['role'] == 'ai') {
+                _messages.last['text'] = (lastMsg['text'] ?? '') + chunk;
+              }
+            });
+            _scrollToBottom(isStreaming: true);
+          }
+        },
+        onDone: () {
+          if (mounted) {
+            setState(() => _isTyping = false);
+            _saveHistory();
+            HapticFeedback.mediumImpact();
+          }
+        },
+        onError: (e) {
+          if (mounted) {
+            setState(() {
+              _isTyping = false;
+              _messages.last['text'] =
+                  "Oops! Connection interrupted. Please try again.";
+            });
+          }
+        },
+      );
+    } else {
+      // FALLBACK: UNARY MODE
+      try {
+        final response = await service.sendMessage(text, systemInstruction: systemInstruction);
+        if (mounted) {
+          if (!_isTyping) return;
+          setState(() {
+            _isTyping = false;
+            _messages.add({'role': 'ai', 'text': response.text});
           });
-        });
-        _saveHistory();
-        _scrollToBottom();
+          _saveHistory();
+          _scrollToBottom();
+          HapticFeedback.mediumImpact();
+        }
+      } catch (e, stackTrace) {
+        // 1. PRINT THE REAL ERROR
+        debugPrint('🔴 CRITICAL GEMINI ERROR: $e');
+        debugPrint('🔴 STACK TRACE: $stackTrace');
+
+        if (mounted) {
+          if (!_isTyping) return;
+          setState(() {
+            _isTyping = false;
+            // 2. SHOW THE ERROR ON UI (Temporary for Debugging)
+            _messages.add({
+              'role': 'ai',
+              'text': "DEBUG ERROR: $e"
+            });
+          });
+          _saveHistory();
+          _scrollToBottom();
+        }
       }
     }
   }
 
-  void _regenerateLastResponse() async {
+  Future<void> _regenerateLastResponse() async {
     String? lastUserText;
     for (int i = _messages.length - 1; i >= 0; i--) {
       if (_messages[i]['role'] == 'user') {
@@ -203,31 +270,75 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     });
     _saveHistory();
 
+    // 1. Build Academic Context (Again)
+    String? systemInstruction;
     try {
-      final response =
-          await ref.read(geminiServiceProvider).sendMessage(lastUserText);
-      if (mounted) {
-        if (!_isTyping) return;
-        setState(() {
-          _isTyping = false;
-          _messages.add({'role': 'ai', 'text': response});
-        });
-        _saveHistory();
-        _scrollToBottom();
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final repo = ref.read(academicContextRepositoryProvider);
+        final context = await repo.buildAcademicContext(user.uid);
+        systemInstruction = PromptBuilder.buildSystemPrompt(context);
       }
     } catch (e) {
-      if (mounted) setState(() => _isTyping = false);
+      debugPrint("⚠️ Context build failed: $e");
+    }
+
+    // Reuse the logic from _sendMessage but without adding the user message again
+    final service = ref.read(geminiServiceProvider);
+    final stream = await service.streamMessage(lastUserText, systemInstruction: systemInstruction);
+
+    if (stream != null) {
+      setState(() => _messages.add({'role': 'ai', 'text': ''}));
+      _streamSubscription?.cancel();
+      _streamSubscription = stream.listen(
+        (chunk) {
+          if (mounted) {
+            setState(() {
+              if (_messages.last['role'] == 'ai') {
+                _messages.last['text'] = (_messages.last['text'] ?? '') + chunk;
+              }
+            });
+            _scrollToBottom(isStreaming: true);
+          }
+        },
+        onDone: () {
+          if (mounted) {
+            setState(() => _isTyping = false);
+            _saveHistory();
+          }
+        },
+      );
+    } else {
+      try {
+        final response = await service.sendMessage(lastUserText, systemInstruction: systemInstruction);
+        if (mounted) {
+          setState(() {
+            _isTyping = false;
+            _messages.add({'role': 'ai', 'text': response.text});
+          });
+          _saveHistory();
+          _scrollToBottom();
+        }
+      } catch (e) {
+        if (mounted) setState(() => _isTyping = false);
+      }
     }
   }
 
-  void _scrollToBottom() {
+  void _scrollToBottom({bool isStreaming = false}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeOutCubic,
-        );
+        final maxScroll = _scrollController.position.maxScrollExtent;
+        final currentScroll = _scrollController.offset;
+
+        // Smart scroll: Only auto-scroll if we are near the bottom or if it's a new message
+        if (!isStreaming || (maxScroll - currentScroll <= 100)) {
+          _scrollController.animateTo(
+            maxScroll,
+            duration: Duration(milliseconds: isStreaming ? 50 : 300),
+            curve: Curves.easeOut,
+          );
+        }
       }
     });
   }
@@ -236,14 +347,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final aiStatus = ref.watch(aiStatusProvider);
-    final isError = aiStatus.toLowerCase().contains('offline') ||
-        aiStatus.toLowerCase().contains('failed');
+    final isError = aiStatus == AIStatus.offline ||
+        aiStatus == AIStatus.error ||
+        aiStatus == AIStatus.quota_exceeded;
     final statusColor = isError ? Colors.redAccent : const Color(0xFF6C63FF);
 
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0F),
       extendBodyBehindAppBar: true,
-      appBar: _buildAppBar(statusColor, aiStatus, isError),
+      appBar: _buildAppBar(statusColor, aiStatus.name.toUpperCase(), isError),
       body: Stack(
         children: [
           // Animated gradient background
@@ -252,8 +364,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
           // Main content
           Column(
             children: [
-              if (aiStatus.isNotEmpty)
-                _buildStatusBanner(statusColor, aiStatus, isError),
+              if (aiStatus != AIStatus.uninitialized)
+                _buildStatusBanner(statusColor, aiStatus.name.toUpperCase(), isError),
               Expanded(child: _buildChatList(theme)),
               if (!_isTyping) _buildSuggestedChips(),
               if (_isTyping) _buildStopGeneratingButton(),
@@ -453,7 +565,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         final isUser = msg['role'] == 'user';
         final isLast = index == _messages.length - 1;
         final showRegen = !isUser && isLast && !_isTyping && index > 0;
-        final isFirst = index == 0;
 
         return Align(
           alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
@@ -463,95 +574,122 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             children: [
               GestureDetector(
                 onLongPress: () => _showMessageOptions(msg, isUser),
-                child: Container(
-                  margin: EdgeInsets.only(bottom: showRegen ? 4 : 16),
-                  padding: const EdgeInsets.all(16),
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 0.8,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: isUser
-                        ? LinearGradient(
-                            colors: [Color(0xFF6C63FF), Color(0xFF5A52D5)],
-                          )
-                        : LinearGradient(
-                            colors: [
-                              Colors.white.withValues(alpha: 0.08),
-                              Colors.white.withValues(alpha: 0.04),
-                            ],
-                          ),
-                    borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(20),
-                      topRight: const Radius.circular(20),
-                      bottomLeft: isUser
-                          ? const Radius.circular(20)
-                          : const Radius.circular(4),
-                      bottomRight: isUser
-                          ? const Radius.circular(4)
-                          : const Radius.circular(20),
-                    ),
-                    border: Border.all(
-                      color: isUser
-                          ? Colors.transparent
-                          : Colors.white.withValues(alpha: 0.1),
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: isUser
-                            ? Color(0xFF6C63FF).withValues(alpha: 0.3)
-                            : Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 12,
-                        offset: Offset(0, 4),
+                child: Row(
+                  mainAxisAlignment:
+                      isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (!isUser) ...[
+                      CircleAvatar(
+                        radius: 16,
+                        backgroundColor: Color(0xFF6C63FF).withValues(alpha: 0.2),
+                        child: FaIcon(FontAwesomeIcons.robot,
+                            size: 14, color: Color(0xFF6C63FF)),
                       ),
+                      const SizedBox(width: 8),
                     ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (!isUser && isFirst)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color:
-                                      Color(0xFF6C63FF).withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(6),
+                    Flexible(
+                      child: Container(
+                        margin: EdgeInsets.only(bottom: showRegen ? 4 : 16),
+                        padding: const EdgeInsets.all(16),
+                        constraints: BoxConstraints(
+                          maxWidth: MediaQuery.of(context).size.width * 0.75,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: isUser
+                              ? LinearGradient(
+                                  colors: [
+                                    Color(0xFF6C63FF),
+                                    Color(0xFF5A52D5)
+                                  ],
+                                )
+                              : LinearGradient(
+                                  colors: [
+                                    Color(0xFF1E1E2C),
+                                    Color(0xFF252538),
+                                  ],
                                 ),
-                                child: FaIcon(
-                                  FontAwesomeIcons.wandMagicSparkles,
-                                  size: 12,
-                                  color: Color(0xFF6C63FF),
+                          borderRadius: BorderRadius.only(
+                            topLeft: const Radius.circular(20),
+                            topRight: const Radius.circular(20),
+                            bottomLeft: isUser
+                                ? const Radius.circular(20)
+                                : const Radius.circular(4),
+                            bottomRight: isUser
+                                ? const Radius.circular(4)
+                                : const Radius.circular(20),
+                          ),
+                          border: Border.all(
+                            color: isUser
+                                ? Colors.transparent
+                                : Colors.white.withValues(alpha: 0.05),
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: isUser
+                                  ? Color(0xFF6C63FF).withValues(alpha: 0.3)
+                                  : Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              msg['text']!,
+                              style: GoogleFonts.inter(
+                                color: Colors.white.withValues(alpha: 0.95),
+                                height: 1.5,
+                                fontSize: 15,
+                              ),
+                            ),
+                            if (!isUser)
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: GestureDetector(
+                                    onTap: () async {
+                                      await Clipboard.setData(ClipboardData(text: msg['text']!));
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          _buildSnackBar("Copied to clipboard! 📋"),
+                                        );
+                                        HapticFeedback.lightImpact();
+                                      }
+                                    },
+                                    child: Icon(
+                                      Icons.copy_rounded,
+                                      size: 16,
+                                      color: Colors.white.withValues(alpha: 0.5),
+                                    ),
+                                  ),
                                 ),
                               ),
-                              const SizedBox(width: 6),
-                              Text(
-                                "CITK Bot",
-                                style: GoogleFonts.inter(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      Text(
-                        msg['text']!,
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          height: 1.5,
-                          fontSize: 15,
+                          ],
                         ),
                       ),
+                    ),
+                    if (isUser) ...[
+                      const SizedBox(width: 8),
+                      CircleAvatar(
+                        radius: 16,
+                        backgroundColor: Colors.white.withValues(alpha: 0.1),
+                        child: Icon(Icons.person_rounded,
+                            size: 18, color: Colors.white70),
+                      ),
                     ],
-                  ),
+                  ],
                 ),
               ),
-              if (showRegen) _buildRegenerateButton(),
+              if (showRegen)
+                Padding(
+                  padding: const EdgeInsets.only(left: 40),
+                  child: _buildRegenerateButton(),
+                ),
             ],
           ),
         )
@@ -564,7 +702,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
   Widget _buildRegenerateButton() {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16, left: 4),
+      padding: const EdgeInsets.only(bottom: 16),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -740,6 +878,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
           child: InkWell(
             onTap: () {
               HapticFeedback.mediumImpact();
+              _streamSubscription?.cancel();
               setState(() => _isTyping = false);
             },
             borderRadius: BorderRadius.circular(24),
@@ -921,7 +1060,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                           size: 20,
                         ),
                       ),
-                      onSubmitted: (_) => _sendMessage(),
+                      onSubmitted: _isTyping ? null : (_) => _sendMessage(),
                       textInputAction: TextInputAction.send,
                     ),
                   ),
@@ -944,7 +1083,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: _sendMessage,
+                      onTap: _isTyping ? null : _sendMessage,
                       borderRadius: BorderRadius.circular(30),
                       child: Container(
                         width: 56,
@@ -952,7 +1091,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                         alignment: Alignment.center,
                         child: Icon(
                           Icons.send_rounded,
-                          color: Colors.white,
+                          color: _isTyping ? Colors.white38 : Colors.white,
                           size: 22,
                         ),
                       ),
@@ -1051,6 +1190,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               ),
               const SizedBox(height: 20),
               ..._suggestedQuestions.map((q) => _buildQuickActionTile(q)),
+              const SizedBox(height: 16),
+              Divider(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  indent: 16,
+                  endIndent: 16),
+              const SizedBox(height: 8),
+              _buildOptionTile(
+                icon: Icons.delete_sweep_rounded,
+                title: "Clear Chat History",
+                isDestructive: true,
+                onTap: () {
+                  Navigator.pop(context);
+                  Future.delayed(
+                      const Duration(milliseconds: 200), _showClearDialog);
+                },
+              ),
               const SizedBox(height: 20),
             ],
           ),
@@ -1289,7 +1444,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
           TextButton(
             onPressed: () {
               Navigator.pop(dialogContext);
-              ref.read(geminiServiceProvider).resetChat();
+              ref.read(geminiServiceProvider).resetSession();
               setState(() {
                 _messages.clear();
                 _messages.add({

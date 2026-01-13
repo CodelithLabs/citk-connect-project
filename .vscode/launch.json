@@ -14,6 +14,14 @@
                 "--dart-define=WEATHER_API_KEY=YOUR_ACTUAL_WEATHER_KEY",
                 "--dart-define=GEMINI_API_KEY=YOUR_GEMINI_KEY" 
             ]
+        },
+        {
+            "name": "CITK Connect",
+            "request": "launch",
+            "type": "dart",
+            "args": [
+                "--dart-define=GEMINI_API_KEY=AIzaSyAWMuWp5S_lwrN4s8EqIrmdxYGk-2AdmDo"
+            ]
         }
     ]
 }

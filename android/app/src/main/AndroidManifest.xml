@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     
     <application
         android:label="CITK Connect"
@@ -62,6 +63,16 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2"/>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- 🏠 HOME WIDGET PROVIDER -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <receiver android:name=".AttendanceWidgetProvider" android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/attendance_widget_info" />
+        </receiver>
     </application>
 
     <!-- ═══════════════════════════════════════════════════════════════════ -->
