@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 from ai_data_processor import CITKDataProcessor
 from firebase_uploader import CITKFirebaseUploader
@@ -7,9 +8,14 @@ def main():
     print("🚀 CITK AI Data Automation Pipeline")
     print("=" * 50)
     
-    # Configuration
-    GEMINI_API_KEY = "AIzaSyBdUhq8NaX98VE3Xy2BHfN2N0h81HXqcZg"  # Replace with your key
+    # Configuration - Use environment variables for security
+    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
     SERVICE_ACCOUNT_PATH = "service-account.json"
+    
+    if not GEMINI_API_KEY:
+        print("❌ ERROR: GEMINI_API_KEY environment variable not set!")
+        print("   Set it with: export GEMINI_API_KEY=your_key")
+        return
     
     # Initialize processors
     processor = CITKDataProcessor(GEMINI_API_KEY)

@@ -19,6 +19,16 @@ class AppWebView extends ConsumerStatefulWidget {
 }
 
 class _AppWebViewState extends ConsumerState<AppWebView> {
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: GoogleFonts.inter()),
+        backgroundColor: isError ? Colors.red : Colors.green,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   late final WebViewController _controller;
   bool _isLoading = true;
   double _progress = 0.0;
@@ -79,6 +89,18 @@ class _AppWebViewState extends ConsumerState<AppWebView> {
 
       if (result != null && result.files.single.path != null) {
         final file = File(result.files.single.path!);
+        final fileSize = await file.length();
+        final maxSize = 10 * 1024 * 1024; // 10MB
+        final allowedTypes = ['pdf', 'jpg', 'png', 'jpeg'];
+        final ext = result.files.single.extension?.toLowerCase();
+        if (ext == null || !allowedTypes.contains(ext)) {
+          _showSnackBar('Invalid file type. Allowed: PDF, JPG, PNG.');
+          return;
+        }
+        if (fileSize > maxSize) {
+          _showSnackBar('File too large. Max 10MB allowed.');
+          return;
+        }
 
         // 2. Ask for Name
         final name = await _showNameDialog();
@@ -91,18 +113,13 @@ class _AppWebViewState extends ConsumerState<AppWebView> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Upload failed: $e'), backgroundColor: Colors.red),
-        );
+        _showSnackBar('Upload failed: $e', isError: true);
       }
     }
   }
 
   Future<void> _uploadWithProgress(File file, String name) async {
-    final progressNotifier = ValueNotifier<double>(0.0);
-
-    // Show Dialog
+    // Show simple uploading dialog
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -116,51 +133,22 @@ class _AppWebViewState extends ConsumerState<AppWebView> {
             Text('Saving to Digital Locker',
                 style: GoogleFonts.inter(fontSize: 12, color: Colors.grey)),
             const SizedBox(height: 16),
-            ValueListenableBuilder<double>(
-              valueListenable: progressNotifier,
-              builder: (context, value, child) {
-                return Column(
-                  children: [
-                    LinearProgressIndicator(
-                      value: value,
-                      backgroundColor: Colors.grey.withValues(alpha: 0.2),
-                      color: const Color(0xFF4CAF50),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    const SizedBox(height: 8),
-                    Text('${(value * 100).toInt()}%',
-                        style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
-                  ],
-                );
-              },
-            ),
+            LinearProgressIndicator(),
           ],
         ),
       ),
     );
 
     try {
-      await ref.read(documentServiceProvider).uploadDocument(file, name,
-          onProgress: (p) => progressNotifier.value = p);
-
+      await ref.read(documentServiceProvider).uploadDocument();
       if (mounted) {
         Navigator.of(context).pop(); // Close dialog
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('Receipt saved successfully!', style: GoogleFonts.inter()),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        _showSnackBar('Receipt saved successfully!');
       }
     } catch (e) {
       if (mounted) {
         Navigator.of(context).pop(); // Close dialog
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Upload failed: $e'), backgroundColor: Colors.red),
-        );
+        _showSnackBar('Upload failed: $e', isError: true);
       }
     }
   }

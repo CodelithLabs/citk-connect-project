@@ -1,10 +1,8 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:citk_connect/map/services/bus_service.dart' as bus_service;
 
@@ -17,12 +15,17 @@ class DriverDashboard extends ConsumerStatefulWidget {
 
 class _DriverDashboardState extends ConsumerState<DriverDashboard> {
   bool _isBroadcasting = false;
-  StreamSubscription<Position>? _positionStream;
-  DateTime? _lastBroadcastTime; // 🧠 Smart Batching Tracker
+  Timer? _timer;
 
   // 🚌 DYNAMIC CONFIG
-  String _selectedBusId = "bus_04"; // Default to Bus 4
+  String _selectedBusId = "bus_01";
   final List<String> _availableBuses = ["bus_01", "bus_02", "bus_03", "bus_04"];
+  final Map<String, String> _busRegistrations = {
+    "bus_01": "AS16AC6338",
+    "bus_02": "AS16C3347",
+    "bus_03": "AS16C3348",
+    "bus_04": "AS16AC6339",
+  };
   bool _isLoading = true;
 
   // 🚦 STATUS FLAGS
@@ -52,161 +55,24 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
     if (mounted) setState(() => _isLoading = false);
   }
 
-  Future<void> _toggleBroadcast() async {
-    if (_isBroadcasting) {
-      // STOP BROADCASTING
-      await _positionStream?.cancel();
-      setState(() => _isBroadcasting = false);
-    } else {
-      // START BROADCASTING
-      // 0. Check GPS Service Status
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        if (mounted) _showLocationServiceDialog();
-        return;
-      }
-
-      // 1. Check Permissions
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) return; // User rejected
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        if (mounted) _showPermissionDialog();
-        return;
-      }
-
-      // 🛡️ MEMORY LEAK FIX: Prevent stream start if widget was disposed during permission check
-      if (!mounted) return;
-
-      setState(() => _isBroadcasting = true);
-
-      // 2. Configure Background Settings
-      LocationSettings locationSettings;
-
-      if (defaultTargetPlatform == TargetPlatform.android) {
-        locationSettings = AndroidSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 0, // ⚡ Get all updates (filter in code)
-          intervalDuration:
-              const Duration(seconds: 3), // ⚡ Force update every 3s
-          // 🔔 Foreground Notification: Keeps service alive when minimized
-          foregroundNotificationConfig: const ForegroundNotificationConfig(
-            notificationTitle: "CITK Driver Active",
-            notificationText: "Broadcasting location to campus...",
-            enableWakeLock: true,
-          ),
-        );
-      } else if (defaultTargetPlatform == TargetPlatform.iOS) {
-        locationSettings = AppleSettings(
-          accuracy: LocationAccuracy.high,
-          activityType: ActivityType.automotiveNavigation,
-          distanceFilter: 0, // ⚡ Get all updates
-          pauseLocationUpdatesAutomatically: false,
-          showBackgroundLocationIndicator: true,
-        );
-      } else {
-        locationSettings = const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 0,
-        );
-      }
-
-      // 3. Start Stream
-      _positionStream = Geolocator.getPositionStream(
-        locationSettings: locationSettings,
-      ).listen((Position position) {
-        // 🧠 SMART BATCHING: Throttle Firestore Writes
-        final now = DateTime.now();
-        if (_lastBroadcastTime != null &&
-            now.difference(_lastBroadcastTime!) < const Duration(seconds: 3)) {
-          return; // ⏳ Throttle: Prevent Firestore spam
-        }
-        _lastBroadcastTime = now;
-
-        // 4. Send to Cloud
-        ref.read(bus_service.busServiceProvider).broadcastLocation(
-              _selectedBusId,
-              position.latitude,
-              position.longitude,
-              position.heading,
-              position.speed,
-              _condition,
-              _occupancy,
-            );
+  void toggleLiveStatus(bool isLive) {
+    if (isLive) {
+      _timer = Timer.periodic(const Duration(seconds: 10), (_) {
+        debugPrint('Updating location...');
       });
+    } else {
+      _timer?.cancel();
     }
+    setState(() => _isBroadcasting = isLive);
   }
 
-  void _showLocationServiceDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF181B21),
-        title: Text("GPS Disabled",
-            style: GoogleFonts.inter(
-                color: Colors.white, fontWeight: FontWeight.bold)),
-        content: Text(
-          "Location services are turned off. Please enable GPS to broadcast.",
-          style: GoogleFonts.inter(color: Colors.grey[400]),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("Cancel", style: GoogleFonts.inter(color: Colors.grey)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Geolocator.openLocationSettings();
-            },
-            child: Text("Enable",
-                style: GoogleFonts.inter(
-                    color: const Color(0xFF6C63FF),
-                    fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showPermissionDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF181B21),
-        title: Text("Location Required",
-            style: GoogleFonts.inter(
-                color: Colors.white, fontWeight: FontWeight.bold)),
-        content: Text(
-          "To broadcast bus location, please enable location permissions in App Settings.",
-          style: GoogleFonts.inter(color: Colors.grey[400]),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("Cancel", style: GoogleFonts.inter(color: Colors.grey)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Geolocator.openAppSettings();
-            },
-            child: Text("Open Settings",
-                style: GoogleFonts.inter(
-                    color: const Color(0xFF6C63FF),
-                    fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
+  Future<void> _toggleBroadcast() async {
+    toggleLiveStatus(!_isBroadcasting);
   }
 
   @override
   void dispose() {
-    _positionStream?.cancel();
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -270,6 +136,35 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
             ),
             const SizedBox(height: 40),
 
+            if (_isBroadcasting)
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.green),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Colors.green,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text("Status: Online",
+                        style: GoogleFonts.inter(
+                            color: Colors.green, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+
             Text(
               _isBroadcasting ? "BROADCASTING LIVE" : "SYSTEM OFFLINE",
               style: GoogleFonts.inter(
@@ -308,7 +203,10 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
                     items: _availableBuses.map((id) {
                       return DropdownMenuItem(
                         value: id,
-                        child: Text(id.toUpperCase().replaceAll('_', ' ')),
+                        child: Text(
+                          "BUS ${id.split('_').last} (${_busRegistrations[id]})",
+                          style: GoogleFonts.robotoMono(color: Colors.white),
+                        ),
                       );
                     }).toList(),
                     onChanged: (val) => setState(() => _selectedBusId = val!),
@@ -322,16 +220,28 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   _buildStatusToggle("OK", Colors.green, _condition == "OK",
-                      () => setState(() => _condition = "OK")),
+                      () {
+                    setState(() => _condition = "OK");
+                    ref
+                        .read(bus_service.busServiceProvider)
+                        .updateStatus(_condition, _occupancy);
+                  }),
                   const SizedBox(width: 10),
                   _buildStatusToggle(
-                      "TRAFFIC",
-                      Colors.orange,
-                      _condition == "TRAFFIC",
-                      () => setState(() => _condition = "TRAFFIC")),
+                      "TRAFFIC", Colors.orange, _condition == "TRAFFIC", () {
+                    setState(() => _condition = "TRAFFIC");
+                    ref
+                        .read(bus_service.busServiceProvider)
+                        .updateStatus(_condition, _occupancy);
+                  }),
                   const SizedBox(width: 10),
                   _buildStatusToggle("ISSUE", Colors.red, _condition == "ISSUE",
-                      () => setState(() => _condition = "ISSUE")),
+                      () {
+                    setState(() => _condition = "ISSUE");
+                    ref
+                        .read(bus_service.busServiceProvider)
+                        .updateStatus(_condition, _occupancy);
+                  }),
                 ],
               ),
               const SizedBox(height: 16),
@@ -339,16 +249,28 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   _buildStatusToggle("EMPTY", Colors.blue, _occupancy == "LOW",
-                      () => setState(() => _occupancy = "LOW")),
+                      () {
+                    setState(() => _occupancy = "LOW");
+                    ref
+                        .read(bus_service.busServiceProvider)
+                        .updateStatus(_condition, _occupancy);
+                  }),
                   const SizedBox(width: 10),
                   _buildStatusToggle("HALF", Colors.purple, _occupancy == "MED",
-                      () => setState(() => _occupancy = "MED")),
+                      () {
+                    setState(() => _occupancy = "MED");
+                    ref
+                        .read(bus_service.busServiceProvider)
+                        .updateStatus(_condition, _occupancy);
+                  }),
                   const SizedBox(width: 10),
                   _buildStatusToggle(
-                      "FULL",
-                      Colors.redAccent,
-                      _occupancy == "FULL",
-                      () => setState(() => _occupancy = "FULL")),
+                      "FULL", Colors.redAccent, _occupancy == "FULL", () {
+                    setState(() => _occupancy = "FULL");
+                    ref
+                        .read(bus_service.busServiceProvider)
+                        .updateStatus(_condition, _occupancy);
+                  }),
                 ],
               ),
               const SizedBox(height: 30),

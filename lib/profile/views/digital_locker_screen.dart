@@ -21,6 +21,11 @@ class DigitalLockerScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => ref.read(documentServiceProvider).uploadDocument(),
+        tooltip: 'Upload Document',
+        child: const Icon(Icons.add),
+      ),
       body: StreamBuilder<QuerySnapshot>(
         stream: ref.read(documentServiceProvider).getUserDocuments(),
         builder: (context, snapshot) {

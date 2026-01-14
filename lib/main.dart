@@ -16,8 +16,10 @@ import 'package:workmanager/workmanager.dart';
 import 'package:app_settings/app_settings.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+
 import 'package:citk_connect/firebase_options.dart';
 import 'package:citk_connect/app/routing/app_router.dart';
+import 'package:citk_connect/ai/providers/chat_providers.dart';
 import 'package:citk_connect/app/routing/navigator_key.dart';
 import 'package:citk_connect/app/routing/settings_provider.dart';
 import 'package:citk_connect/app/config/env_config.dart';
@@ -160,35 +162,30 @@ void main() async {
   };
 
   try {
-    // 4️⃣ Start Firebase Init (Background - DO NOT AWAIT)
-    _initializeFirebaseWithRetry().then((_) async {
-      _appStatus.value = AppStatus.success;
+    // 4️⃣ Initialize Firebase first (wait for completion to prevent race conditions)
+    await _initializeFirebaseWithRetry();
+    _appStatus.value = AppStatus.success;
 
-      // ☁️ Setup Firebase Messaging
-      FirebaseMessaging.onBackgroundMessage(
-          _firebaseMessagingBackgroundHandler);
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        if (message.data.containsKey('attendance')) {
-          updateAttendanceWidget(message.data['attendance']);
-        }
-      });
-
-      // Initialize Home Widget
-      try {
-        HomeWidget.setAppGroupId('group.citk.connect.widget');
-        HomeWidget.registerInteractivityCallback(backgroundCallback);
-      } catch (e) {
-        developer.log('HomeWidget init failed', error: e);
+    // ☁️ Setup Firebase Messaging (after Firebase is initialized)
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      if (message.data.containsKey('attendance')) {
+        updateAttendanceWidget(message.data['attendance']);
       }
-
-      // 6️⃣ Seed Data (Debug Only) - Moved here to ensure Firebase is initialized
-      if (kDebugMode) {
-        await FirestoreSeeder.seedNotices();
-      }
-    }).catchError((e) {
-      developer.log('Firebase init failed', error: e);
-      _appStatus.value = AppStatus.error;
     });
+
+    // Initialize Home Widget
+    try {
+      HomeWidget.setAppGroupId('group.citk.connect.widget');
+      HomeWidget.registerInteractivityCallback(backgroundCallback);
+    } catch (e) {
+      developer.log('HomeWidget init failed', error: e);
+    }
+
+    // 6️⃣ Seed Data (Debug Only) - Moved here to ensure Firebase is initialized
+    if (kDebugMode) {
+      await FirestoreSeeder.seedNotices();
+    }
 
     // 5️⃣ Initialize SharedPreferences
     final prefs = await _initializeSharedPreferences();
@@ -243,6 +240,8 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     // Initialize Onboarding Service
     ref.read(onboardingServiceProvider.notifier).init();
+    // Initialize Chat History Service
+    ref.read(chatHistoryServiceProvider).init();
 
     // Check permissions on app startup
     WidgetsBinding.instance.addPostFrameCallback((_) => _checkNotificationPermission());

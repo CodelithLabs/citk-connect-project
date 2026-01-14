@@ -1,21 +1,19 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
-import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:citk_connect/auth/services/auth_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:citk_connect/app/routing/settings_provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:sensors_plus/sensors_plus.dart';
-import 'package:citk_connect/home/views/smart_attendance_card.dart';
 import 'package:citk_connect/fees/views/fees_card.dart';
-import 'package:citk_connect/routine/views/widgets/routine_home_card.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:citk_connect/profile/views/profile_screen.dart';
+import 'package:citk_connect/auth/services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:citk_connect/mail/views/inbox_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -30,6 +28,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   late final bool _isNight;
   late AnimationController _pulseController;
   late AnimationController _floatController;
+  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -88,10 +87,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final String firstLetter =
         safeName.isNotEmpty ? safeName[0].toUpperCase() : "S";
 
+    // Navigation Destinations
+    final List<Widget> screens = [
+      _buildHomeDashboard(
+          context, safeName, firstLetter, accentColor, accentGradient),
+      const Center(
+          child: Text("Bus Tracker Placeholder")), // Replace with BusScreen()
+      const InboxScreen(),
+      const ProfileScreen(),
+    ];
+
     return Scaffold(
       backgroundColor:
           _isNight ? const Color(0xFF0A0E27) : const Color(0xFFF5F7FA),
-      extendBodyBehindAppBar: true,
+      extendBodyBehindAppBar: _selectedIndex == 0, // Only transparent for Home
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: (index) =>
+            setState(() => _selectedIndex = index),
+        backgroundColor: _isNight ? const Color(0xFF1A1F3A) : Colors.white,
+        indicatorColor: accentColor.withValues(alpha: 0.2),
+        destinations: const [
+          NavigationDestination(
+              icon: Icon(Icons.dashboard_rounded), label: 'Home'),
+          NavigationDestination(
+              icon: Icon(Icons.directions_bus_rounded), label: 'Bus'),
+          NavigationDestination(icon: Icon(Icons.mail_rounded), label: 'Mail'),
+          NavigationDestination(
+              icon: Icon(Icons.person_rounded), label: 'Profile'),
+        ],
+      ),
       appBar: AppBar(
         title: ShaderMask(
           shaderCallback: (bounds) => LinearGradient(
@@ -181,7 +206,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             color: _isNight ? const Color(0xFF1A1F3A) : Colors.white,
             onSelected: (value) async {
               if (value == 'profile') {
-                context.push('/profile');
+                setState(() => _selectedIndex = 3); // Switch to Profile Tab
               } else if (value == 'logout') {
                 await FirebaseAuth.instance.signOut();
               }
@@ -194,40 +219,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   title: Text('My Profile',
                       style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
                   contentPadding: EdgeInsets.zero,
-                ),
-              ),
-              PopupMenuItem<String>(
-                enabled: false,
-                child: Consumer(
-                  builder: (context, ref, _) {
-                    final settings = ref.watch(settingsControllerProvider);
-                    final isDark = settings.themeMode == ThemeMode.dark;
-                    return ListTile(
-                      leading: Icon(
-                        isDark
-                            ? Icons.dark_mode_rounded
-                            : Icons.light_mode_rounded,
-                        color: accentColor,
-                      ),
-                      title: Text('Dark Mode',
-                          style:
-                              GoogleFonts.inter(fontWeight: FontWeight.w600)),
-                      trailing: Switch(
-                        value: isDark,
-                        onChanged: (val) {
-                          HapticFeedback.selectionClick();
-                          final target = val ? 'dark' : 'light';
-                          context.go('/splash?targetTheme=$target');
-                          ref
-                              .read(settingsControllerProvider.notifier)
-                              .updateThemeMode(
-                                  val ? ThemeMode.dark : ThemeMode.light);
-                        },
-                        activeThumbColor: accentColor,
-                      ),
-                      contentPadding: EdgeInsets.zero,
-                    );
-                  },
                 ),
               ),
               PopupMenuItem<String>(
@@ -249,227 +240,345 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ),
       drawer: _buildModernDrawer(
           context, user, safeName, firstLetter, theme, accentColor),
-      body: Stack(
-        children: [
-          // Dynamic Background
-          Positioned.fill(
-            child: _EnhancedBackground(isNight: _isNight),
-          ),
+      body: screens[_selectedIndex],
+    );
+  }
 
-          // Main Content
-          RefreshIndicator(
-            onRefresh: () async {
-              setState(() => _isLoading = true);
-              await FirebaseAuth.instance.currentUser?.reload();
-              await Future.delayed(const Duration(seconds: 2));
-              if (mounted) setState(() => _isLoading = false);
-            },
-            color: accentColor,
-            backgroundColor: _isNight ? const Color(0xFF1A1F3A) : Colors.white,
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                // Hero Header
-                SliverToBoxAdapter(
-                  child: Container(
-                    padding: const EdgeInsets.fromLTRB(24, 100, 24, 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Greeting with gradient
-                        ShaderMask(
-                          shaderCallback: (bounds) => LinearGradient(
-                            colors: [
-                              Colors.white.withValues(alpha: 0.6),
-                              Colors.white.withValues(alpha: 0.3),
-                            ],
-                          ).createShader(bounds),
-                          child: Text(
-                            _isNight ? "Good Evening," : "Good Morning,",
-                            style: GoogleFonts.inter(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white,
-                              letterSpacing: 0.5,
-                            ),
+  Widget _buildHomeDashboard(BuildContext context, String safeName,
+      String firstLetter, Color accentColor, List<Color> accentGradient) {
+    return Stack(
+      children: [
+        // Dynamic Background
+        Positioned.fill(
+          child: _EnhancedBackground(isNight: _isNight),
+        ),
+
+        // Main Content
+        RefreshIndicator(
+          onRefresh: () async {
+            setState(() => _isLoading = true);
+            await FirebaseAuth.instance.currentUser?.reload();
+            await Future.delayed(const Duration(seconds: 2));
+            if (mounted) setState(() => _isLoading = false);
+          },
+          color: accentColor,
+          backgroundColor: _isNight ? const Color(0xFF1A1F3A) : Colors.white,
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // Hero Header
+              SliverToBoxAdapter(
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(24, 100, 24, 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Greeting with gradient
+                      ShaderMask(
+                        shaderCallback: (bounds) => LinearGradient(
+                          colors: [
+                            Colors.white.withValues(alpha: 0.6),
+                            Colors.white.withValues(alpha: 0.3),
+                          ],
+                        ).createShader(bounds),
+                        child: Text(
+                          _isNight ? "Good Evening," : "Good Morning,",
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                      ),
+                      const SizedBox(height: 8),
 
-                        // Name with animation
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                safeName.split(' ')[0],
-                                style: GoogleFonts.poppins(
-                                  fontSize: 40,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: -1.5,
-                                  foreground: Paint()
-                                    ..shader = LinearGradient(
-                                      colors: accentGradient,
-                                    ).createShader(
-                                        const Rect.fromLTWH(0, 0, 200, 70)),
+                      // Name with animation
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              safeName.split(' ')[0],
+                              style: GoogleFonts.poppins(
+                                fontSize: 40,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -1.5,
+                                foreground: Paint()
+                                  ..shader = LinearGradient(
+                                    colors: accentGradient,
+                                  ).createShader(
+                                      const Rect.fromLTWH(0, 0, 200, 70)),
+                              ),
+                            ).animate().fadeIn(duration: 600.ms).moveX(
+                                begin: -50, end: 0, curve: Curves.easeOutBack),
+                          ),
+                          const SizedBox(width: 12),
+                          AnimatedBuilder(
+                            animation: _floatController,
+                            builder: (context, child) {
+                              return Transform.translate(
+                                offset: Offset(0,
+                                    sin(_floatController.value * 2 * pi) * 5),
+                                child: Text(
+                                  "👋",
+                                  style: const TextStyle(fontSize: 32),
                                 ),
-                              ).animate().fadeIn(duration: 600.ms).moveX(
-                                  begin: -50,
-                                  end: 0,
-                                  curve: Curves.easeOutBack),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 28),
+
+                      // Premium Search Bar
+                      _buildPremiumSearchBar(accentColor, accentGradient),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Next Class Card (New Feature)
+              SliverToBoxAdapter(child: _buildNextClassCard(accentColor)),
+
+              // Quick Actions Row (New Feature)
+              SliverToBoxAdapter(child: _buildQuickActionsRow(accentColor)),
+
+              // Fees & Renewal Card
+              const SliverToBoxAdapter(child: FeesCard()),
+
+              // Quick Stats Row
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  child: Row(
+                    children: [
+                      _buildStatCard("85%", "Attendance",
+                          Icons.check_circle_outline_rounded, accentColor),
+                      const SizedBox(width: 12),
+                      _buildStatCard("8.2", "CGPA", Icons.school_rounded,
+                          accentGradient[1]),
+                      const SizedBox(width: 12),
+                      _buildStatCard("12", "Days Left",
+                          Icons.calendar_today_rounded, Colors.orangeAccent),
+                    ],
+                  ),
+                ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.3, end: 0),
+              ),
+
+              // Feature Grid
+              SliverPadding(
+                padding: const EdgeInsets.all(24),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 0.95,
+                  ),
+                  delegate: SliverChildListDelegate(
+                    _isLoading
+                        ? List.generate(6, (index) => _buildEnhancedSkeleton())
+                        : [
+                            _buildPremiumFeatureCard(
+                              context,
+                              title: "Campus Map",
+                              icon: Icons.map_rounded,
+                              gradient: [
+                                const Color(0xFF667eea),
+                                const Color(0xFF764ba2)
+                              ],
+                              desc: "Navigate in 3D",
+                              index: 0,
+                              onTap: () => context.push('/map'),
                             ),
-                            const SizedBox(width: 12),
-                            AnimatedBuilder(
-                              animation: _floatController,
-                              builder: (context, child) {
-                                return Transform.translate(
-                                  offset: Offset(0,
-                                      sin(_floatController.value * 2 * pi) * 5),
-                                  child: Text(
-                                    "👋",
-                                    style: const TextStyle(fontSize: 32),
-                                  ),
-                                );
-                              },
+                            _buildPremiumFeatureCard(
+                              context,
+                              title: "Academics",
+                              icon: Icons.school_rounded,
+                              gradient: [
+                                const Color(0xFFf093fb),
+                                const Color(0xFFF5576c)
+                              ],
+                              desc: "Routine & PYQ",
+                              index: 1,
+                              onTap: () => context.push('/routine'),
+                            ),
+                            _buildPremiumFeatureCard(
+                              context,
+                              title: "Bus Tracker",
+                              icon: Icons.directions_bus_rounded,
+                              gradient: [
+                                const Color(0xFF4facfe),
+                                const Color(0xFF00f2fe)
+                              ],
+                              desc: "Live Status",
+                              index: 2,
+                              onTap: () => context.push('/bus'),
+                            ),
+                            _buildPremiumFeatureCard(
+                              context,
+                              title: "AI Assistant",
+                              icon: Icons.auto_awesome_rounded,
+                              gradient: [
+                                const Color(0xFFfa709a),
+                                const Color(0xFFfee140)
+                              ],
+                              desc: "Ask anything",
+                              index: 3,
+                              onTap: () => context.push('/chat'),
+                            ),
+                            _buildPremiumFeatureCard(
+                              context,
+                              title: "AR Finder",
+                              icon: Icons.view_in_ar_rounded,
+                              gradient: [
+                                const Color(0xFF30cfd0),
+                                const Color(0xFF330867)
+                              ],
+                              desc: "Find Labs",
+                              index: 4,
+                              onTap: () => context.push('/ar'),
+                            ),
+                            _buildPremiumFeatureCard(
+                              context,
+                              title: "Emergency",
+                              icon: Icons.local_hospital_rounded,
+                              gradient: [
+                                const Color(0xFFff6b6b),
+                                const Color(0xFFc92a2a)
+                              ],
+                              desc: "SOS & Medical",
+                              index: 5,
+                              onTap: () => context.push('/emergency'),
                             ),
                           ],
-                        ),
-                        const SizedBox(height: 28),
-
-                        // Premium Search Bar
-                        _buildPremiumSearchBar(accentColor, accentGradient),
-                      ],
-                    ),
                   ),
                 ),
+              ),
 
-                // Smart Attendance Widget
-                const SliverToBoxAdapter(child: SmartAttendanceCard()),
+              // Bottom Spacing
+              const SliverToBoxAdapter(child: SizedBox(height: 40)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
-                // Routine & Calculator Card
-                const SliverToBoxAdapter(child: RoutineHomeCard()),
-
-                // Fees & Renewal Card
-                const SliverToBoxAdapter(child: FeesCard()),
-
-                // Quick Stats Row
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 12),
-                    child: Row(
-                      children: [
-                        _buildStatCard("85%", "Attendance",
-                            Icons.check_circle_outline_rounded, accentColor),
-                        const SizedBox(width: 12),
-                        _buildStatCard("8.2", "CGPA", Icons.school_rounded,
-                            accentGradient[1]),
-                        const SizedBox(width: 12),
-                        _buildStatCard("12", "Days Left",
-                            Icons.calendar_today_rounded, Colors.orangeAccent),
-                      ],
-                    ),
-                  ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.3, end: 0),
+  Widget _buildNextClassCard(Color accentColor) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: _isNight
+              ? [
+                  const Color(0xFF6C63FF).withValues(alpha: 0.2),
+                  const Color(0xFF6C63FF).withValues(alpha: 0.05)
+                ]
+              : [const Color(0xFF6C63FF).withValues(alpha: 0.1), Colors.white],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: accentColor,
+                  borderRadius: BorderRadius.circular(20),
                 ),
+                child: Text("NEXT CLASS",
+                    style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white)),
+              ),
+              Text("In 15 mins",
+                  style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: accentColor)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text("Data Structures & Algorithms",
+              style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: _isNight ? Colors.white : Colors.black87)),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Icon(Icons.location_on_rounded, size: 14, color: Colors.grey),
+              const SizedBox(width: 4),
+              Text("Room 304, Academic Block 1",
+                  style: GoogleFonts.inter(fontSize: 13, color: Colors.grey)),
+            ],
+          ),
+        ],
+      ),
+    ).animate().fadeIn().slideX();
+  }
 
-                // Feature Grid
-                SliverPadding(
-                  padding: const EdgeInsets.all(24),
-                  sliver: SliverGrid(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: 0.95,
-                    ),
-                    delegate: SliverChildListDelegate(
-                      _isLoading
-                          ? List.generate(
-                              6, (index) => _buildEnhancedSkeleton())
-                          : [
-                              _buildPremiumFeatureCard(
-                                context,
-                                title: "Campus Map",
-                                icon: Icons.map_rounded,
-                                gradient: [
-                                  const Color(0xFF667eea),
-                                  const Color(0xFF764ba2)
-                                ],
-                                desc: "Navigate in 3D",
-                                index: 0,
-                                onTap: () => context.push('/map'),
-                              ),
-                              _buildPremiumFeatureCard(
-                                context,
-                                title: "Academics",
-                                icon: Icons.school_rounded,
-                                gradient: [
-                                  const Color(0xFFf093fb),
-                                  const Color(0xFFF5576c)
-                                ],
-                                desc: "Routine & PYQ",
-                                index: 1,
-                                onTap: () => context.push('/routine'),
-                              ),
-                              _buildPremiumFeatureCard(
-                                context,
-                                title: "Bus Tracker",
-                                icon: Icons.directions_bus_rounded,
-                                gradient: [
-                                  const Color(0xFF4facfe),
-                                  const Color(0xFF00f2fe)
-                                ],
-                                desc: "Live Status",
-                                index: 2,
-                                onTap: () => context.push('/bus-tracker'),
-                              ),
-                              _buildPremiumFeatureCard(
-                                context,
-                                title: "AI Assistant",
-                                icon: Icons.auto_awesome_rounded,
-                                gradient: [
-                                  const Color(0xFFfa709a),
-                                  const Color(0xFFfee140)
-                                ],
-                                desc: "Ask anything",
-                                index: 3,
-                                onTap: () => context.push('/chat'),
-                              ),
-                              _buildPremiumFeatureCard(
-                                context,
-                                title: "AR Finder",
-                                icon: Icons.view_in_ar_rounded,
-                                gradient: [
-                                  const Color(0xFF30cfd0),
-                                  const Color(0xFF330867)
-                                ],
-                                desc: "Find Labs",
-                                index: 4,
-                                onTap: () => context.push('/ar'),
-                              ),
-                              _buildPremiumFeatureCard(
-                                context,
-                                title: "Emergency",
-                                icon: Icons.local_hospital_rounded,
-                                gradient: [
-                                  const Color(0xFFff6b6b),
-                                  const Color(0xFFc92a2a)
-                                ],
-                                desc: "SOS & Medical",
-                                index: 5,
-                                onTap: () => context.push('/emergency'),
-                              ),
-                            ],
-                    ),
-                  ),
-                ),
-
-                // Bottom Spacing
-                const SliverToBoxAdapter(child: SizedBox(height: 40)),
-              ],
+  Widget _buildQuickActionsRow(Color accentColor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildQuickActionBtn(
+              "Bus Status",
+              Icons.directions_bus_filled_rounded,
+              Colors.blueAccent,
+              () => setState(() => _selectedIndex = 1),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildQuickActionBtn(
+              "Check Mail",
+              Icons.mail_rounded,
+              Colors.orangeAccent,
+              () => setState(() => _selectedIndex = 2),
             ),
           ),
         ],
+      ),
+    ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.2, end: 0);
+  }
+
+  Widget _buildQuickActionBtn(
+      String label, IconData icon, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 8),
+            Text(label,
+                style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w600,
+                    color: _isNight ? Colors.white : Colors.black87)),
+          ],
+        ),
       ),
     );
   }
@@ -823,8 +932,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             title: 'My Profile',
             color: accentColor,
             onTap: () {
-              context.pop();
-              context.push('/profile');
+              Navigator.pop(context); // Close drawer
+              setState(() => _selectedIndex = 3); // Switch to Profile
             },
           ),
           _buildDrawerItem(

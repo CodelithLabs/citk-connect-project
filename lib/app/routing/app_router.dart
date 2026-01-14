@@ -34,12 +34,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateChangesProvider);
   final onboardingSeen = ref.watch(onboardingServiceProvider);
 
+  final refreshListenable =
+      GoRouterRefreshStream(FirebaseAuth.instance.authStateChanges());
+  ref.onDispose(refreshListenable.dispose);
+
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: '/splash',
-    refreshListenable: GoRouterRefreshStream(
-      FirebaseAuth.instance.authStateChanges(),
-    ),
+    refreshListenable: refreshListenable,
     redirect: (context, state) {
       final isSplash = state.matchedLocation == '/splash';
       if (isSplash) return null; // Let splash finish its timer

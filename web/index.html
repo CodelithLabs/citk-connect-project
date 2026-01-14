@@ -34,7 +34,7 @@
 
   <!-- 🗺️ Google Maps SDK for Web (REQUIRED) -->
   <!-- Replace YOUR_API_KEY with your actual Google Maps API Key -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCCGy6iOdFSvq_Agq6QQP_FbwWmM4Q2pOc"></script>
   <style>
     .loading {
       display: flex;
@@ -73,6 +73,11 @@
   <div id="loading_indicator" class="loading">
     <div class="loader"></div>
   </div>
+  <!-- Flutter build config (must be before flutter.js) -->
+  <script>
+    window._flutter = window._flutter || {};
+    window._flutter.buildConfig = {};
+  </script>
   <script src="flutter.js" defer></script>
   <script>
     window.addEventListener('load', function(ev) {

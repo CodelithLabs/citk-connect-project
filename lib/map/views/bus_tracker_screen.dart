@@ -138,13 +138,14 @@ class _BusTrackerScreenState extends ConsumerState<BusTrackerScreen>
           } else {
             // Start animation from CURRENT visual position to avoid jumps
             _prevBusData = BusData(
-                id: newData.id,
-                lat: _lat,
-                lng: _lng,
-                heading: _heading,
-                speed: newData.speed,
-                condition: newData.condition,
-                occupancy: newData.occupancy);
+              id: newData.id,
+              lat: _lat,
+              lng: _lng,
+              heading: _heading,
+              speed: newData.speed,
+              condition: newData.condition,
+              occupancy: newData.occupancy,
+            );
             _animController.forward(from: 0.0);
           }
           _currentBusData = newData;
@@ -174,13 +175,14 @@ class _BusTrackerScreenState extends ConsumerState<BusTrackerScreen>
               markers: _currentBusData != null
                   ? {
                       _createBusMarker(BusData(
-                          id: _currentBusData!.id,
-                          lat: _lat,
-                          lng: _lng,
-                          heading: _heading,
-                          speed: _currentBusData!.speed,
-                          condition: _currentBusData!.condition,
-                          occupancy: _currentBusData!.occupancy))
+                        id: _currentBusData!.id,
+                        lat: _lat,
+                        lng: _lng,
+                        heading: _heading,
+                        speed: _currentBusData!.speed,
+                        condition: _currentBusData!.condition,
+                        occupancy: _currentBusData!.occupancy,
+                      ))
                     }
                   : {},
               polylines: _polylines,
@@ -276,6 +278,13 @@ class _BusTrackerScreenState extends ConsumerState<BusTrackerScreen>
 class BusInfoCard extends ConsumerWidget {
   final BusData bus;
 
+  static const Map<String, String> _busRegistrations = {
+    "bus_01": "AS16AC6338",
+    "bus_02": "AS16C3347",
+    "bus_03": "AS16C3348",
+    "bus_04": "AS16AC6339",
+  };
+
   const BusInfoCard({super.key, required this.bus});
 
   @override
@@ -324,7 +333,7 @@ class BusInfoCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Bus No. 1',
+                    'BUS ${bus.id.split('_').last} (${_busRegistrations[bus.id] ?? 'Unknown'})',
                     style: GoogleFonts.inter(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,

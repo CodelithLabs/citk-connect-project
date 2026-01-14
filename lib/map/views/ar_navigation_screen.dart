@@ -62,62 +62,7 @@ class _ArNavigationScreenState extends State<ArNavigationScreen>
   late AnimationController _scanController;
   
   // Destinations List
-  List<Map<String, dynamic>> _destinations = [
-    {
-      "name": "Main Building",
-      "lat": 26.4705,
-      "lng": 90.2705,
-      "type": "academic",
-      "floor": "Ground Floor",
-      "icon": Icons.business_rounded,
-      "description": "Administrative offices and classrooms"
-    },
-    {
-      "name": "Central Library",
-      "lat": 26.4710,
-      "lng": 90.2710,
-      "type": "academic",
-      "floor": "1st Floor",
-      "icon": Icons.library_books_rounded,
-      "description": "Main library with digital resources"
-    },
-    {
-      "name": "Boys Hostel",
-      "lat": 26.4745,
-      "lng": 90.2660,
-      "type": "hostel",
-      "floor": "Multiple",
-      "icon": Icons.hotel_rounded,
-      "description": "Student accommodation"
-    },
-    {
-      "name": "Canteen",
-      "lat": 26.4690,
-      "lng": 90.2750,
-      "type": "food",
-      "floor": "Ground Floor",
-      "icon": Icons.restaurant_rounded,
-      "description": "Food and beverages"
-    },
-    {
-      "name": "Computer Lab",
-      "lat": 26.4715,
-      "lng": 90.2695,
-      "type": "academic",
-      "floor": "2nd Floor",
-      "icon": Icons.computer_rounded,
-      "description": "Computer facilities and labs"
-    },
-    {
-      "name": "Sports Complex",
-      "lat": 26.4680,
-      "lng": 90.2720,
-      "type": "other",
-      "floor": "Ground Floor",
-      "icon": Icons.sports_basketball_rounded,
-      "description": "Indoor and outdoor sports facilities"
-    },
-  ];
+  List<Map<String, dynamic>> _destinations = [];
   
   late Map<String, dynamic> _selectedDestination;
 

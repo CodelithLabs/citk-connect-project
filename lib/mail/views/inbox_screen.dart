@@ -3,6 +3,7 @@
 import 'package:citk_connect/mail/models/college_email.dart';
 import 'package:citk_connect/mail/models/email_category.dart';
 import 'package:citk_connect/mail/providers/mail_provider.dart';
+import 'package:citk_connect/mail/services/mail_action_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,6 +37,15 @@ class _InboxScreenState extends ConsumerState<InboxScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _showComposeModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) => const _ComposeEmailModal(),
+    );
   }
 
   @override
@@ -131,7 +141,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen>
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          context.push('/mail/compose');
+          _showComposeModal(context);
         },
         child: const Icon(Icons.edit),
       ),
@@ -175,9 +185,7 @@ class _EmailList extends ConsumerWidget {
           final email = emails[index];
           return Dismissible(
             key: Key(email.id),
-            direction: !email.isRead
-                ? DismissDirection.startToEnd
-                : DismissDirection.none,
+            direction: DismissDirection.horizontal,
             background: Container(
               decoration: BoxDecoration(
                 color: Colors.green,
@@ -185,12 +193,34 @@ class _EmailList extends ConsumerWidget {
               ),
               alignment: Alignment.centerLeft,
               padding: const EdgeInsets.only(left: 20),
-              child: const Icon(Icons.mark_email_read, color: Colors.white),
+              child: const Icon(Icons.archive_outlined, color: Colors.white),
+            ),
+            secondaryBackground: Container(
+              decoration: BoxDecoration(
+                color: Colors.redAccent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.only(right: 20),
+              child: const Icon(Icons.delete_outline, color: Colors.white),
             ),
             confirmDismiss: (direction) async {
               if (direction == DismissDirection.startToEnd) {
-                await ref.read(mailProvider.notifier).markAsRead(email.id);
-                return false; // Snap back and let provider rebuild list
+                await ref
+                    .read(mailActionServiceProvider)
+                    .archiveEmail(email.id);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Email archived')));
+                }
+                return true;
+              } else if (direction == DismissDirection.endToStart) {
+                await ref.read(mailActionServiceProvider).deleteEmail(email.id);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Email deleted')));
+                }
+                return true;
               }
               return false;
             },
@@ -354,6 +384,101 @@ class _CategoryBadge extends StatelessWidget {
           fontWeight: FontWeight.w600,
           color: category.color,
         ),
+      ),
+    );
+  }
+}
+
+class _ComposeEmailModal extends ConsumerStatefulWidget {
+  const _ComposeEmailModal();
+
+  @override
+  ConsumerState<_ComposeEmailModal> createState() => _ComposeEmailModalState();
+}
+
+class _ComposeEmailModalState extends ConsumerState<_ComposeEmailModal> {
+  final _toController = TextEditingController();
+  final _subjectController = TextEditingController();
+  final _bodyController = TextEditingController();
+  bool _isSending = false;
+
+  @override
+  void dispose() {
+    _toController.dispose();
+    _subjectController.dispose();
+    _bodyController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _sendEmail() async {
+    if (_toController.text.isEmpty || _subjectController.text.isEmpty) return;
+
+    setState(() => _isSending = true);
+
+    try {
+      await ref.read(mailActionServiceProvider).sendEmail(
+            _toController.text,
+            _subjectController.text,
+            _bodyController.text,
+          );
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Email sent to ${_toController.text}'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Failed to send: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSending = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: 16,
+        right: 16,
+        top: 24,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Compose Email',
+              style: GoogleFonts.poppins(
+                  fontSize: 20, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 20),
+          TextField(
+              controller: _toController,
+              decoration: const InputDecoration(labelText: 'To')),
+          const SizedBox(height: 12),
+          TextField(
+              controller: _subjectController,
+              decoration: const InputDecoration(labelText: 'Subject')),
+          const SizedBox(height: 12),
+          TextField(
+              controller: _bodyController,
+              decoration: const InputDecoration(labelText: 'Message'),
+              maxLines: 5),
+          const SizedBox(height: 24),
+          ElevatedButton(
+              onPressed: _isSending ? null : _sendEmail,
+              child:
+                  _isSending ? const Text('Sending...') : const Text('Send')),
+          const SizedBox(height: 24),
+        ],
       ),
     );
   }

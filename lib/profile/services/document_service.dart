@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as path;
 
 final documentServiceProvider = Provider((ref) => DocumentService());
@@ -12,43 +13,36 @@ class DocumentService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  Future<void> uploadDocument(File file, String customName,
-      {Function(double)? onProgress}) async {
+  Future<void> uploadDocument() async {
     final user = _auth.currentUser;
     if (user == null) throw Exception("User not logged in");
 
+    final result = await FilePicker.platform.pickFiles();
+    if (result == null) return;
+
+    final file = File(result.files.single.path!);
+
     // Create a unique filename
     final extension = path.extension(file.path);
-    final fileName = '${DateTime.now().millisecondsSinceEpoch}_$extension';
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}$extension';
 
     // Reference: users/{uid}/documents/{timestamp_ext}
     final storageRef =
         _storage.ref().child('users/${user.uid}/documents/$fileName');
 
-    // 1. Upload File with Progress
-    final task = storageRef.putFile(file);
-
-    task.snapshotEvents.listen((event) {
-      if (onProgress != null && event.totalBytes > 0) {
-        final progress = event.bytesTransferred / event.totalBytes;
-        onProgress(progress);
-      }
-    });
-
-    await task;
+    // 1. Upload File
+    await storageRef.putFile(file);
     final downloadUrl = await storageRef.getDownloadURL();
 
     // 2. Save Metadata to Firestore
     await _db.collection('users').doc(user.uid).collection('documents').add({
-      'name': customName.isNotEmpty
-          ? customName
-          : path.basenameWithoutExtension(file.path),
+      'name': path.basenameWithoutExtension(file.path),
       'url': downloadUrl,
       'fileName': fileName,
       'type': extension.replaceAll('.', '').toUpperCase(),
       'uploadedAt': FieldValue.serverTimestamp(),
       'size': await file.length(),
-      'source': 'SBI Collect/Web',
+      'source': 'manual_upload',
     });
   }
 

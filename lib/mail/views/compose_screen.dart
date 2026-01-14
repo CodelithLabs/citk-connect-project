@@ -1,11 +1,16 @@
 // lib/mail/views/compose_screen.dart
 
+import 'dart:io';
+
 import 'package:citk_connect/mail/providers/mail_provider.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import 'contact_typeahead.dart';
 
 class ComposeScreen extends ConsumerStatefulWidget {
   const ComposeScreen({super.key});
@@ -20,6 +25,7 @@ class _ComposeScreenState extends ConsumerState<ComposeScreen> {
   final _subjectController = TextEditingController();
   final _bodyController = TextEditingController();
   bool _isSending = false;
+  File? _attachment;
 
   @override
   void dispose() {
@@ -40,6 +46,7 @@ class _ComposeScreenState extends ConsumerState<ComposeScreen> {
         to: _toController.text.trim(),
         subject: _subjectController.text.trim(),
         body: _bodyController.text.trim(),
+        attachment: _attachment,
       );
 
       if (mounted) {
@@ -112,11 +119,8 @@ class _ComposeScreenState extends ConsumerState<ComposeScreen> {
             // To Field
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: TextFormField(
+              child: ContactTypeAhead(
                 controller: _toController,
-                style: GoogleFonts.inter(
-                  color: isDark ? Colors.white : Colors.black87,
-                ),
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.person_outline, size: 20),
                   hintText: 'To',
@@ -126,14 +130,15 @@ class _ComposeScreenState extends ConsumerState<ComposeScreen> {
                   enabledBorder: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a recipient';
-                  }
-                  if (!value.contains('@')) {
-                    return 'Please enter a valid email';
-                  }
-                  return null;
+                suggestionsCallback: (pattern) async {
+                  return [
+                    'test1@example.com',
+                    'test2@example.com',
+                    'test3@example.com',
+                  ].where((item) => item.toLowerCase().contains(pattern.toLowerCase())).toList();
+                },
+                onSuggestionSelected: (suggestion) {
+                  _toController.text = suggestion;
                 },
               ),
             ),
@@ -199,7 +204,7 @@ class _ComposeScreenState extends ConsumerState<ComposeScreen> {
               ),
             ),
 
-            // Attachments Bar (Visual only for now)
+            // Attachments Bar
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -214,23 +219,23 @@ class _ComposeScreenState extends ConsumerState<ComposeScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.attach_file),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Attachments coming soon!')),
-                      );
+                    onPressed: () async {
+                      final result = await FilePicker.platform.pickFiles();
+                      if (result != null) {
+                        setState(() {
+                          _attachment = File(result.files.single.path!);
+                        });
+                      }
                     },
                     tooltip: 'Attach file',
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.image_outlined),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Images coming soon!')),
-                      );
-                    },
-                    tooltip: 'Insert image',
-                  ),
+                  if (_attachment != null)
+                    Expanded(
+                      child: Text(
+                        _attachment!.path.split('/').last,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   const Spacer(),
                   Text(
                     'Sent from CITK Connect',

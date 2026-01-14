@@ -60,11 +60,13 @@ dependencies:
   
   # Utilities
   shared_preferences: ^2.5.4
+  path_provider: ^2.0.11
   url_launcher: ^6.3.2
   share_plus: ^12.0.1
   webview_flutter: ^4.4.2
   file_picker: ^8.0.0
   google_generative_ai: ^0.4.7
+  mime: ^1.0.4
   intl: ^0.20.2
   hive: ^2.2.3
   hive_flutter: ^1.1.0
@@ -84,7 +86,7 @@ dev_dependencies:
   riverpod_generator: ^2.6.0
   custom_lint: ^0.7.0
   riverpod_lint: ^2.6.0
-  cupertino_icons: ^1.0.8
+  cupertino_icons: ^1.0.6
 
 flutter_launcher_icons:
   android: "launcher_icon"
@@ -99,3 +101,4 @@ flutter:
     - assets/images/
     - assets/data/citk_data.json
     - assets/sounds/
+

@@ -4,13 +4,34 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:citk_connect/ai/bus_schedule_data.dart';
+import 'package:citk_connect/ai/campus_data.dart';
+import 'package:citk_connect/ai/function_declarations.dart';
+import 'package:citk_connect/ai/timetable_data.dart';
+import 'package:intl/intl.dart';
+
+/// Provider for the CITK AI Agent
+final citkAgentProvider = Provider<CITKAIAgent>((ref) {
+  // Get API key from environment variable (injected at build time via --dart-define)
+  // Falls back to empty string if not provided (will be handled during initialization)
+  final apiKey =
+      const String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
+
+  return CITKAIAgent(
+    apiKey: apiKey,
+    firestore: FirebaseFirestore.instance,
+  );
+});
 
 /// CITK Knowledge retrieved from Firebase
 class CITKKnowledge {
   final Map<String, dynamic> library;
   final Map<String, dynamic> hostels;
   final List<dynamic> buses;
+  final Map<String, dynamic> busSchedule;
+  final Map<String, dynamic> timetable;
   final Map<String, dynamic> departments;
   final Map<String, dynamic> facilities;
   final Map<String, dynamic> contacts;
@@ -19,6 +40,8 @@ class CITKKnowledge {
     required this.library,
     required this.hostels,
     required this.buses,
+    required this.busSchedule,
+    required this.timetable,
     required this.departments,
     required this.facilities,
     required this.contacts,
@@ -29,6 +52,8 @@ class CITKKnowledge {
       library: data['library'] ?? {},
       hostels: data['hostels'] ?? {},
       buses: data['buses'] ?? [],
+      busSchedule: data['bus_schedule'] ?? {},
+      timetable: data['timetable'] ?? {},
       departments: data['departments'] ?? {},
       facilities: data['facilities'] ?? {},
       contacts: data['contacts'] ?? {},
@@ -48,6 +73,19 @@ Girls: ${(hostels['girls'] as List).map((h) => h['name']).join(', ')}
 
 Bus Routes: ${buses.length} routes available
 First route: ${buses.isNotEmpty ? buses[0]['route'] : 'N/A'}
+
+Bus Schedule (Effective ${busSchedule['meta']?['effective_from'] ?? 'Unknown'}):
+Weekdays:
+  Morning: CIT->Town ${busSchedule['weekdays']?['morning']?['cit_to_town']}, Town->CIT ${busSchedule['weekdays']?['morning']?['town_to_cit']}
+  Afternoon: CIT->Town ${busSchedule['weekdays']?['afternoon']?['cit_to_town']}, Town->CIT ${busSchedule['weekdays']?['afternoon']?['town_to_cit']}
+  Evening: CIT->Town ${busSchedule['weekdays']?['evening']?['cit_to_town']}, Town->CIT ${busSchedule['weekdays']?['evening']?['town_to_cit']}
+Weekends:
+  Morning: CIT->Town ${busSchedule['weekends']?['morning']?['cit_to_town']}, Town->CIT ${busSchedule['weekends']?['morning']?['town_to_cit']}
+  Afternoon: CIT->Town ${busSchedule['weekends']?['afternoon']?['cit_to_town']}, Town->CIT ${busSchedule['weekends']?['afternoon']?['town_to_cit']}
+  Evening: CIT->Town ${busSchedule['weekends']?['evening']?['cit_to_town']}, Town->CIT ${busSchedule['weekends']?['evening']?['town_to_cit']}
+
+Academic Timetable (2026):
+$timetable
 ''';
   }
 }
@@ -107,6 +145,7 @@ enum AIAction {
   showNoticeDetail,
   searchNotices,
   callEmergency,
+  findNextClass,
   none,
 }
 
@@ -140,36 +179,48 @@ class CITKAIAgent {
     required this.firestore,
   });
 
+  /// Expose knowledge for UI consumption
+  CITKKnowledge? get knowledge => _knowledge;
+
   /// Initialize agent and load Firebase data
   Future<void> initialize() async {
     if (_isInitialized) return;
 
     debugPrint('🤖 Initializing CITK AI Agent...');
 
-    // Load knowledge base from Firebase
-    await _loadKnowledgeBase();
+    try {
+      // CRITICAL: Validate API key before proceeding
+      if (apiKey.isEmpty) {
+        throw Exception('GEMINI_API_KEY is not configured. '
+            'Run: flutter run --dart-define=GEMINI_API_KEY=your_key_here');
+      }
 
-    // Initialize Gemini model
-    _model = GenerativeModel(
-      model: 'gemini-2.0-flash-exp',
-      apiKey: apiKey,
-      tools: [Tool(functionDeclarations: _getFunctionDeclarations())],
-      systemInstruction: Content.system(_getSystemPrompt()),
-    );
+      // Load knowledge base from Firebase
+      await _loadKnowledgeBase();
 
-    _chat = _model!.startChat();
-    _isInitialized = true;
+      // Initialize Gemini model
+      _model = GenerativeModel(
+        model: 'gemini-2.0-flash-exp',
+        apiKey: apiKey,
+        tools: [Tool(functionDeclarations: getFunctionDeclarations())],
+        systemInstruction: Content.system(getSystemPrompt()),
+      );
 
-    debugPrint('✅ AI Agent initialized');
+      _chat = _model!.startChat();
+      _isInitialized = true;
+
+      debugPrint('✅ AI Agent initialized');
+    } catch (e) {
+      debugPrint('❌ Failed to initialize AI Agent: $e');
+      rethrow;
+    }
   }
 
   /// Load knowledge base from Firebase
   Future<void> _loadKnowledgeBase() async {
     try {
-      final doc = await firestore
-          .collection('knowledge_base')
-          .doc('campus_info')
-          .get();
+      final doc =
+          await firestore.collection('knowledge_base').doc('campus_info').get();
 
       if (doc.exists) {
         _knowledge = CITKKnowledge.fromFirestore(doc.data()!);
@@ -187,27 +238,11 @@ class CITKAIAgent {
   /// Get default knowledge if Firebase fails
   CITKKnowledge _getDefaultKnowledge() {
     return CITKKnowledge(
-      library: {
-        'timings': '9:00 AM - 8:00 PM',
-        'location': 'Academic Block',
-        'contact': 'library@cit.ac.in'
-      },
-      hostels: {
-        'boys': [
-          {'name': 'Dwimalu', 'capacity': 200},
-          {'name': 'Jwhwlao', 'capacity': 180}
-        ],
-        'girls': [
-          {'name': 'Gwzwon', 'capacity': 150},
-          {'name': 'Nivedita', 'capacity': 120}
-        ]
-      },
-      buses: [
-        {
-          'route': 'Kokrajhar Railgate → Campus',
-          'timings': ['8:30 AM', '9:30 AM']
-        }
-      ],
+      library: getLibraryData(),
+      hostels: getHostelsData(),
+      buses: getBusesData(),
+      busSchedule: getBusScheduleData(),
+      timetable: getTimetableData(),
       departments: {},
       facilities: {},
       contacts: {},
@@ -279,10 +314,19 @@ class CITKAIAgent {
         final call = functionCalls.first;
         final action = _mapFunctionToAction(call.name);
 
+        // Execute logic for specific tools that return data to the LLM
+        Map<String, dynamic> executionResult = {
+          'status': 'executed',
+          'message': 'Action initiated'
+        };
+        if (call.name == 'find_next_class') {
+          executionResult = _executeFindNextClass(call.args);
+        }
+
         // Send function response back
         final functionResponse = FunctionResponse(
           call.name,
-          {'status': 'executed', 'message': 'Action initiated'},
+          executionResult,
         );
 
         response = await _chat!.sendMessage(
@@ -335,53 +379,13 @@ class CITKAIAgent {
       }
     }
 
-    buffer.writeln('Respond naturally. If user wants to perform an action, call the appropriate function.');
+    buffer.writeln(
+        'Respond naturally. If user wants to perform an action, call the appropriate function.');
 
     return buffer.toString();
   }
 
-  /// Get function declarations for Gemini
-  List<FunctionDeclaration> _getFunctionDeclarations() {
-    return [
-      FunctionDeclaration(
-        'open_bus_tracker',
-        'Opens live bus tracking screen',
-        Schema(SchemaType.object, properties: {}),
-      ),
-      FunctionDeclaration(
-        'open_map',
-        'Opens campus map for navigation',
-        Schema(SchemaType.object, properties: {}),
-      ),
-      FunctionDeclaration(
-        'open_notices',
-        'Shows latest campus notices and announcements',
-        Schema(SchemaType.object, properties: {}),
-      ),
-      FunctionDeclaration(
-        'show_notice_detail',
-        'Shows detailed information about a specific notice',
-        Schema(SchemaType.object, properties: {
-          'notice_id': Schema(SchemaType.string, description: 'Notice ID'),
-        }),
-      ),
-      FunctionDeclaration(
-        'open_hostels',
-        'Shows hostel information and facilities',
-        Schema(SchemaType.object, properties: {}),
-      ),
-      FunctionDeclaration(
-        'open_library',
-        'Opens library section with timings and info',
-        Schema(SchemaType.object, properties: {}),
-      ),
-      FunctionDeclaration(
-        'register_complaint',
-        'Opens complaint registration form',
-        Schema(SchemaType.object, properties: {}),
-      ),
-    ];
-  }
+
 
   /// Map function name to action enum
   AIAction _mapFunctionToAction(String functionName) {
@@ -400,33 +404,82 @@ class CITKAIAgent {
         return AIAction.openLibrary;
       case 'register_complaint':
         return AIAction.openComplaints;
+      case 'find_next_class':
+        return AIAction.findNextClass;
       default:
         return AIAction.none;
     }
   }
 
-  /// Get system prompt
-  String _getSystemPrompt() {
-    return '''
-You are CITK Connect AI, an intelligent assistant for Central Institute of Technology Kokrajhar.
+  /// Logic to find the next class from the timetable
+  Map<String, dynamic> _executeFindNextClass(Map<String, dynamic> args) {
+    try {
+      final semGroup = args['semester_group'] as String?;
+      final branch = args['branch'] as String?;
 
-Your capabilities:
-1. Answer questions about CITK using provided campus information
-2. Search and reference recent notices (scholarships, events, exams, etc.)
-3. Help with navigation by calling app functions
-4. Provide accurate, helpful information to students
+      if (semGroup == null || branch == null || _knowledge == null) {
+        return {'error': 'Missing information or knowledge base not loaded'};
+      }
 
-Guidelines:
-- Use the provided campus information and notices to answer accurately
-- When users want to DO something (track bus, see notices, register complaint), call the appropriate function
-- Reference specific notices when relevant
-- Be concise, friendly, and student-focused
-- If you don't know something, say so honestly
-- For emergencies, prioritize safety
+      final now = DateTime.now();
+      final dayName = DateFormat('EEEE').format(now).toUpperCase();
 
-Important: You have access to real-time notice data. When answering about recent events, scholarships, or updates, reference the provided notices.
-''';
+      // Access the schedule
+      final schedule =
+          _knowledge!.timetable['schedule'] as Map<String, dynamic>?;
+      if (schedule == null) return {'error': 'No schedule data found'};
+
+      final daySchedule = schedule[dayName] as Map<String, dynamic>?;
+      if (daySchedule == null)
+        return {'result': 'No classes scheduled for $dayName.'};
+
+      final groupSchedule = daySchedule[semGroup] as Map<String, dynamic>?;
+      if (groupSchedule == null)
+        return {'error': 'Semester group $semGroup not found'};
+
+      // Handle branch variations (e.g., CSE_A, CSE_B in JSON vs just CSE)
+      // Simple fuzzy match for demo
+      final branchKey = groupSchedule.keys.firstWhere(
+        (k) => k.toUpperCase().contains(branch.toUpperCase()),
+        orElse: () => '',
+      );
+
+      if (branchKey.isEmpty)
+        return {'error': 'Branch $branch not found in $semGroup'};
+
+      final classInfo = groupSchedule[branchKey] as Map<String, dynamic>;
+      final slots = List<String>.from(classInfo['slots'] ?? []);
+      final room = classInfo['room'] ?? 'Unknown Room';
+
+      // Determine current slot based on time (Assuming 9 AM start, 1 hour slots)
+      // 0: 09-10, 1: 10-11, 2: 11-12, 3: 12-01, 4: Lunch, 5: 02-03, 6: 03-04, 7: 04-05
+      int currentHour = now.hour;
+      int slotIndex = currentHour - 9;
+
+      if (slotIndex < 0)
+        return {
+          'result':
+              'Classes haven\'t started yet. First class is ${slots.firstWhere((s) => s.isNotEmpty, orElse: () => "Free")} at 9:00 AM.'
+        };
+      if (slotIndex >= slots.length)
+        return {'result': 'Classes are over for today.'};
+
+      // Find next non-empty slot
+      for (int i = slotIndex; i < slots.length; i++) {
+        if (slots[i].isNotEmpty && slots[i] != "Lunch Break") {
+          return {
+            'result': 'Next class: ${slots[i]} in Room $room at ${9 + i}:00.'
+          };
+        }
+      }
+
+      return {'result': 'No more classes for today.'};
+    } catch (e) {
+      return {'error': 'Failed to calculate next class: $e'};
+    }
   }
+
+
 
   /// Reset conversation
   void reset() {
@@ -441,4 +494,12 @@ Important: You have access to real-time notice data. When answering about recent
     _chat = null;
     _isInitialized = false;
   }
+}
+
+String getSystemPrompt() {
+  return '''
+You are the CITK Digital Senior, a helpful AI assistant for the Central Institute of Technology Kokrajhar (CITK).
+Your goal is to assist students with information about the campus, bus schedules, hostels, library, and academic timetable.
+Use the provided context to answer questions accurately.
+''';
 }

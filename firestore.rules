@@ -27,6 +27,12 @@ service cloud.firestore {
       allow write: if hasPermission('broadcast_location');
     }
     
+    // 🚌 BUS LOCATIONS: Public Read for tracking, Driver Write Only
+    match /bus_locations/{busId} {
+      allow read: if true; // Students can see real-time bus location
+      allow write: if hasPermission('broadcast_location'); // Only drivers with permission
+    }
+    
     // 👤 USERS: Owner Write, Auth Read
     match /users/{userId} {
       allow read: if isSignedIn();

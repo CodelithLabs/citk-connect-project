@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:citk_connect/map/models/bus_data.dart';
+import 'package:geolocator/geolocator.dart';
 
 /// Provides an instance of [BusService] to the app.
 ///
@@ -16,6 +18,9 @@ final busServiceProvider = Provider((ref) => BusService());
 /// to the Firestore database. It is designed to be used by the driver's dashboard.
 class BusService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  StreamSubscription<Position>? _positionStream;
+  String _currentCondition = "OK";
+  String _currentOccupancy = "LOW";
 
   /// Broadcasts the current location and status of a bus to Firestore.
   ///
@@ -29,6 +34,8 @@ class BusService {
   ///
   /// This method updates the document for the given `busId` in the `bus_locations`
   /// collection. If the document does not exist, it will be created.
+  ///
+  /// Throws [FirebaseException] if write fails (allows caller to handle).
   Future<void> broadcastLocation(
     String busId,
     double lat,
@@ -39,6 +46,11 @@ class BusService {
     String occupancy,
   ) async {
     try {
+      // Validate inputs
+      if (busId.isEmpty) {
+        throw ArgumentError('busId cannot be empty');
+      }
+
       // Reference to the specific bus document in the 'bus_locations' collection
       final docRef = _firestore.collection('bus_locations').doc(busId);
 
@@ -55,16 +67,87 @@ class BusService {
         'timestamp':
             FieldValue.serverTimestamp(), // Use server time for consistency
       });
+
+      developer.log(
+        'Location broadcast successful for bus $busId',
+        name: 'BusService',
+      );
     } catch (e, stackTrace) {
       developer.log(
         'Error broadcasting location for bus $busId',
         error: e,
         stackTrace: stackTrace,
         name: 'BusService',
+        level: 2000, // WARNING level
       );
       FirebaseCrashlytics.instance.recordError(e, stackTrace,
-          reason: 'Broadcast Location Failed for $busId');
+          reason: 'Broadcast Location Failed for $busId', fatal: false);
+      rethrow; // Allow caller to handle the error
     }
+  }
+
+  /// Starts broadcasting location updates.
+  Future<void> startBroadcasting({
+    required String busId,
+    required String routeName,
+    required String condition,
+    required String occupancy,
+  }) async {
+    _currentCondition = condition;
+    _currentOccupancy = occupancy;
+
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      throw Exception('Location services are disabled.');
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        throw Exception('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      throw Exception('Location permissions are permanently denied');
+    }
+
+    // Stop existing stream if any
+    await _positionStream?.cancel();
+
+    const locationSettings = LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 10,
+    );
+
+    _positionStream =
+        Geolocator.getPositionStream(locationSettings: locationSettings).listen(
+            (Position position) {
+      broadcastLocation(
+        busId,
+        position.latitude,
+        position.longitude,
+        position.heading,
+        position.speed,
+        _currentCondition,
+        _currentOccupancy,
+      );
+    }, onError: (e) {
+      developer.log('GPS Stream Error', error: e);
+    });
+  }
+
+  /// Stops broadcasting.
+  Future<void> stopBroadcasting(String busId) async {
+    await _positionStream?.cancel();
+    _positionStream = null;
+  }
+
+  /// Updates status flags for the next broadcast.
+  void updateStatus(String condition, String occupancy) {
+    _currentCondition = condition;
+    _currentOccupancy = occupancy;
   }
 
   Stream<BusData> streamBus(String busId) {

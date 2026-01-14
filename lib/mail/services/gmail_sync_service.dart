@@ -2,6 +2,8 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+import 'package:mime/mime.dart';
 
 import 'package:citk_connect/mail/models/college_email.dart';
 import 'package:citk_connect/mail/models/email_attachment.dart';
@@ -250,20 +252,44 @@ class GmailSyncService {
     }
   }
 
+//...
+
   /// Send an email
   Future<void> sendEmail({
     required String to,
     required String subject,
     required String body,
+    File? attachment,
   }) async {
     await _ensureInitialized();
     try {
       final message = gmail.Message();
 
-      final String rawString = 'To: $to\r\n'
-          'Subject: $subject\r\n'
-          'Content-Type: text/plain; charset="UTF-8"\r\n\r\n'
-          '$body';
+      String rawString;
+      if (attachment == null) {
+        rawString = 'To: $to\r\n'
+            'Subject: $subject\r\n'
+            'Content-Type: text/plain; charset="UTF-8"\r\n\r\n'
+            '$body';
+      } else {
+        final boundary = "------------${DateTime.now().millisecondsSinceEpoch}";
+        final attachmentData = base64Encode(await attachment.readAsBytes());
+        final mimeType =
+            lookupMimeType(attachment.path) ?? 'application/octet-stream';
+
+        rawString = 'To: $to\r\n'
+            'Subject: $subject\r\n'
+            'Content-Type: multipart/mixed; boundary="$boundary"\r\n\r\n'
+            '--$boundary\r\n'
+            'Content-Type: text/plain; charset="UTF-8"\r\n\r\n'
+            '$body\r\n\r\n'
+            '--$boundary\r\n'
+            'Content-Type: $mimeType; name="${attachment.path.split('/').last}"\r\n'
+            'Content-Disposition: attachment; filename="${attachment.path.split('/').last}"\r\n'
+            'Content-Transfer-Encoding: base64\r\n\r\n'
+            '$attachmentData\r\n'
+            '--$boundary--';
+      }
 
       final List<int> bytes = utf8.encode(rawString);
       final String base64Email = base64Url.encode(bytes);

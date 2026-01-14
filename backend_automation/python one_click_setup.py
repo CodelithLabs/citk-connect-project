@@ -15,6 +15,7 @@ What it does:
 """
 
 import json
+import os
 import firebase_admin
 from firebase_admin import credentials, firestore
 from datetime import datetime
@@ -25,8 +26,9 @@ import sys
 # CONFIGURATION (EDIT THESE)
 # ============================================================================
 
-GEMINI_API_KEY = "AIzaSyBdUhq8NaX98VE3Xy2BHfN2N0h81HXqcZg"  # ← YOUR KEY HERE
-SERVICE_ACCOUNT_FILE = "service-account.json"  # ← YOUR FILE HERE
+# ⚠️  IMPORTANT: Never hardcode API keys! Use environment variables instead.
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')  # Set via: export GEMINI_API_KEY=your_key
+SERVICE_ACCOUNT_FILE = "service-account.json"  # Your Firebase service account key
 
 # ============================================================================
 # STEP 1: INITIALIZE FIREBASE

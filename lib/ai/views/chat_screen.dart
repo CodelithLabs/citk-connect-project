@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:ui' as ui;
-import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:citk_connect/ai/services/gemini_service.dart';
-import 'package:citk_connect/ai/services/prompt_builder.dart';
-import 'package:citk_connect/ai/providers/context_provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:citk_connect/ai/services/citk_ai_agent.dart';
+import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:citk_connect/academics/views/timetable_screen.dart';
+import 'package:citk_connect/ai/providers/chat_providers.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
@@ -31,7 +29,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
   late AnimationController _fabController;
   late AnimationController _welcomeController;
-  StreamSubscription? _streamSubscription;
 
   final List<Map<String, String>> _messages = [
     {
@@ -114,31 +111,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   }
 
   Future<void> _loadHistory() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? savedChat = prefs.getString('chat_history');
-
-    if (savedChat != null && mounted) {
-      try {
-        final List<dynamic> decoded = jsonDecode(savedChat);
-        setState(() {
-          _messages.clear();
-          _messages.addAll(decoded.map((e) => Map<String, String>.from(e)));
-        });
-        Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
-      } catch (e) {
-        debugPrint("Error loading chat history: $e");
-      }
+    final history = ref.read(chatHistoryServiceProvider).getHistory();
+    if (history.isNotEmpty && mounted) {
+      setState(() {
+        _messages.clear();
+        _messages.addAll(history);
+      });
+      Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
     }
   }
 
   Future<void> _saveHistory() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('chat_history', jsonEncode(_messages));
+    await ref.read(chatHistoryServiceProvider).saveHistory(_messages);
   }
 
   @override
   void dispose() {
-    _streamSubscription?.cancel();
     _flutterTts.stop();
     _controller.dispose();
     _scrollController.dispose();
@@ -162,92 +150,71 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     if (customText == null) _controller.clear();
     _scrollToBottom();
 
-    // 1. Build Academic Context
-    String? systemInstruction;
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        final repo = ref.read(academicContextRepositoryProvider);
-        final context = await repo.buildAcademicContext(user.uid);
-        systemInstruction = PromptBuilder.buildSystemPrompt(context);
+      final agent = ref.read(citkAgentProvider);
+      final response = await agent.sendMessage(text);
+
+      if (mounted) {
+        if (!_isTyping) return;
+        setState(() {
+          _isTyping = false;
+          _messages.add({'role': 'ai', 'text': response.message});
+        });
+        _saveHistory();
+        _scrollToBottom();
+        HapticFeedback.mediumImpact();
+
+        // Handle Actions
+        if (response.action != null && response.action != AIAction.none) {
+          _handleAIAction(response.action!, response.params);
+        }
       }
-    } catch (e) {
-      debugPrint("⚠️ Context build failed: $e");
-      // Continue without context
+    } catch (e, stackTrace) {
+      debugPrint('🔴 CRITICAL AI ERROR: $e');
+      debugPrint('🔴 STACK TRACE: $stackTrace');
+
+      if (mounted) {
+        if (!_isTyping) return;
+        setState(() {
+          _isTyping = false;
+          _messages.add({'role': 'ai', 'text': "I'm having trouble connecting right now. Please try again later."});
+        });
+        _saveHistory();
+        _scrollToBottom();
+        ScaffoldMessenger.of(context).showSnackBar(
+          _buildSnackBar("Error: ${e.toString()}"),
+        );
+      }
     }
+  }
 
-    final service = ref.read(geminiServiceProvider);
-    final stream = await service.streamMessage(text, systemInstruction: systemInstruction);
-
-    if (stream != null) {
-      // STREAMING MODE
-      setState(() {
-        _messages.add({'role': 'ai', 'text': ''});
-      });
-
-      _streamSubscription?.cancel();
-      _streamSubscription = stream.listen(
-        (chunk) {
-          if (mounted) {
-            setState(() {
-              final lastMsg = _messages.last;
-              if (lastMsg['role'] == 'ai') {
-                _messages.last['text'] = (lastMsg['text'] ?? '') + chunk;
-              }
-            });
-            _scrollToBottom(isStreaming: true);
-          }
-        },
-        onDone: () {
-          if (mounted) {
-            setState(() => _isTyping = false);
-            _saveHistory();
-            HapticFeedback.mediumImpact();
-          }
-        },
-        onError: (e) {
-          if (mounted) {
-            setState(() {
-              _isTyping = false;
-              _messages.last['text'] =
-                  "Oops! Connection interrupted. Please try again.";
-            });
-          }
-        },
-      );
-    } else {
-      // FALLBACK: UNARY MODE
-      try {
-        final response = await service.sendMessage(text, systemInstruction: systemInstruction);
-        if (mounted) {
-          if (!_isTyping) return;
-          setState(() {
-            _isTyping = false;
-            _messages.add({'role': 'ai', 'text': response.text});
-          });
-          _saveHistory();
-          _scrollToBottom();
-          HapticFeedback.mediumImpact();
-        }
-      } catch (e, stackTrace) {
-        // 1. PRINT THE REAL ERROR
-        debugPrint('🔴 CRITICAL GEMINI ERROR: $e');
-        debugPrint('🔴 STACK TRACE: $stackTrace');
-
-        if (mounted) {
-          if (!_isTyping) return;
-          setState(() {
-            _isTyping = false;
-            // 2. SHOW THE ERROR ON UI (Temporary for Debugging)
-            _messages.add({
-              'role': 'ai',
-              'text': "DEBUG ERROR: $e"
-            });
-          });
-          _saveHistory();
-          _scrollToBottom();
-        }
-      }
+  void _handleAIAction(AIAction action, Map<String, dynamic>? params) {
+    switch (action) {
+      case AIAction.openBusTracker:
+        context.push('/bus'); // Ensure this route exists in AppRouter
+        break;
+      case AIAction.openMap:
+        context.push('/map');
+        ScaffoldMessenger.of(context).showSnackBar(
+          _buildSnackBar("Opening Campus Map... 🗺️"),
+        );
+        break;
+      case AIAction.openNotices:
+        context.push('/notices');
+        ScaffoldMessenger.of(context).showSnackBar(
+          _buildSnackBar("Checking Notices... 📢"),
+        );
+        break;
+      case AIAction.openTimetable:
+      case AIAction.findNextClass:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const TimetableScreen()),
+        );
+        break;
+      default:
+        // Do nothing
+        break;
     }
   }
 
@@ -270,58 +237,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     });
     _saveHistory();
 
-    // 1. Build Academic Context (Again)
-    String? systemInstruction;
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        final repo = ref.read(academicContextRepositoryProvider);
-        final context = await repo.buildAcademicContext(user.uid);
-        systemInstruction = PromptBuilder.buildSystemPrompt(context);
+      final agent = ref.read(citkAgentProvider);
+      final response = await agent.sendMessage(lastUserText);
+
+      if (mounted) {
+        setState(() {
+          _isTyping = false;
+          _messages.add({'role': 'ai', 'text': response.message});
+        });
+        _saveHistory();
+        _scrollToBottom();
+
+        if (response.action != null && response.action != AIAction.none) {
+          _handleAIAction(response.action!, response.params);
+        }
       }
     } catch (e) {
-      debugPrint("⚠️ Context build failed: $e");
-    }
-
-    // Reuse the logic from _sendMessage but without adding the user message again
-    final service = ref.read(geminiServiceProvider);
-    final stream = await service.streamMessage(lastUserText, systemInstruction: systemInstruction);
-
-    if (stream != null) {
-      setState(() => _messages.add({'role': 'ai', 'text': ''}));
-      _streamSubscription?.cancel();
-      _streamSubscription = stream.listen(
-        (chunk) {
-          if (mounted) {
-            setState(() {
-              if (_messages.last['role'] == 'ai') {
-                _messages.last['text'] = (_messages.last['text'] ?? '') + chunk;
-              }
-            });
-            _scrollToBottom(isStreaming: true);
-          }
-        },
-        onDone: () {
-          if (mounted) {
-            setState(() => _isTyping = false);
-            _saveHistory();
-          }
-        },
-      );
-    } else {
-      try {
-        final response = await service.sendMessage(lastUserText, systemInstruction: systemInstruction);
-        if (mounted) {
-          setState(() {
-            _isTyping = false;
-            _messages.add({'role': 'ai', 'text': response.text});
-          });
-          _saveHistory();
-          _scrollToBottom();
-        }
-      } catch (e) {
-        if (mounted) setState(() => _isTyping = false);
-      }
+      if (mounted) setState(() => _isTyping = false);
     }
   }
 
@@ -346,16 +279,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final aiStatus = ref.watch(aiStatusProvider);
-    final isError = aiStatus == AIStatus.offline ||
-        aiStatus == AIStatus.error ||
-        aiStatus == AIStatus.quota_exceeded;
-    final statusColor = isError ? Colors.redAccent : const Color(0xFF6C63FF);
 
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0F),
       extendBodyBehindAppBar: true,
-      appBar: _buildAppBar(statusColor, aiStatus.name.toUpperCase(), isError),
+      appBar: _buildAppBar(),
       body: Stack(
         children: [
           // Animated gradient background
@@ -364,8 +292,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
           // Main content
           Column(
             children: [
-              if (aiStatus != AIStatus.uninitialized)
-                _buildStatusBanner(statusColor, aiStatus.name.toUpperCase(), isError),
               Expanded(child: _buildChatList(theme)),
               if (!_isTyping) _buildSuggestedChips(),
               if (_isTyping) _buildStopGeneratingButton(),
@@ -402,8 +328,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     );
   }
 
-  PreferredSizeWidget _buildAppBar(
-      Color statusColor, String aiStatus, bool isError) {
+  PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -501,60 +426,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     );
   }
 
-  Widget _buildStatusBanner(Color statusColor, String aiStatus, bool isError) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(16, 100, 16, 8),
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            statusColor.withValues(alpha: 0.15),
-            statusColor.withValues(alpha: 0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: statusColor.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (!isError)
-            SizedBox(
-              width: 14,
-              height: 14,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: statusColor,
-              ),
-            ),
-          if (!isError) const SizedBox(width: 10),
-          Icon(
-            isError ? Icons.error_outline : Icons.cloud_sync_rounded,
-            size: 16,
-            color: statusColor,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            aiStatus,
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              color: statusColor,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    ).animate().fadeIn().slideY(begin: -0.3, end: 0);
-  }
-
   Widget _buildChatList(ThemeData theme) {
     return ListView.builder(
       controller: _scrollController,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+      padding: const EdgeInsets.fromLTRB(16, 100, 16, 100),
       itemCount: _messages.length + (_isTyping ? 1 : 0),
       itemBuilder: (context, index) {
         if (index == _messages.length) {
@@ -878,7 +753,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
           child: InkWell(
             onTap: () {
               HapticFeedback.mediumImpact();
-              _streamSubscription?.cancel();
               setState(() => _isTyping = false);
             },
             borderRadius: BorderRadius.circular(24),
@@ -1444,7 +1318,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
           TextButton(
             onPressed: () {
               Navigator.pop(dialogContext);
-              ref.read(geminiServiceProvider).resetSession();
+              ref.read(citkAgentProvider).reset();
+              ref.read(chatHistoryServiceProvider).clearHistory();
               setState(() {
                 _messages.clear();
                 _messages.add({
@@ -1454,7 +1329,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 });
                 _isTyping = false;
               });
-              _saveHistory();
               ScaffoldMessenger.of(context).showSnackBar(
                 _buildSnackBar("Memory wiped! 🧠✨"),
               );

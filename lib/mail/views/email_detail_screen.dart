@@ -3,6 +3,7 @@
 import 'package:citk_connect/mail/models/college_email.dart';
 import 'package:citk_connect/mail/models/email_category.dart';
 import 'package:citk_connect/mail/providers/mail_provider.dart';
+import 'package:citk_connect/mail/services/mail_action_service.dart';
 import 'package:citk_connect/mail/views/widgets/ai_summary_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -114,17 +115,27 @@ class _EmailDetailScreenState extends ConsumerState<EmailDetailScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.archive_outlined),
-            onPressed: () {
-              // TODO: Implement archive
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Archive not implemented yet')),
-              );
+            onPressed: () async {
+              await ref
+                  .read(mailActionServiceProvider)
+                  .archiveEmail(widget.email.id);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('Email archived'),
+                    backgroundColor: Colors.green));
+                Navigator.pop(context);
+              }
             },
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline),
-            onPressed: () {
-              // TODO: Implement delete
+            onPressed: () async {
+              await ref
+                  .read(mailActionServiceProvider)
+                  .deleteEmail(widget.email.id);
+              if (context.mounted) {
+                Navigator.pop(context);
+              }
             },
           ),
           const SizedBox(width: 8),
