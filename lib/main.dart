@@ -122,7 +122,6 @@ void main() async {
   // 4️⃣ Initialize WorkManager
   Workmanager().initialize(
     callbackDispatcher,
-    isInDebugMode: kDebugMode,
   );
 
   // Register Periodic Task (Every 15 minutes)

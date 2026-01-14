@@ -40,6 +40,8 @@ dependencies:
   # Google Services
   google_sign_in: ^6.2.1
   google_maps_flutter: ^2.14.0
+  googleapis: ^13.1.0
+  extension_google_sign_in_as_googleapis_auth: ^2.0.7
   
   # Media & Camera
   camera: ^0.11.0

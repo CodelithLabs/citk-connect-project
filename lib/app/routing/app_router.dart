@@ -18,6 +18,11 @@ import 'package:citk_connect/common/views/app_web_view.dart';
 import 'package:citk_connect/profile/views/help_support_screen.dart';
 import 'package:citk_connect/profile/views/profile_screen.dart';
 import 'package:citk_connect/profile/views/digital_locker_screen.dart';
+import 'package:citk_connect/mail/views/compose_screen.dart';
+import 'package:citk_connect/mail/views/email_detail_screen.dart';
+import 'package:citk_connect/mail/views/mail_settings_screen.dart';
+import 'package:citk_connect/mail/models/college_email.dart';
+import 'package:citk_connect/routine/views/routine_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -105,12 +110,35 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             context, state, const FeesSelectionScreen()),
       ),
       GoRoute(
+        path: '/routine',
+        pageBuilder: (context, state) =>
+            _buildPageWithTransition(context, state, const RoutineScreen()),
+      ),
+      GoRoute(
         path: '/webview',
         pageBuilder: (context, state) {
           final url = state.uri.queryParameters['url']!;
           final title = state.uri.queryParameters['title'] ?? 'Browser';
           return _buildPageWithTransition(
               context, state, AppWebView(url: url, title: title));
+        },
+      ),
+      GoRoute(
+        path: '/mail/compose',
+        pageBuilder: (context, state) =>
+            _buildPageWithTransition(context, state, const ComposeScreen()),
+      ),
+      GoRoute(
+        path: '/mail/settings',
+        pageBuilder: (context, state) => _buildPageWithTransition(
+            context, state, const MailSettingsScreen()),
+      ),
+      GoRoute(
+        path: '/mail/details',
+        pageBuilder: (context, state) {
+          final email = state.extra as CollegeEmail;
+          return _buildPageWithTransition(
+              context, state, EmailDetailScreen(email: email));
         },
       ),
       StatefulShellRoute.indexedStack(

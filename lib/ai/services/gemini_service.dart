@@ -703,6 +703,24 @@ class GeminiService implements IAIService {
     return apiKey;
   }
 
+  /// Analyze email content for categorization and summary
+  Future<AIResponse> analyzeEmail(String subject, String body, {String? userId}) async {
+    const systemPrompt = '''
+You are an Email Intelligence Agent for a college student.
+Analyze the email and return a JSON object (no markdown) with:
+1. "category": One of [Official, Assignment, Exam, Personal, Spam, Promotion]
+2. "summary": A 1-sentence TL;DR.
+3. "action_items": List of strings (tasks).
+4. "deadlines": List of strings (dates/times).
+5. "urgency": [High, Medium, Low]
+''';
+    
+    final content = "Subject: $subject\n\nBody: $body";
+    
+    // Use a temporary session or specific model for this task
+    return sendMessage(content, userId: userId, systemInstruction: systemPrompt);
+  }
+
   /// Initialize a model with configuration
   Future<GenerativeModel> _initializeModel(
       String apiKey, String modelName, {String? systemInstruction}) async {

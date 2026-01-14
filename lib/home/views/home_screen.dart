@@ -14,6 +14,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:citk_connect/home/views/smart_attendance_card.dart';
 import 'package:citk_connect/fees/views/fees_card.dart';
+import 'package:citk_connect/routine/views/widgets/routine_home_card.dart';
 import 'package:home_widget/home_widget.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -343,6 +344,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
                 // Smart Attendance Widget
                 const SliverToBoxAdapter(child: SmartAttendanceCard()),
+
+                // Routine & Calculator Card
+                const SliverToBoxAdapter(child: RoutineHomeCard()),
 
                 // Fees & Renewal Card
                 const SliverToBoxAdapter(child: FeesCard()),

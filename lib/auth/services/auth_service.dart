@@ -15,7 +15,13 @@ class AuthService extends StreamNotifier<User?> {
   Future<void> signInWithGoogle() async {
     state = const AsyncValue.loading();
     try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      final GoogleSignInAccount? googleUser = await GoogleSignIn(
+        scopes: [
+          'email',
+          'https://www.googleapis.com/auth/gmail.readonly',
+          'https://www.googleapis.com/auth/gmail.labels',
+        ],
+      ).signIn();
       if (googleUser == null) {
         state = AsyncValue.data(FirebaseAuth.instance.currentUser);
         return; // User canceled
